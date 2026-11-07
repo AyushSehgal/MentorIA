@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api/client";
-import type { ConnectorStatus, DashboardResponse } from "./api/types";
-import { StatusDot } from "./components/Common";
-import { FALLBACK_TZ, providerLabel } from "./lib/format";
+import type { DashboardResponse } from "./api/types";
+import { FALLBACK_TZ } from "./lib/format";
 import { Dashboard } from "./pages/Dashboard";
 import { Documents } from "./pages/Documents";
 import { Knowledge } from "./pages/Knowledge";
@@ -72,7 +71,6 @@ export default function App() {
   }
 
   const tz = dash?.student.timezone ?? FALLBACK_TZ;
-  const connectors: ConnectorStatus[] = dash?.connectors ?? [];
   const route = ROUTES.find((r) => r.path === path) ? path : "/";
 
   return (
@@ -98,14 +96,6 @@ export default function App() {
           ))}
         </nav>
         <div className="topbar-right">
-          <div className="conn-dots" onClick={() => navigate("/sources")} title="Connector status">
-            {connectors.map((c) => (
-              <span key={c.provider} className="conn-dot">
-                <StatusDot status={c} />
-                <span className="conn-name">{providerLabel(c.provider)}</span>
-              </span>
-            ))}
-          </div>
           <span className="student">{dash?.student.name ?? "—"}</span>
           <button className="btn small-btn" onClick={() => void syncAll()} disabled={syncing}>
             {syncing ? "Syncing…" : "↻ Sync all"}
