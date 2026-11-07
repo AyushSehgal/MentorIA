@@ -86,7 +86,9 @@ For the snappiest live demo, switch to **Off**; it answers instantly.
 2. **Ask** "What ML topics am I struggling with?" → Backpropagation 0.12 citing 10-601 Quiz 2 **and** 10-605 lecture quizzes.
 3. **Student Model** → 10-605 concepts marked "shared with 10-601": one concept, evidence from both courses.
 4. **About me** → "I want a job at a startup that makes robots understand language" → goal now **3 sources**; matching concepts and opportunities listed.
-5. **Ask** "Events to attend?" → language-robotics seminar and startup mixer on top; quant club filtered out.
+5. **Quick Recap** → *At a glance* (goal, focus, due next) and *Suggested for you*: the Gmail seminar (Add to calendar),
+   SayCan from the real 16-831 reading list (Open paper), and RT-2 shared by a classmate on Piazza.
+   **Ask** "Events to attend?" → seminar and startup mixer on top; quant club filtered out.
 6. **Calendar → Open calendar → ✨ Plan my week** → dashed study blocks in free time before HW deadlines; click one → Approve → *Simulated*, block turns solid.
 7. Click any dashboard item for its details (reasons, evidence, links).
 

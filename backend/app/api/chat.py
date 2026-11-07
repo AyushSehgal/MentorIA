@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from ..memory import store
 from ..orchestration.graph import run_chat
 from ..schemas import ApproveRequest, ApproveResponse, ChatRequest, ChatResponse, Recommendation, RejectRequest
-from ..services import actions, seed
+from ..services import actions, seed, suggestions
 
 router = APIRouter(prefix="/api")
 
@@ -30,6 +30,12 @@ def approve(rec_id: str, req: ApproveRequest):
 @router.post("/recommendations/{rec_id}/reject")
 def reject(rec_id: str, req: RejectRequest):
     return {"recommendation": actions.reject(rec_id, req.student_id).model_dump()}
+
+
+@router.post("/suggestions/{sug_id}/dismiss")
+def dismiss_suggestion(sug_id: str, req: RejectRequest):
+    suggestions.dismiss(req.student_id, sug_id)
+    return {"ok": True}
 
 
 @router.post("/demo/reset")

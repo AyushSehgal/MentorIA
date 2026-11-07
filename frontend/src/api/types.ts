@@ -250,6 +250,7 @@ export interface DashboardResponse {
   recommendations: Recommendation[]; // pending only
   connectors: ConnectorStatus[];
   knowledge: KnowledgeCounts; // v1.2: what MentorIA knows so far (drives the "context growing" bar)
+  suggestions: Suggestion[]; // v1.5: "Suggested for you" in Quick Recap (max 4)
 }
 
 export interface ChatMessage {
@@ -367,4 +368,16 @@ export interface DemoAsset {
   kind: ImportKind;
   what_to_notice: string; // what changes in the UI after adding it
   added: boolean;
+}
+
+// ---- v1.5: suggestions -------------------------------------------------------------------
+export interface Suggestion {
+  id: string;
+  kind: "event" | "reading" | "resource" | "study";
+  source_label: string; // "From your Gmail" | "From the 16-831 reading list" | "Shared on Piazza" | "From your weekly plan"
+  title: string;
+  why: string; // one short line
+  when: string | null; // ISO start for events/study blocks
+  url: string | null; // paper/resource link
+  recommendation: Recommendation | null; // events/study blocks: approve/reject via the existing routes
 }

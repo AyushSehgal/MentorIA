@@ -142,6 +142,19 @@ def _course_overview(t: Tracker, text: str, is_fixture: bool) -> Optional[str]:
                                         "provenance": "fixture" if is_fixture else "verified"})
     if n_edges:
         t.changes.append(f"{n_edges} concept relations (as stated in this document)")
+    readings = []
+    for line in re.findall(r"(?im)^\s*Reading\s*:\s*(.+)$", text):
+        parts = [p.strip() for p in line.split("|")]
+        info = {k.strip().lower(): v.strip() for k, _, v in (p.partition(":") for p in parts[1:])}
+        title = parts[0]
+        readings.append(SourceRecord(
+            id=record_id("documents", f"reading:{cid}:{_sha(title, 8)}", t.student_id), student_id=t.student_id,
+            provider="documents", external_id=f"reading:{cid}:{_sha(title, 8)}", kind="reading", title=title,
+            source_url=info.get("url") or None, fetched_at=now_iso(), course_id=cid,
+            concept_ids=[c.strip() for c in info.get("concepts", "").split(",") if catalog.concept(c.strip())],
+            metadata={"course_code": code, "imported": True}, is_fixture=is_fixture))
+    if readings:
+        _add_records(t, readings, f"Readings from the {code or label} reading list")
     return cid
 
 
@@ -309,6 +322,7 @@ def _import_pack(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
             recs.append(SourceRecord(
                 id=record_id(provider, raw["external_id"], t.student_id), student_id=t.student_id, provider=provider,
                 external_id=raw["external_id"], kind=raw["kind"], title=raw["title"], body=body,
+                source_url=raw.get("source_url"),
                 occurred_at=resolve_time(raw.get("when")), fetched_at=now_iso(), course_id=raw.get("course_id"),
                 concept_ids=raw.get("concept_ids") or catalog.match_concepts(f"{raw['title']} {body}"),
                 metadata=meta, is_fixture=is_fixture))

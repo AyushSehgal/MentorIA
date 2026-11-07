@@ -153,3 +153,21 @@ def test_tell_confidence_is_separate_from_mastery(empty_client):
 def test_ask_mode_question_is_not_saved(empty_client):
     empty_client.post("/api/chat", json={"message": "What should I focus on this week?", "mode": "ask"})
     assert store.list_propositions(SID) == []
+
+
+# ---- v1.5 suggestions ----------------------------------------------------------------------------
+def test_suggestions_event_paper_and_classmate_resource(empty_client):
+    for step in sorted(STEP):
+        add(empty_client, step)
+    sug = empty_client.get("/api/dashboard").json()["suggestions"]
+    kinds = {s["kind"]: s for s in sug}
+    assert set(kinds) >= {"event", "reading", "resource"} and len(sug) <= 4
+    assert kinds["event"]["source_label"] == "From your Gmail" and kinds["event"]["recommendation"]["status"] == "pending"
+    assert kinds["reading"]["source_label"] == "From the 16-831 reading list"
+    assert kinds["reading"]["url"].startswith("https://arxiv.org/abs/") and "goal" in kinds["reading"]["why"]
+    assert kinds["resource"]["source_label"] == "A classmate shared this on Piazza" and "RT-2" in kinds["resource"]["title"]
+    # dismissing a paper shows the next-best paper instead (never a made-up one)
+    first = kinds["reading"]["title"]
+    empty_client.post(f"/api/suggestions/{kinds['reading']['id']}/dismiss", json={"student_id": SID})
+    nxt = {s["kind"]: s for s in empty_client.get("/api/dashboard").json()["suggestions"]}
+    assert nxt["reading"]["title"] != first

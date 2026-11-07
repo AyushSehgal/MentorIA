@@ -96,6 +96,17 @@ RL = {
         ("ml_reinforcement_learning", "policy_gradients", "related_to"),
         ("transformers_lms", "foundation_models_robotics", "prerequisite_of"),
     ],
+    # Readings listed on the public course page for Lecture 24 "Foundation Models in Robotics".
+    "readings": [
+        ("Do As I Can, Not As I Say: Grounding Language in Robotic Affordances (SayCan)",
+         "https://arxiv.org/abs/2204.01691", "foundation_models_robotics"),
+        ("RT-1: Robotics Transformer for Real-World Control at Scale",
+         "https://arxiv.org/abs/2212.06817", "foundation_models_robotics, imitation_learning"),
+        ("CLIPort: What and Where Pathways for Robotic Manipulation",
+         "https://arxiv.org/abs/2109.12098", "foundation_models_robotics, imitation_learning"),
+        ("Code as Policies: Language Model Programs for Embodied Control",
+         "https://arxiv.org/abs/2209.07753", "foundation_models_robotics, transformers_lms"),
+    ],
 }
 
 
@@ -222,6 +233,11 @@ def course_overview(course: dict, path: Path):
         p.line("Topics shared with other courses (MentorIA links them to the same concept):", bold=True)
         for cid, note in course["shared"]:
             p.line(f"Shared concept: {cid} | taught here as: {note}", size=8.5, gap=3, fit=True)
+    if course.get("readings"):
+        p.space()
+        p.line("Reading list (from the course page):", bold=True)
+        for title, url, concepts in course["readings"]:
+            p.line(f"Reading: {title} | url: {url} | concepts: {concepts}", size=8, gap=3, fit=True)
     p.space()
     p.line("How topics build on each other (MentorIA annotation, not official prerequisites):", bold=True)
     for a, b, rel in course["relations"]:
@@ -364,6 +380,17 @@ PIAZZA_PACK = f"""<!-- {MARK} -->
 - concepts: backpropagation
 
 When computing gradients for HW5, combine softmax and cross-entropy: the gradient with respect to the logits is (y_hat - y).
+
+### Found a great paper on vision-language-action models (RT-2)
+- id: p831_2
+- course: 16-831
+- posted: d-1 19:45
+- author: student
+- type: note
+- concepts: foundation_models_robotics
+- url: https://arxiv.org/abs/2307.15818
+
+For anyone thinking about project ideas: RT-2 shows how a vision-language model can output robot actions directly. Really relevant to the project proposal.
 
 ### Why do my gradients explode in HW5?
 - id: p601_2

@@ -9,7 +9,7 @@ from ..memory.context import active_propositions, concept_states, obs_evidence, 
 from ..schemas import (CalendarCard, ConnectorStatus, DashboardCards, DashboardResponse, DocumentsCard, GmailCard, Insight,
                        KnowledgeCounts, SourceCard)
 from ..timeutil import human, now, now_iso, parse
-from . import imports, opportunity_ranking, planning
+from . import imports, opportunity_ranking, planning, suggestions
 from .aggregation import free_windows, statuses
 
 
@@ -98,4 +98,4 @@ def dashboard(student_id: str) -> DashboardResponse:
     return DashboardResponse(student=student_info(student_id), generated_at=now_iso(), demo_mode=settings.demo_mode,
                              cards=cards, insights=insights(student_id),
                              recommendations=store.list_recommendations(student_id, status="pending"), connectors=st,
-                             knowledge=knowledge(student_id))
+                             knowledge=knowledge(student_id), suggestions=suggestions.build(student_id))

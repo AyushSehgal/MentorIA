@@ -297,6 +297,7 @@ class DashboardResponse(BaseModel):
     recommendations: list[Recommendation]
     connectors: list[ConnectorStatus]
     knowledge: "KnowledgeCounts"
+    suggestions: list["Suggestion"] = Field(default_factory=list)
 
 
 class ChatMessage(BaseModel):
@@ -458,6 +459,17 @@ class DemoAsset(BaseModel):
     kind: ImportKind
     what_to_notice: str
     added: bool = False
+
+
+class Suggestion(BaseModel):
+    id: str
+    kind: Literal["event", "reading", "resource", "study"]
+    source_label: str
+    title: str
+    why: str
+    when: Optional[str] = None
+    url: Optional[str] = None
+    recommendation: Optional[Recommendation] = None
 
 
 DashboardResponse.model_rebuild()

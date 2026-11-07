@@ -63,3 +63,9 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
 - MentorIA starts PREPOPULATED (all sample assets imported on first start and on `POST /api/demo/reset`).
   `MENTORIA_PREPOPULATE=false` restores the empty start (tests use this).
 - UI shows no "demo" labels (user decision, ADR-013); `is_fixture` remains in the API.
+
+## v1.5 (2026-11-07) — suggestions in Quick Recap
+- `DashboardResponse.suggestions: Suggestion[]` (max 4: Gmail event, paper from a course reading list, classmate resource
+  from Piazza, study blocks). Events/study blocks carry the `Recommendation` for the existing approve/reject routes.
+- `POST /api/suggestions/{id}/dismiss` `{student_id}` → `{ok: true}` (hides a reading/resource suggestion).
+- Course overview PDFs may contain `Reading: <title> | url: <url> | concepts: a, b` lines → records of kind `reading`.

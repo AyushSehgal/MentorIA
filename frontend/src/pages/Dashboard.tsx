@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { DashboardResponse, KnowledgeCounts, SourceRecord } from "../api/types";
-import { ApprovalCard } from "../components/ApprovalCard";
+import { api, DEFAULT_STUDENT } from "../api/client";
+import type { DashboardResponse, KnowledgeCounts, SourceRecord, Suggestion } from "../api/types";
 import { ChatPanel } from "../components/ChatPanel";
 import { WeekCalendar } from "../components/WeekCalendar";
 import { Bar, Block, Empty, ExpandItem, Facts, MoreList } from "../components/Common";
@@ -38,8 +38,7 @@ export function Dashboard({
               </div>
             ) : (
               <>
-                <RecapBlock data={data} tz={tz} />
-                <ApprovalsBlock data={data} tz={tz} onRefresh={onRefresh} />
+                <RecapBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <CalendarBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <div className="grid-2">
                   <AssignmentsBlock data={data} tz={tz} />
@@ -93,50 +92,113 @@ function recapBoxes(data: DashboardResponse, tz: string): RecapBox[] {
   return boxes.slice(0, 4);
 }
 
-function RecapBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+const SUGGESTION_ICON: Record<Suggestion["kind"], string> = { event: "✉️", reading: "📄", resource: "💬", study: "📖" };
+
+function SuggestionBox({ s, tz, onRefresh }: { s: Suggestion; tz: string; onRefresh: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const rec = s.recommendation;
+  async function approve() {
+    if (!rec) return;
+    setBusy(true);
+    try {
+      const r = await api.approve(rec.id, {
+        student_id: DEFAULT_STUDENT,
+        confirm: { title: rec.title, suggested_start: rec.suggested_start, duration_minutes: rec.duration_minutes },
+      });
+      setDone(r.simulated ? "✓ Added to your plan (calendar not connected, nothing written)" : "✓ Added to your calendar");
+      setTimeout(onRefresh, 2200); // let the confirmation show before the box leaves
+    } catch (e) {
+      setDone((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function reject() {
+    setBusy(true);
+    try {
+      if (rec) await api.reject(rec.id);
+      else await api.dismissSuggestion(s.id);
+      setDone("Dismissed");
+      setTimeout(onRefresh, 1200);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className={`recap-box sugg sugg-${s.kind}`}>
+      <div className="recap-label">
+        <span aria-hidden>{SUGGESTION_ICON[s.kind]}</span> {s.source_label}
+      </div>
+      <div className="recap-text">{s.title}</div>
+      <div className="recap-sub">
+        {s.when ? `${fmtShort(s.when, tz)} · ` : ""}
+        {s.why}
+      </div>
+      {done ? (
+        <div className="sugg-done">{done}</div>
+      ) : (
+        <div className="sugg-actions">
+          {rec ? (
+            <button className="btn small-btn primary" disabled={busy} onClick={() => void approve()}>
+              {s.kind === "event" ? "Add to calendar" : "Approve"}
+            </button>
+          ) : (
+            s.url && (
+              <a className="btn small-btn primary" href={s.url} target="_blank" rel="noreferrer">
+                {s.kind === "reading" ? "Open paper" : "Open"}
+              </a>
+            )
+          )}
+          <button className="btn small-btn" disabled={busy} onClick={() => void reject()}>
+            {rec ? "Not now" : "Dismiss"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecapBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   const [open, setOpen] = useState(false);
   const boxes = recapBoxes(data, tz);
-  if (!boxes.length) return null;
+  const sugg = data.suggestions ?? [];
+  if (!boxes.length && !sugg.length) return null;
   return (
     <section className="recap">
       <button className={`btn recap-btn ${open ? "" : "primary"}`} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         {open ? "Hide recap" : "Quick Recap"}
+        {!open && sugg.length > 0 && <span className="recap-count">{sugg.length} suggestions</span>}
       </button>
       {open && (
-        <div className="recap-grid">
-          {boxes.map((b) => (
-            <div key={b.key} className={`recap-box tone-${b.tone}`}>
-              <div className="recap-label">{b.label}</div>
-              <div className="recap-text">{b.text}</div>
-              {b.sub && <div className="recap-sub">{b.sub}</div>}
+        <>
+          {boxes.length > 0 && (
+            <div className="recap-section">
+              <h3 className="recap-heading">At a glance</h3>
+              <div className="recap-grid">
+                {boxes.map((b) => (
+                  <div key={b.key} className={`recap-box tone-${b.tone}`}>
+                    <div className="recap-label">{b.label}</div>
+                    <div className="recap-text">{b.text}</div>
+                    {b.sub && <div className="recap-sub">{b.sub}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+          {sugg.length > 0 && (
+            <div className="recap-section">
+              <h3 className="recap-heading">Suggested for you</h3>
+              <div className="recap-grid">
+                {sugg.map((sg) => (
+                  <SuggestionBox key={sg.id} s={sg} tz={tz} onRefresh={onRefresh} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </section>
-  );
-}
-
-function ApprovalsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
-  if (data.recommendations.length === 0) return null;
-  return (
-    <Block icon="✅" title="Needs approval">
-      <MoreList
-        className="xitems"
-        items={data.recommendations}
-        limit={3}
-        render={(r) => (
-          <ExpandItem
-            key={r.id}
-            icon={r.type === "attend_event" ? "🎤" : "📖"}
-            title={r.title.replace(/^Study: /, "").replace(/^Attend: /, "")}
-            badge={r.suggested_start ? fmtDay(r.suggested_start, tz) : undefined}
-          >
-            <ApprovalCard rec={r} tz={tz} onChanged={onRefresh} compact />
-          </ExpandItem>
-        )}
-      />
-    </Block>
   );
 }
 

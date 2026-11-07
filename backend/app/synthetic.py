@@ -218,7 +218,8 @@ def parse_world(text: str, known_courses: set[str] | None = None, known_concepts
             if "id" not in f:
                 raise SyntheticDataError(f"Piazza post '{b.title}': missing '- id:' field")
             records["piazza"].append({
-                "external_id": f["id"], "kind": "discussion", "title": b.title, "body": _body_times(body, f"Piazza '{b.title}'"),
+                "external_id": f["id"], "kind": "discussion", "title": b.title, "source_url": f.get("url") or None,
+                "body": _body_times(body, f"Piazza '{b.title}'"),
                 "when": _time(f.get("posted", ""), f"Piazza '{b.title}'", False),
                 "course_id": f.get("course") or None, "concept_ids": check_concepts(_list(f.get("concepts", "")), b.title),
                 "metadata": {"is_instructor": f.get("author", "").lower() == "instructor", "type": f.get("type", "")}})
