@@ -112,3 +112,8 @@ course hub on the map, shown under each course in Details ("shared" pill + both 
 T19 marked DONE on main (no pending dashboard branch). Shared-file rules kept; main's App.tsx / concept_states changes logged as exceptions in TASKS.md.
 Conflicts resolved: Knowledge.tsx (took student-model, then ported), SCRATCHPAD.md (kept both logs).
 Tests: pytest 54/54 (incl. test_student_model.py); npm run build passes.
+
+[2026-11-07 21:30 EST] coordinator | dashboard: assignments tags/sort, course forums, remove opportunities+documents | DONE
+Contract v1.6 (edstem provider, course_message emails, DashboardResponse.discussions). Sample Ed posts (10-605) and a
+[10-601] staff email added (18 sample files). pytest 55/55; browser-verified.
+Note: which forum each real course uses (Piazza vs Ed) is not verified — the Ed posts are sample data.

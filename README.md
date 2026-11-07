@@ -90,7 +90,8 @@ For the snappiest live demo, switch to **Off**; it answers instantly.
    SayCan from the real 16-831 reading list (Open paper), and RT-2 shared by a classmate on Piazza.
    **Ask** "Events to attend?" → seminar and startup mixer on top; quant club filtered out.
 6. **Calendar → Open calendar → ✨ Plan my week** → dashed study blocks in free time before HW deadlines; click one → Approve → *Simulated*, block turns solid.
-7. Click any dashboard item for its details (reasons, evidence, links).
+7. **Assignments**: course + deadline tags; switch **Deadline / Course** sorting. **Relevant discussions from course forums**:
+   grouped by course, tagged Piazza / Ed / Email. Click any item for details.
 
 ## Integration status (truthful)
 

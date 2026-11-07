@@ -1,7 +1,7 @@
 // FROZEN CONTRACT v1 — mirrors backend/app/schemas.py. See coordination/CONTRACTS.md.
 // Change only via a logged proposal in coordination/SCRATCHPAD.md + DECISIONS.md.
 
-export type Provider = "canvas" | "google_calendar" | "gmail" | "piazza" | "documents";
+export type Provider = "canvas" | "google_calendar" | "gmail" | "piazza" | "documents" | "edstem";
 
 export type ConnectorState = "connected" | "needs_auth" | "failed" | "demo_data" | "not_available" | "imported";
 
@@ -251,6 +251,9 @@ export interface DashboardResponse {
   connectors: ConnectorStatus[];
   knowledge: KnowledgeCounts; // v1.2: what MentorIA knows so far (drives the "context growing" bar)
   suggestions: Suggestion[]; // v1.5: "Suggested for you" in Quick Recap (max 4)
+  // v1.6: relevant course-forum posts — Piazza, Ed Discussion (provider "edstem") and course emails
+  // (provider "gmail", kind "course_message") — ordered by course, then relevance.
+  discussions: SourceRecord[];
 }
 
 export interface ChatMessage {

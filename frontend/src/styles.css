@@ -455,3 +455,20 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .sugg-actions { display: flex; gap: 8px; margin-top: 6px; }
 .sugg-actions a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 .sugg-done { margin-top: 6px; font-size: 12.5px; color: #15803d; font-weight: 600; }
+
+/* ---- Tags, sort switch, course groups ---- */
+.tags { display: inline-flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+.tag { font-size: 11px; font-weight: 600; line-height: 1.5; padding: 0 7px; border-radius: 6px; border: 1px solid #e5e7eb;
+  background: #f8fafc; color: #475569; white-space: nowrap; }
+.tag-due.urgent { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+.tag-due.done { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
+.tag-src.src-piazza { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.tag-src.src-edstem { background: #f5f3ff; border-color: #ddd6fe; color: #6d28d9; }
+.tag-src.src-gmail { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+.tag-staff { background: #f1f5f9; color: #334155; }
+.xitem-badge:has(.tags) { background: none; padding: 0; }
+.seg { display: inline-flex; border: 1px solid var(--border, #e5e7eb); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; color: var(--muted, #6b7280); }
+.seg button.on { background: var(--accent, #4f46e5); color: #fff; }
+.group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.group-head { display: flex; align-items: center; gap: 8px; margin: 2px 0; }

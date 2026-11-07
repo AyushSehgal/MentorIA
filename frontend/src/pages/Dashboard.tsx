@@ -2,9 +2,9 @@ import { useState } from "react";
 import { api, DEFAULT_STUDENT } from "../api/client";
 import type { DashboardResponse, KnowledgeCounts, SourceRecord, Suggestion } from "../api/types";
 import { ChatPanel } from "../components/ChatPanel";
-import { WeekCalendar } from "../components/WeekCalendar";
-import { Bar, Block, Empty, ExpandItem, Facts, MoreList } from "../components/Common";
-import { fmtDay, fmtShort, pct } from "../lib/format";
+import { courseColor, WeekCalendar } from "../components/WeekCalendar";
+import { Block, Empty, ExpandItem, Facts, MoreList } from "../components/Common";
+import { fmtDay, fmtShort, fmtTime } from "../lib/format";
 
 
 function isEmpty(k: KnowledgeCounts | undefined) {
@@ -42,10 +42,8 @@ export function Dashboard({
                 <CalendarBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <div className="grid-2">
                   <AssignmentsBlock data={data} tz={tz} />
-                  <OpportunitiesBlock data={data} tz={tz} />
                   <DiscussionsBlock data={data} tz={tz} />
                 </div>
-                <DocumentsBlock data={data} tz={tz} />
               </>
             )}
           </>
@@ -202,45 +200,173 @@ function RecapBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: stri
   );
 }
 
+function deadlineLabel(iso: string | null | undefined, tz: string): string {
+  if (!iso) return "no date";
+  return `${fmtDay(iso, tz)} · ${fmtTime(iso, tz)}`;
+}
+
+/** Short tag text: the date only, plus the time when it isn't the usual 11:59 PM. */
+function deadlineTag(iso: string | null | undefined, tz: string): string {
+  if (!iso) return "no date";
+  const t = fmtTime(iso, tz);
+  return t === "11:59 PM" ? fmtDay(iso, tz) : `${fmtDay(iso, tz)} · ${t}`;
+}
+
+function CourseTag({ code, courseId }: { code: string; courseId: string | null }) {
+  const c = courseColor(courseId);
+  return (
+    <span className="tag tag-course" style={{ color: c, borderColor: `${c}55`, background: `${c}12` }}>
+      {code}
+    </span>
+  );
+}
+
+type AssignSort = "deadline" | "course";
+
 function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.canvas;
-  const items = [...card.items].sort((a, b) => {
+  const [sort, setSort] = useState<AssignSort>("deadline");
+  const byDue = (a: SourceRecord, b: SourceRecord) => {
     const ca = a.metadata?.completed ? 1 : 0;
     const cb = b.metadata?.completed ? 1 : 0;
     if (ca !== cb) return ca - cb;
     return (a.occurred_at ?? "9999").localeCompare(b.occurred_at ?? "9999");
-  });
+  };
+  const items = [...card.items].sort(byDue);
+  const row = (r: SourceRecord) => {
+    const done = !!r.metadata?.completed;
+    const dueMs = r.occurred_at ? new Date(r.occurred_at).getTime() - Date.now() : null;
+    const urgent = !done && dueMs !== null && dueMs >= 0 && dueMs < 3 * 864e5;
+    return (
+      <ExpandItem
+        key={r.id}
+        title={r.title}
+        done={done}
+        badge={
+          <span className="tags">
+            {sort === "deadline" && <CourseTag code={courseShort(r)} courseId={r.course_id} />}
+            <span className={`tag tag-due ${urgent ? "urgent" : ""} ${done ? "done" : ""}`}>
+              {done ? "submitted" : deadlineTag(r.occurred_at, tz)}
+            </span>
+          </span>
+        }
+      >
+        <Facts
+          rows={[
+            ["Course", String(r.metadata?.course_name ?? courseShort(r))],
+            ["Due", done ? "Submitted" : deadlineLabel(r.occurred_at, tz)],
+            ["Points", r.metadata?.points_possible ? String(r.metadata.points_possible) : null],
+          ]}
+        />
+        {r.body && <p className="small">{r.body}</p>}
+        {r.source_url && (
+          <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
+            Open in Canvas ↗
+          </a>
+        )}
+      </ExpandItem>
+    );
+  };
+  const groups = new Map<string, SourceRecord[]>();
+  if (sort === "course") {
+    [...items]
+      .sort((a, b) => courseShort(a).localeCompare(courseShort(b)) || byDue(a, b))
+      .forEach((r) => groups.set(courseShort(r), [...(groups.get(courseShort(r)) ?? []), r]));
+  }
   return (
-    <Block icon="📚" title="Assignments" status={card.status}>
+    <Block
+      icon="📚"
+      title="Assignments"
+      status={card.status}
+      actions={
+        items.length > 0 && (
+          <div className="seg" role="group" aria-label="Sort assignments">
+            <button className={sort === "deadline" ? "on" : ""} onClick={() => setSort("deadline")}>
+              Deadline
+            </button>
+            <button className={sort === "course" ? "on" : ""} onClick={() => setSort("course")}>
+              Course
+            </button>
+          </div>
+        )
+      }
+    >
       {items.length === 0 ? (
         <Empty>No assignments yet</Empty>
+      ) : sort === "deadline" ? (
+        <MoreList className="xitems" items={items} render={row} />
       ) : (
-        <MoreList
-          className="xitems"
-          items={items}
-          render={(r) => {
-            const done = !!r.metadata?.completed;
-            const dueMs = r.occurred_at ? new Date(r.occurred_at).getTime() - Date.now() : null;
-            const urgent = !done && dueMs !== null && dueMs >= 0 && dueMs < 3 * 864e5;
-            return (
-              <ExpandItem key={r.id} title={r.title} done={done} badge={urgent ? "soon" : done ? "✓" : undefined}>
-                <Facts
-                  rows={[
-                    ["Course", courseShort(r)],
-                    ["Due", done ? "Submitted" : fmtShort(r.occurred_at, tz)],
-                    ["Points", r.metadata?.points_possible ? String(r.metadata.points_possible) : null],
-                  ]}
-                />
-                {r.body && <p className="small">{r.body}</p>}
-                {r.source_url && (
-                  <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
-                    Open in Canvas ↗
-                  </a>
-                )}
-              </ExpandItem>
-            );
-          }}
-        />
+        [...groups.entries()].map(([code, list]) => (
+          <div key={code} className="group">
+            <div className="group-head">
+              <CourseTag code={code} courseId={list[0].course_id} />
+              {String(list[0].metadata?.course_name ?? "") !== code && (
+                <span className="muted small">{String(list[0].metadata?.course_name ?? "")}</span>
+              )}
+            </div>
+            <MoreList className="xitems" items={list} limit={3} render={row} />
+          </div>
+        ))
+      )}
+    </Block>
+  );
+}
+
+const FORUM: Record<string, string> = { piazza: "Piazza", edstem: "Ed", gmail: "Email" };
+
+function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+  const items = data.discussions ?? [];
+  const names = new Map(data.cards.canvas.items.map((a) => [a.course_id ?? "", String(a.metadata?.course_name ?? "")]));
+  const courseName = (id: string | null) => names.get(id ?? "") ?? "";
+  const groups = new Map<string, SourceRecord[]>();
+  items.forEach((r) => groups.set(courseShort(r), [...(groups.get(courseShort(r)) ?? []), r]));
+  return (
+    <Block icon="💬" title="Relevant discussions from course forums">
+      {items.length === 0 ? (
+        <Empty>No course discussions yet</Empty>
+      ) : (
+        [...groups.entries()].map(([code, list]) => (
+          <div key={code} className="group">
+            <div className="group-head">
+              <CourseTag code={code} courseId={list[0].course_id} />
+              {courseName(list[0].course_id) !== code && <span className="muted small">{courseName(list[0].course_id)}</span>}
+            </div>
+            <MoreList
+              className="xitems"
+              items={list}
+              limit={3}
+              render={(r) => {
+                const staff = !!r.metadata?.is_instructor || r.kind === "course_message";
+                return (
+                  <ExpandItem
+                    key={r.id}
+                    title={r.title}
+                    badge={
+                      <span className="tags">
+                        <span className={`tag tag-src src-${r.provider}`}>{FORUM[r.provider] ?? r.provider}</span>
+                        {staff && <span className="tag tag-staff">{r.kind === "course_message" ? "Staff" : "Instructor"}</span>}
+                      </span>
+                    }
+                  >
+                    <Facts
+                      rows={[
+                        ["From", FORUM[r.provider] ?? r.provider],
+                        ["Posted", fmtDay(r.occurred_at, tz)],
+                        ["Sender", r.kind === "course_message" ? String(r.metadata?.from ?? "") : null],
+                      ]}
+                    />
+                    {r.body && <p className="small">{r.body}</p>}
+                    {r.source_url && (
+                      <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
+                        Open ↗
+                      </a>
+                    )}
+                  </ExpandItem>
+                );
+              }}
+            />
+          </div>
+        ))
       )}
     </Block>
   );
@@ -301,114 +427,3 @@ function CalendarBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: s
   );
 }
 
-function OpportunitiesBlock({ data }: { data: DashboardResponse; tz?: string }) {
-  const card = data.cards.gmail;
-  const opps = [...card.opportunities].sort((a, b) => b.relevance_score - a.relevance_score);
-  return (
-    <Block icon="✉️" title="Opportunities" status={card.status}>
-      {opps.length === 0 ? (
-        <Empty>No emails yet</Empty>
-      ) : (
-        <MoreList
-          className="xitems"
-          items={opps}
-          render={(o) => (
-            <ExpandItem key={o.record.id} title={o.record.title} badge={o.relevance_score >= 0.5 ? "★ match" : undefined}>
-              <Facts
-                rows={[
-                  ["When", o.timing_label],
-                  ["Speaker", o.speaker],
-                  ["Where", o.venue],
-                  ["Match", <><Bar value={o.relevance_score} /> {pct(o.relevance_score)}</>],
-                ]}
-              />
-              <ul className="why-list">
-                {o.relevance_reasons.map((r, i) => (
-                  <li key={i}>{r}</li>
-                ))}
-              </ul>
-              {o.url && (
-                <a className="small" href={o.url} target="_blank" rel="noreferrer">
-                  Event link ↗
-                </a>
-              )}
-            </ExpandItem>
-          )}
-        />
-      )}
-    </Block>
-  );
-}
-
-function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
-  const card = data.cards.piazza;
-  const items = [...card.items].sort((a, b) => {
-    const ia = a.metadata?.is_instructor ? 0 : 1;
-    const ib = b.metadata?.is_instructor ? 0 : 1;
-    if (ia !== ib) return ia - ib;
-    return (b.occurred_at ?? "").localeCompare(a.occurred_at ?? "");
-  });
-  return (
-    <Block icon="💬" title="Discussions" status={card.status}>
-      {items.length === 0 ? (
-        <Empty>No discussions yet</Empty>
-      ) : (
-        <MoreList
-          className="xitems"
-          items={items}
-          render={(r) => (
-            <ExpandItem key={r.id} title={r.title} badge={r.metadata?.is_instructor ? "Instructor" : undefined}>
-              <Facts rows={[["Course", courseShort(r)], ["Posted", fmtDay(r.occurred_at, tz)]]} />
-              {r.body && <p className="small">{r.body}</p>}
-              {r.source_url && (
-                <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
-                  Open in Piazza ↗
-                </a>
-              )}
-            </ExpandItem>
-          )}
-        />
-      )}
-    </Block>
-  );
-}
-
-function DocumentsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
-  const card = data.cards.documents;
-  return (
-    <Block
-      icon="📄"
-      title="Documents"
-      status={card.status}
-    >
-      {card.documents.length === 0 ? (
-        <Empty>No documents yet</Empty>
-      ) : (
-        <MoreList
-          className="xitems"
-          items={card.documents}
-          render={(d) => (
-            <ExpandItem
-              key={d.id}
-              title={d.title || d.filename}
-              badge={d.status === "failed" ? "failed" : d.kind === "graded_assessment" ? "graded" : undefined}
-            >
-              <Facts
-                rows={[
-                  ["Type", d.kind === "graded_assessment" ? "Graded work" : "Study material"],
-                  ["Pages", String(d.page_count)],
-                  ["Evidence", d.kind === "graded_assessment" ? `${d.observations_created} answers${d.pending_review ? `, ${d.pending_review} to review` : ""}` : null],
-                  ["Added", fmtDay(d.uploaded_at, tz)],
-                ]}
-              />
-              {d.error && <p className="error-text small">{d.error}</p>}
-              <a className="small" href={d.file_url} target="_blank" rel="noreferrer">
-                Open PDF ↗
-              </a>
-            </ExpandItem>
-          )}
-        />
-      )}
-    </Block>
-  );
-}

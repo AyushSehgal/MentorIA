@@ -184,7 +184,7 @@ def parse_world(text: str, known_courses: set[str] | None = None, known_concepts
                "completed_courses": completed, "seed_observations": seeds}
 
     course_label = {c["id"]: c["label"] for c in courses}
-    records: dict[str, list[dict]] = {"canvas": [], "google_calendar": [], "gmail": [], "piazza": []}
+    records: dict[str, list[dict]] = {"canvas": [], "google_calendar": [], "gmail": [], "piazza": [], "edstem": []}
     if "canvas assignments" in s:
         for r in _table(s["canvas assignments"].lines, "Canvas assignments", ["id", "course", "title", "due"]):
             where = f"Canvas assignments row {r['_row']}"
@@ -212,15 +212,17 @@ def parse_world(text: str, known_courses: set[str] | None = None, known_concepts
                 "external_id": f["id"], "kind": "event_announcement", "title": b.title,
                 "body": _body_times(body, f"Gmail '{b.title}'"), "when": _time(f.get("sent", ""), f"Gmail '{b.title}'", False), "course_id": None, "concept_ids": check_concepts(_list(f.get("concepts", "")), b.title),
                 "metadata": {"from": f.get("from", "")}})
-    if "piazza posts" in s:
-        for b in s["piazza posts"].subs:
+    for section, provider, forum in (("piazza posts", "piazza", "Piazza"), ("ed discussion posts", "edstem", "Ed")):
+        if section not in s:
+            continue
+        for b in s[section].subs:
             f, body = _fields_and_body(b.lines)
             if "id" not in f:
-                raise SyntheticDataError(f"Piazza post '{b.title}': missing '- id:' field")
-            records["piazza"].append({
+                raise SyntheticDataError(f"{forum} post '{b.title}': missing '- id:' field")
+            records[provider].append({
                 "external_id": f["id"], "kind": "discussion", "title": b.title, "source_url": f.get("url") or None,
-                "body": _body_times(body, f"Piazza '{b.title}'"),
-                "when": _time(f.get("posted", ""), f"Piazza '{b.title}'", False),
+                "body": _body_times(body, f"{forum} '{b.title}'"),
+                "when": _time(f.get("posted", ""), f"{forum} '{b.title}'", False),
                 "course_id": f.get("course") or None, "concept_ids": check_concepts(_list(f.get("concepts", "")), b.title),
                 "metadata": {"is_instructor": f.get("author", "").lower() == "instructor", "type": f.get("type", "")}})
     for provider, items in records.items():

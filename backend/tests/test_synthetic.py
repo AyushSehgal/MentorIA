@@ -11,7 +11,7 @@ def test_pack_parses():
     w = synthetic.parse_world(PACK.read_text(encoding="utf-8"))
     assert {c["id"] for c in w["courses"]} == {"systems", "robot_learning"}
     assert len(w["concepts"]) == 8
-    assert {k: len(v) for k, v in w["records"].items()} == {"canvas": 5, "google_calendar": 9, "gmail": 4, "piazza": 3}
+    assert {k: len(v) for k, v in w["records"].items()} == {"canvas": 5, "google_calendar": 9, "gmail": 4, "piazza": 3, "edstem": 0}
     assert len(w["profile"]["seed_observations"]) == 5
 
 

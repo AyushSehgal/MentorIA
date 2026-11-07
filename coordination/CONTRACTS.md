@@ -69,3 +69,9 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
   from Piazza, study blocks). Events/study blocks carry the `Recommendation` for the existing approve/reject routes.
 - `POST /api/suggestions/{id}/dismiss` `{student_id}` → `{ok: true}` (hides a reading/resource suggestion).
 - Course overview PDFs may contain `Reading: <title> | url: <url> | concepts: a, b` lines → records of kind `reading`.
+
+## v1.6 (2026-11-07) — course forums
+- `Provider` += `"edstem"` (Ed Discussion; sample posts via `## Ed Discussion posts` in .md packs; no live connector).
+- Course-staff emails whose subject starts with a course code (e.g. "[10-601] …") import as gmail `kind: "course_message"`
+  and are excluded from opportunities.
+- `DashboardResponse.discussions: SourceRecord[]` — Piazza + Ed + course emails, ordered by course then relevance.

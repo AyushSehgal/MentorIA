@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from ..config import settings
 from ..memory import catalog, store
-from ..memory.context import active_propositions, concept_states, obs_evidence, record_evidence, student_info
+from ..memory.context import goal_concepts, active_propositions, concept_states, obs_evidence, record_evidence, student_info
 from ..schemas import (CalendarCard, ConnectorStatus, DashboardCards, DashboardResponse, DocumentsCard, GmailCard, Insight,
                        KnowledgeCounts, SourceCard)
 from ..timeutil import human, now, now_iso, parse
@@ -71,6 +71,21 @@ def insights(student_id: str) -> list[Insight]:
     return out
 
 
+def discussions(student_id: str) -> list:
+    """Course-forum posts from Piazza, Ed Discussion and course-staff email, grouped by course, most relevant first:
+    instructor posts, then posts touching your weak or goal-linked concepts, then the newest."""
+    goals = goal_concepts(student_id)
+    weak = {s.concept_id for s in concept_states(student_id) if s.mastery is not None and s.mastery < 0.5}
+    items = (store.list_records(student_id, provider="piazza") + store.list_records(student_id, provider="edstem")
+             + [r for r in store.list_records(student_id, provider="gmail") if r.kind == "course_message"])
+
+    def rank(r):
+        rel = 2 * bool(r.metadata.get("is_instructor") or r.kind == "course_message") + bool(set(r.concept_ids) & (weak | goals))
+        return (r.course_id or "~", -rel, "".join(chr(255 - ord(ch)) for ch in (r.occurred_at or "")))
+
+    return sorted(items, key=rank)
+
+
 def dashboard(student_id: str) -> DashboardResponse:
     st = statuses(student_id)
     opps = opportunity_ranking.propose_event_recommendations(student_id, opportunity_ranking.rank(student_id))
@@ -98,4 +113,5 @@ def dashboard(student_id: str) -> DashboardResponse:
     return DashboardResponse(student=student_info(student_id), generated_at=now_iso(), demo_mode=settings.demo_mode,
                              cards=cards, insights=insights(student_id),
                              recommendations=store.list_recommendations(student_id, status="pending"), connectors=st,
-                             knowledge=knowledge(student_id), suggestions=suggestions.build(student_id))
+                             knowledge=knowledge(student_id), suggestions=suggestions.build(student_id),
+                             discussions=discussions(student_id))

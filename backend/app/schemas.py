@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-Provider = Literal["canvas", "google_calendar", "gmail", "piazza", "documents"]
+Provider = Literal["canvas", "google_calendar", "gmail", "piazza", "documents", "edstem"]
 ConnectorState = Literal["connected", "needs_auth", "failed", "demo_data", "not_available", "imported"]
 Strength = Literal["none", "weak", "moderate", "strong"]
 
@@ -298,6 +298,7 @@ class DashboardResponse(BaseModel):
     connectors: list[ConnectorStatus]
     knowledge: "KnowledgeCounts"
     suggestions: list["Suggestion"] = Field(default_factory=list)
+    discussions: list[SourceRecord] = Field(default_factory=list)  # v1.6: course-forum posts (Piazza, Ed, course emails)
 
 
 class ChatMessage(BaseModel):

@@ -229,10 +229,13 @@ def _import_eml(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
         sent = now_iso()
     ext_id = "file:" + (str(msg.get("Message-ID", "")).strip("<> ") or _sha(data))
     from_student = sender == settings.student_email.lower()
+    course_id = catalog.course_for_text(f"{subject} {body[:500]}")
+    # Course-staff mail ("[10-601] Exam 2 logistics") is a course-forum item, not an opportunity.
+    course_msg = (not from_student) and bool(re.match(r"^\s*\[?\d{2}-\d{3}\b", subject)) and catalog.course_for_text(subject)
     rec = SourceRecord(
         id=record_id("gmail", ext_id, t.student_id), student_id=t.student_id, provider="gmail", external_id=ext_id,
-        kind="message" if from_student else "event_announcement", title=subject, body=body[:3000], source_url=None,
-        occurred_at=sent, fetched_at=now_iso(), course_id=catalog.course_for_text(f"{subject} {body[:500]}"),
+        kind="message" if from_student else "course_message" if course_msg else "event_announcement", title=subject,
+        body=body[:3000], source_url=None, occurred_at=sent, fetched_at=now_iso(), course_id=course_id,
         concept_ids=catalog.match_concepts(f"{subject} {body[:1500]}"),
         metadata={"from": sender, "to": parseaddr(str(msg.get("To", "")))[1], "imported": True, "filename": filename,
                   "sent_by_student": from_student},
@@ -241,6 +244,8 @@ def _import_eml(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
     if from_student:
         t.changes.append("You sent this email, so MentorIA read it for your stated goals and interests")
         _learn_from_text(t, body, "email", f"eml_{_sha(ext_id, 10)}", {"subject": subject}, sent, rec.id, is_fixture)
+    elif course_msg:
+        t.changes.append(f"Added to course discussions ({catalog.course_label(course_id)})")
     else:
         t.changes.append(f"Added to Gmail opportunities (from {sender or 'unknown sender'})")
     return "email", subject
@@ -311,11 +316,14 @@ def _import_pack(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
         t.changes.append(f"{n_new} new concepts")
     for e in world["edges"]:
         catalog.upsert_edge(e | {"provenance": "fixture" if is_fixture else "verified"})
-    labels = {"canvas": "Canvas assignments", "google_calendar": "Calendar events", "gmail": "Emails", "piazza": "Piazza posts"}
+    labels = {"canvas": "Canvas assignments", "google_calendar": "Calendar events", "gmail": "Emails", "piazza": "Piazza posts",
+              "edstem": "Ed Discussion posts"}
     for provider, raws in world["records"].items():
         recs = []
         for raw in raws:
             meta = dict(raw.get("metadata", {})) | {"imported": True, "filename": filename}
+            if raw.get("course_id") and meta.get("course_name") in (None, "", raw.get("course_id")):
+                meta["course_name"] = catalog.course_label(raw["course_id"])  # full name from the catalog
             if "end" in meta:
                 meta["end"] = resolve_time(meta["end"])
             body = _WHEN.sub(lambda m: human(resolve_rel(m.group(1).strip())), raw.get("body", ""))

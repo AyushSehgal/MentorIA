@@ -90,7 +90,7 @@ function layout<T>(items: { item: T; day: string; startMin: number; endMin: numb
 }
 
 const COURSE_COLORS = ["#4f46e5", "#0891b2", "#c2410c", "#15803d", "#a21caf", "#b45309"];
-function courseColor(courseId: string | null): string {
+export function courseColor(courseId: string | null): string {
   if (!courseId) return "#64748b";
   let h = 0;
   for (const ch of courseId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;

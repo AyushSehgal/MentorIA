@@ -424,6 +424,43 @@ HW3 is out. Start early on the REINFORCE derivation; office hours are on the cou
 """
 
 
+ED_PACK = f"""<!-- {MARK} -->
+# Ed Discussion export
+
+## Ed Discussion posts
+
+### HW 5: office hours moved to Thursday this week
+- id: ed605_1
+- course: 10-605
+- posted: d-1 09:15
+- author: instructor
+- type: announcement
+- concepts: transformers_lms, parallel_training
+
+Thursday's office hours cover GPT-2 training setups. Bring your profiler output if you are running out of memory.
+
+### All-reduce vs. a parameter server: why is there no central node?
+- id: ed605_2
+- course: 10-605
+- posted: d-2 20:10
+- author: student
+- type: question
+- concepts: distributed_learning
+
+From lecture: all-reduce leaves the summed gradient on every worker. Does that mean no single machine is a bottleneck? An instructor-endorsed answer explains the ring version step by step.
+
+### Tip: measuring GPU memory per layer for HW 5
+- id: ed605_3
+- course: 10-605
+- posted: d-1 23:30
+- author: student
+- type: note
+- concepts: gpu_optimization
+
+torch.cuda.max_memory_allocated() after each block made it obvious the attention activations were the problem.
+"""
+
+
 def manifest_entries() -> list[dict]:
     return [
         {"step": 1, "name": "01_10601_course_overview.pdf", "kind": "course_overview",
@@ -475,6 +512,12 @@ def manifest_entries() -> list[dict]:
         {"step": 15, "name": "15_piazza_posts.md", "kind": "source_pack", "title": "Piazza posts export",
          "description": "Instructor clarifications for 10-601 HW5 and 16-831 HW3, plus a student question.",
          "what_to_notice": "Piazza card fills; instructor posts are badged. Questions never lower your mastery."},
+        {"step": 17, "name": "17_ed_discussion_posts.md", "kind": "source_pack", "title": "Ed Discussion posts export (10-605)",
+         "description": "An instructor note and two classmate posts from the 10-605 forum.",
+         "what_to_notice": "They appear under Relevant discussions from course forums, tagged Ed."},
+        {"step": 18, "name": "18_email_10601_exam2_logistics.eml", "kind": "email", "title": "[10-601] Exam 2 logistics",
+         "description": "A course-staff email.",
+         "what_to_notice": "Filed under course discussions (tagged Email), not opportunities."},
         {"step": 16, "name": "16_10601_practice_ungraded.pdf", "kind": "study_material",
          "title": "10-601 practice problems (ungraded)",
          "description": "A question sheet without answers or grades.",
@@ -579,6 +622,13 @@ def generate(out: Path = OUT) -> Path:
                 "Where: Business School Atrium\n", now - timedelta(hours=50))
     (out / "15_piazza_posts.md").write_text(PIAZZA_PACK)
     practice_sheet(out / "16_10601_practice_ungraded.pdf")
+    (out / "17_ed_discussion_posts.md").write_text(ED_PACK)
+    exam = _at(today, 12, 19)
+    write_email(out / "18_email_10601_exam2_logistics.eml", "10-601 Course Staff <10601-staff@example.edu>", settings.student_email,
+                "[10-601] Exam 2 logistics and practice problems",
+                f"Exam 2 is on {_human(exam)} and covers lectures 8-17: optimization, logistic regression, regularization, "
+                "neural networks and backpropagation. Practice problems and solutions are posted on the course website.\n",
+                now - timedelta(hours=6))
     manifest = {"generated_on": today.isoformat(), "student_name": settings.student_name,
                 "student_email": settings.student_email, "assets": manifest_entries()}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))

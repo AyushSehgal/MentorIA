@@ -54,7 +54,7 @@ def test_prepopulated_start(empty_client, monkeypatch):
     monkeypatch.setattr(settings, "prepopulate", True)
     empty_client.post("/api/demo/reset")
     k = empty_client.get("/api/dashboard").json()["knowledge"]
-    assert (k["courses"], k["imports"]) == (3, 16)
+    assert (k["courses"], k["imports"]) == (3, 18)
 
 
 def test_quiz_before_overview_warns_then_maps_after(empty_client):
@@ -70,7 +70,7 @@ def test_full_demo_sequence(empty_client):
         add(empty_client, step)
     d = empty_client.get("/api/dashboard").json()
     k = d["knowledge"]
-    assert (k["courses"], k["concepts"], k["graded_answers"], k["imports"]) == (3, 48, 18, 16)
+    assert (k["courses"], k["concepts"], k["graded_answers"], k["imports"]) == (3, 48, 18, 18)
     assert all(s["state"] == "imported" for s in d["connectors"] if s["provider"] != "documents")
     opps = {o["record"]["title"][:20]: o for o in d["cards"]["gmail"]["opportunities"]}
     assert opps["Robotics Seminar: Te"]["relevance_score"] >= 0.5 and opps["Robotics Seminar: Te"]["event_start"]
@@ -171,3 +171,17 @@ def test_suggestions_event_paper_and_classmate_resource(empty_client):
     empty_client.post(f"/api/suggestions/{kinds['reading']['id']}/dismiss", json={"student_id": SID})
     nxt = {s["kind"]: s for s in empty_client.get("/api/dashboard").json()["suggestions"]}
     assert nxt["reading"]["title"] != first
+
+
+# ---- v1.6 course forums ----------------------------------------------------------------------------
+def test_discussions_mix_forums_and_course_email(empty_client):
+    for step in sorted(STEP):
+        add(empty_client, step)
+    d = empty_client.get("/api/dashboard").json()
+    disc = d["discussions"]
+    assert {r["provider"] for r in disc} == {"piazza", "edstem", "gmail"}
+    staff = next(r for r in disc if r["provider"] == "gmail")
+    assert staff["kind"] == "course_message" and staff["course_id"] == "10-601"
+    assert all(o["record"]["kind"] == "event_announcement" for o in d["cards"]["gmail"]["opportunities"])
+    courses = [r["course_id"] for r in disc]
+    assert courses == sorted(courses)  # grouped by course

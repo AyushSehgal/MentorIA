@@ -17,7 +17,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 ## E. Prepopulated start
 
-- [ ] **E1. Dashboard.** Expect a **Quick Recap** button (with "3 suggestions"), then the Calendar, Assignments, Opportunities, Discussions and Documents blocks.
+- [ ] **E1. Dashboard.** Expect a **Quick Recap** button (with "3 suggestions"), then three blocks only: Calendar, Assignments, and Relevant discussions from course forums.
 - [ ] **E1b. Quick Recap.** Do: click **Quick Recap**. Expect up to four boxes: Your goal ("Stated in 2 places"), Focus this week (Backpropagation · Policy Gradients), Due next (HW5) and, only when there's a blind spot, Watch out. **Hide recap** closes them.
 - [ ] **E1c. Suggested for you.** Expect three boxes under **Suggested for you**:
   - **From your Gmail:** the robotics seminar, with **Add to calendar** / **Not now**;
@@ -36,13 +36,13 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 - [ ] **O3. Ask about 10-605.** Do: Ask "What 10-605 topics am I struggling with?". Expect: Backpropagation (citing both courses), Distributed Learning & All-Reduce 0.15, and Bloom Filters & Count-Min Sketch 0.15.
 - [ ] **O4. Graph.** Expect: the Backpropagation node is linked from both the 10-601 and 10-605 course nodes.
 
-## D. Dashboard: titles first, details on click
+## D. Dashboard blocks
 
-- [ ] **D1. Calm by default.** Expect: every block lists one-line titles only, with at most one small badge ("soon", "★ match", "2 sources", a date) and ≤4 items plus "+N more".
-- [ ] **D2. Expand.** Do: click HW5 in Assignments. Expect: its details open. Click again to close them.
-- [ ] **D4. Assignment details.** Do: click HW5. Expect: the course, due date, points and description.
-- [ ] **D5. Opportunity details.** Do: click the robotics seminar. Expect: When, Speaker, Where, a match bar, reasons and the event link.
-- [ ] **D6. Document details.** Do: click the 10-601 quiz. Expect: the type, pages, "6 answers, 1 to review" and Open PDF.
+- [ ] **D1. Assignments tags.** Expect each row to show a coloured course tag (10-601 / 10-605 / 16-831) and a deadline tag (e.g. "Tue, Nov 10"; the time appears only when it isn't 11:59 PM, e.g. Exam 2 "· 7:00 PM"). Submitted work shows "submitted".
+- [ ] **D2. Sort.** Do: click **Course**. Expect: groups per course with the full course name, each sorted by deadline. Click **Deadline** to get one list again.
+- [ ] **D3. Assignment details.** Do: click HW5. Expect: course, due date and time, points, description.
+- [ ] **D4. Course forums.** Expect the block **Relevant discussions from course forums**, grouped by course. Each post is tagged **Piazza**, **Ed** or **Email**, and instructor/staff posts are marked and listed first. The [10-601] Exam 2 email appears here, tagged Email · Staff.
+- [ ] **D5. Gone.** Expect: no Opportunities block and no Documents block. Gmail events still appear in Quick Recap → Suggested for you.
 
 ## W. Interactive calendar
 
