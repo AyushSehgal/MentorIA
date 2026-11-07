@@ -1,0 +1,19 @@
+{
+  "id": "src_gmail_fe284b372d",
+  "student_id": "demo_student",
+  "provider": "gmail",
+  "external_id": "gmail_m1",
+  "kind": "event_announcement",
+  "title": "Robotics Seminar: Learning Dexterous Manipulation from Human Video",
+  "body": "Robotics Seminar Series\nSpeaker: Dr. Jordan Rivera (Example Robotics Lab)\nTitle: Learning Dexterous Manipulation from Human Video\nWhen: Tuesday, November 10, 2026 at 4:00 PM EST\nWhere: Robotics Seminar Room 1305 (demo venue)\nZoom: https://example.edu/seminar/manipulation\nAbstract: How can robots acquire manipulation skills by watching people? This talk covers imitation learning from video and embodied AI benchmarks.",
+  "source_url": null,
+  "occurred_at": "2026-11-06T09:12:00-05:00",
+  "fetched_at": "2026-11-07T14:26:13-05:00",
+  "course_id": null,
+  "concept_ids": [],
+  "metadata": {
+    "demo_label": "Demo data",
+    "from": "robotics-seminars@example.edu"
+  },
+  "is_fixture": true
+}

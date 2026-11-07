@@ -108,10 +108,10 @@ def narrative(student_id: str) -> str:
     parts = []
     goals = [p.statement for p in active_propositions(student_id) if p.category in ("goal", "interest")]
     if goals:
-        parts.append("Stated goals/interests: " + "; ".join(goals) + ".")
+        parts.append("Stated goals/interests: " + "; ".join(g.rstrip(". ") for g in goals) + ".")
     prefs = [p.statement for p in active_propositions(student_id) if p.category == "preference"]
     if prefs:
-        parts.append("Preferences: " + "; ".join(prefs))
+        parts.append("Preferences: " + "; ".join(p.rstrip(". ") for p in prefs) + ".")
     states = concept_states(student_id)
     weak = [s for s in states if s.mastery is not None and s.mastery < 0.5]
     strong = [s for s in states if s.mastery is not None and s.mastery >= 0.6]

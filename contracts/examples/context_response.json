@@ -1,0 +1,298 @@
+{
+    "narrative": "Stated goals/interests: I want to do research in embodied AI / robotics, ideally manipulation.. Preferences: Prefers short, focused study blocks (25\u201350 min) in the afternoon. Assessment evidence suggests gaps in: Cache Coherence (MESI) (0.12), Synchronization & Races (0.15). Assessment evidence suggests solid footing in: Caches & Locality, Virtual Memory & TLBs. Possible blind spots (self-confidence well above estimate): Cache Coherence (MESI). Computer Systems (demo course): 1 incomplete item(s) due in 7 days. Intro to Robot Learning (demo course): 1 incomplete item(s) due in 7 days.",
+    "facts": [
+        "Cache Coherence (MESI): BKT estimate 0.12 from 2 graded answer(s) (0 correct).",
+        "Cache Coherence (MESI): self-reported confidence 0.85 (self-report, not evidence of mastery)."
+    ],
+    "relevant_beliefs": [
+        {
+            "id": "belief_demo_student_cache_coherence_selfconf",
+            "student_id": "demo_student",
+            "scope": {
+                "level": "concept",
+                "course_id": "systems",
+                "concept_id": "cache_coherence"
+            },
+            "key": "knowledge.self_confidence",
+            "value": 0.85,
+            "evidence_strength": "weak",
+            "status": "self_reported",
+            "evidence_ids": [
+                "obs_seed_conf_coherence"
+            ],
+            "updated_at": "2026-11-07T14:26:13-05:00",
+            "expires_at": null,
+            "version": 1
+        },
+        {
+            "id": "belief_demo_student_systems_workload",
+            "student_id": "demo_student",
+            "scope": {
+                "level": "course",
+                "course_id": "systems",
+                "concept_id": null
+            },
+            "key": "workload.upcoming_due",
+            "value": 1.0,
+            "evidence_strength": "strong",
+            "status": "source_fact",
+            "evidence_ids": [
+                "src_canvas_fc0f4ed401"
+            ],
+            "updated_at": "2026-11-07T14:26:13-05:00",
+            "expires_at": null,
+            "version": 1
+        },
+        {
+            "id": "belief_demo_student_robot_learning_workload",
+            "student_id": "demo_student",
+            "scope": {
+                "level": "course",
+                "course_id": "robot_learning",
+                "concept_id": null
+            },
+            "key": "workload.upcoming_due",
+            "value": 1.0,
+            "evidence_strength": "strong",
+            "status": "source_fact",
+            "evidence_ids": [
+                "src_canvas_b4cf76d7ac"
+            ],
+            "updated_at": "2026-11-07T14:26:13-05:00",
+            "expires_at": null,
+            "version": 1
+        },
+        {
+            "id": "belief_demo_student_cache_coherence_mastery",
+            "student_id": "demo_student",
+            "scope": {
+                "level": "concept",
+                "course_id": "systems",
+                "concept_id": "cache_coherence"
+            },
+            "key": "knowledge.mastery",
+            "value": 0.119,
+            "evidence_strength": "moderate",
+            "status": "estimated",
+            "evidence_ids": [
+                "obs_doc_be504c166510_Q2",
+                "obs_doc_be504c166510_Q3"
+            ],
+            "updated_at": "2026-11-07T14:26:51-05:00",
+            "expires_at": null,
+            "version": 2
+        }
+    ],
+    "source_records": [
+        {
+            "id": "src_canvas_fc0f4ed401",
+            "student_id": "demo_student",
+            "provider": "canvas",
+            "external_id": "canvas_a1",
+            "kind": "assignment",
+            "title": "Cache Lab Part B: coherence simulator",
+            "body": "Implement a MESI snooping coherence simulator and report invalidation counts.",
+            "source_url": null,
+            "occurred_at": "2026-11-11T23:59:00-05:00",
+            "fetched_at": "2026-11-07T14:26:13-05:00",
+            "course_id": "systems",
+            "concept_ids": [
+                "cache_locality",
+                "cache_coherence"
+            ],
+            "metadata": {
+                "completed": false,
+                "course_name": "Computer Systems (demo course)",
+                "demo_label": "Demo data",
+                "points_possible": 100
+            },
+            "is_fixture": true
+        },
+        {
+            "id": "src_pdf_be504c166510",
+            "student_id": "demo_student",
+            "provider": "documents",
+            "external_id": "doc_be504c166510",
+            "kind": "assessment",
+            "title": "Computer Systems - Quiz 3 (Graded)",
+            "body": "Computer Systems - Quiz 3 (Graded)\nCourse: Computer Systems (demo course)   Student: Alex (demo student)   Date: 2026-10-20   Total: 7/14\nPage 1 of 3\nDEMO DATA - fictional student and course, generated for the NOVA demo.\nQ1.\nTopic: Caches & Locality\nQuestion: Which loop order over a row-major 2D array has better spatial locality?\nStudent answer: Row-major (inner loop over columns)\nResult: Correct\nScore: 2/2\nGrader comment: Good.\nQ2.\nTopic: Cache Coherence\nQuestion: Under MESI, a core holds line X in Shared. Another core issues BusRdX for X.\nWhat is the new state?\nStudent answer: Stays Shared\nResult: Incorrect\nScore: 0/2\nGrader comment: BusRdX invalidates other copies: S -> I.\n\nComputer Systems - Quiz 3 (Graded)\nCourse: Computer Systems (demo course)   Student: Alex (demo student)   Date: 2026-10-20   Total: 7/14\nPage 2 of 3\nDEMO DATA - fictional student and course, generated for the NOVA demo.\nQ3.\nTopic: Cache Coherence\nQuestion: Why does a write to a line in Shared state require a bus transaction?\nStudent answer: It doesn't if the line is clean\nResult: Incorrect\nScore: 0/2\nGrader comment: Other sharers must be invalidated (BusUpgr/BusRdX).\nQ4.\nTopic: Virtual Memory\nQuestion: What does the TLB cache?\nStudent answer: Recent virtual-to-physical page translations\nResult: Correct\nScore: 2/2\n\nComputer Systems - Quiz 3 (Graded)\nCourse: Computer Systems (demo course)   Student: Alex (demo student)   Date: 2026-10-20   Total: 7/14\nPage 3 of 3\nDEMO DATA - fictional student and course,",
+            "source_url": "/api/documents/doc_be504c166510/file",
+            "occurred_at": "2026-10-20T12:00:00-04:00",
+            "fetched_at": "2026-11-07T14:26:51-05:00",
+            "course_id": "systems",
+            "concept_ids": [
+                "cache_coherence",
+                "cache_locality",
+                "processes_signals",
+                "synchronization",
+                "virtual_memory"
+            ],
+            "metadata": {
+                "filename": "systems_quiz3_graded.pdf",
+                "pages": 3
+            },
+            "is_fixture": true
+        },
+        {
+            "id": "src_gmail_0732ccc115",
+            "student_id": "demo_student",
+            "provider": "gmail",
+            "external_id": "gmail_m4",
+            "kind": "event_announcement",
+            "title": "Systems Reading Group: Cache coherence in modern GPUs",
+            "body": "This week's systems reading group discusses cache coherence protocols in GPUs.\nWhen: Friday, November 13, 2026 at 12:00 PM EST\nWhere: CS Lounge (demo venue)",
+            "source_url": null,
+            "occurred_at": "2026-11-06T12:30:00-05:00",
+            "fetched_at": "2026-11-07T14:26:13-05:00",
+            "course_id": null,
+            "concept_ids": [],
+            "metadata": {
+                "demo_label": "Demo data",
+                "from": "systems-reading@example.edu"
+            },
+            "is_fixture": true
+        },
+        {
+            "id": "src_piazza_8ebd4a99cd",
+            "student_id": "demo_student",
+            "provider": "piazza",
+            "external_id": "piazza_p1",
+            "kind": "discussion",
+            "title": "[Instructor] Cache Lab: clarification on MESI state transitions",
+            "body": "Several of you asked whether a BusRdX from another core should move a line from S to I. Yes \u2014 see the updated state diagram in the handout.",
+            "source_url": null,
+            "occurred_at": "2026-11-06T17:20:00-05:00",
+            "fetched_at": "2026-11-07T14:26:13-05:00",
+            "course_id": "systems",
+            "concept_ids": [
+                "cache_coherence"
+            ],
+            "metadata": {
+                "demo_label": "Demo data",
+                "is_instructor": true,
+                "type": "announcement"
+            },
+            "is_fixture": true
+        },
+        {
+            "id": "src_piazza_e5d97ef2f1",
+            "student_id": "demo_student",
+            "provider": "piazza",
+            "external_id": "piazza_p2",
+            "kind": "discussion",
+            "title": "Why does my coherence simulator double-count invalidations?",
+            "body": "My invalidation count is 2x the reference trace. Am I counting both the request and the snoop?",
+            "source_url": null,
+            "occurred_at": "2026-11-06T21:05:00-05:00",
+            "fetched_at": "2026-11-07T14:26:13-05:00",
+            "course_id": "systems",
+            "concept_ids": [
+                "cache_coherence"
+            ],
+            "metadata": {
+                "answered": true,
+                "demo_label": "Demo data",
+                "is_instructor": false,
+                "type": "question"
+            },
+            "is_fixture": true
+        }
+    ],
+    "evidence_refs": [
+        {
+            "id": "src_canvas_fc0f4ed401",
+            "label": "Canvas: Cache Lab Part B: coherence simulator",
+            "provider": "canvas",
+            "source_record_id": "src_canvas_fc0f4ed401",
+            "page": null,
+            "question_id": null,
+            "url": null,
+            "is_fixture": true
+        },
+        {
+            "id": "src_pdf_be504c166510",
+            "label": "Documents: Computer Systems - Quiz 3 (Graded)",
+            "provider": "documents",
+            "source_record_id": "src_pdf_be504c166510",
+            "page": null,
+            "question_id": null,
+            "url": "/api/documents/doc_be504c166510/file",
+            "is_fixture": true
+        },
+        {
+            "id": "src_gmail_0732ccc115",
+            "label": "Gmail: Systems Reading Group: Cache coherence in modern GPUs",
+            "provider": "gmail",
+            "source_record_id": "src_gmail_0732ccc115",
+            "page": null,
+            "question_id": null,
+            "url": null,
+            "is_fixture": true
+        },
+        {
+            "id": "src_piazza_8ebd4a99cd",
+            "label": "Piazza: [Instructor] Cache Lab: clarification on MESI state transitions",
+            "provider": "piazza",
+            "source_record_id": "src_piazza_8ebd4a99cd",
+            "page": null,
+            "question_id": null,
+            "url": null,
+            "is_fixture": true
+        },
+        {
+            "id": "src_piazza_e5d97ef2f1",
+            "label": "Piazza: Why does my coherence simulator double-count invalidations?",
+            "provider": "piazza",
+            "source_record_id": "src_piazza_e5d97ef2f1",
+            "page": null,
+            "question_id": null,
+            "url": null,
+            "is_fixture": true
+        },
+        {
+            "id": "doc_be504c166510:p1",
+            "label": "Computer Systems - Quiz 3 (Graded), p. 1",
+            "provider": "documents",
+            "source_record_id": "src_pdf_be504c166510",
+            "page": 1,
+            "question_id": null,
+            "url": "/api/documents/doc_be504c166510/file#page=1",
+            "is_fixture": true
+        },
+        {
+            "id": "doc_be504c166510:p2",
+            "label": "Computer Systems - Quiz 3 (Graded), p. 2",
+            "provider": "documents",
+            "source_record_id": "src_pdf_be504c166510",
+            "page": 2,
+            "question_id": null,
+            "url": "/api/documents/doc_be504c166510/file#page=2",
+            "is_fixture": true
+        },
+        {
+            "id": "obs_doc_be504c166510_Q2",
+            "label": "Computer Systems - Quiz 3 (Graded), p. 1, Q2",
+            "provider": "documents",
+            "source_record_id": "src_pdf_be504c166510",
+            "page": 1,
+            "question_id": "Q2",
+            "url": "/api/documents/doc_be504c166510/file#page=1",
+            "is_fixture": true
+        },
+        {
+            "id": "obs_doc_be504c166510_Q3",
+            "label": "Computer Systems - Quiz 3 (Graded), p. 2, Q3",
+            "provider": "documents",
+            "source_record_id": "src_pdf_be504c166510",
+            "page": 2,
+            "question_id": "Q3",
+            "url": "/api/documents/doc_be504c166510/file#page=2",
+            "is_fixture": true
+        }
+    ],
+    "uncertainties": [
+        "BKT parameters are illustrative defaults, not calibrated to this student or course.",
+        "Some source records are labeled demo data, not live connector reads."
+    ],
+    "state_version": 17
+}

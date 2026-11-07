@@ -17,3 +17,13 @@ Tests: `npm run build` passes (tsc strict, 0 errors). Smoke: UI renders with bac
 Interfaces changed: none (types.ts untouched).
 Needs integration: run `npm run dev` (port 5173, /api proxied to :8000). Chat history persists across route changes (module-level). Knowledge page refetches model/graph/history independently.
 Contract notes: (1) calendar end time read from metadata.end (ISO) if present; (2) Canvas course name from metadata.course_name, completion from metadata.completed; (3) Piazza instructor flag metadata.is_instructor; (4) NOVA-created calendar events flagged by metadata.created_by_nova.
+
+[2026-11-07 15:30 EST] coordinator | T00–T08, T13 | DONE
+Files: backend/**, scripts/{dev.sh,seed_demo.py,make_demo_pdfs.py,google_auth.py}, fixtures/**, README.md
+Tests: pytest 18/18 pass (BKT, idempotency, order independence, self-report isolation, graded/ungraded PDFs, connector partial failure, fixture labels, chat source refs, no-catalog honesty, goal→proposition, reject/approve idempotency, exact-confirm, undated opportunity, untrusted email text, smoke routes).
+Manual: live UI at :5173 against API :8000 — dashboard, weekly-focus chat with approval cards, approve → "Simulated" label, Student Model + graph, Documents table; mobile 375px no horizontal scroll; no console errors.
+Interfaces changed: added HealthResponse/LLMInfo to schemas.py (matches types.ts HealthResponse). Frontend contract notes (metadata.end, course_name, completed, is_instructor, created_by_nova) all match backend.
+Needs integration: T09–T12 live connectors are MOCK_ONLY — need real credentials in .env.
+
+[2026-11-07 15:30 EST] coordinator | T02/T07-UI/T14 | REVIEWED
+Verified frontend against live backend payloads; accepted.

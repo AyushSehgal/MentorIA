@@ -1,0 +1,23 @@
+{
+  "event_id": "obs_doc_be504c166510_Q1",
+  "student_id": "demo_student",
+  "source_record_id": "src_pdf_be504c166510",
+  "source": "pdf_assessment",
+  "event_type": "assessment_answer",
+  "course_id": "systems",
+  "concept_id": "cache_locality",
+  "occurred_at": "2026-10-20T12:00:00-04:00",
+  "payload": {
+    "correct": true,
+    "document_id": "doc_be504c166510",
+    "document_title": "Computer Systems - Quiz 3 (Graded)",
+    "evidence_text": "Q1: Result: Correct (Score: 2/2) \u2014 student answered \u201cRow-major (inner loop over columns)\u201d",
+    "page": 1,
+    "question_id": "Q1",
+    "review_reason": null,
+    "topic": "Caches & Locality"
+  },
+  "extraction_confidence": 0.9,
+  "status": "accepted",
+  "is_fixture": true
+}
