@@ -200,10 +200,6 @@ function AssistantTurn({ res, tz, onChanged }: { res: ChatResponse; tz: string; 
       {res.proposed_recommendations.map((r) => (
         <ApprovalCard key={r.id} rec={r} tz={tz} onChanged={onChanged} compact />
       ))}
-      <div className="chat-foot" title={`intent: ${res.intent} · trace: ${res.trace.join(" → ")}`}>
-        {res.llm_used ? `worded by ${res.llm_provider}` : "grounded draft (no LLM)"}
-        {res.llm_note && <span className="muted"> · {res.llm_note}</span>}
-      </div>
     </div>
   );
 }

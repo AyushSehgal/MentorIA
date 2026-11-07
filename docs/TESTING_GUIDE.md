@@ -65,7 +65,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
   - "Your next 10-601 lecture is "Backpropagation I" (Mon …), and Homework 5 is due Tue …"
   - "Review before then:" Goodfellow et al. §6.5 and Bishop §5.3 (suggested readings, not course-assigned)
   - "Also this week: **Policy Gradients** for HW3 …" and a drafted 50-minute study block to approve.
-  - In Local AI mode the answer appears after 10–25 s; if the model's rewrite drops citations, MentorIA shows this exact text and notes it in the footer.
+  - Appears instantly in every AI mode (this answer is never reworded).
 - [ ] **C2. Classes to take next?** Expect:
   - "I don't have a verified course catalog…" and no invented course numbers;
   - your goals, with the main goal showing "(in N sources)";
@@ -74,7 +74,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
   - topics to shore up first.
 - [ ] **C3. Events to attend?** Expect: the seminar and mixer first with "Matches your stated goal"; "Skipped 1… Quant Finance Club".
 - [ ] **C4. "What assignments are due soon?"** Expect: Canvas items due within 7 days, plus instructor Piazza posts.
-- [ ] **C5. Sources and caveats.** Expect: answers show source chips (quiz page and question, Canvas, Gmail) and a Caveats list. Hovering the footer shows the intent and trace.
+- [ ] **C5. Sources and caveats.** Expect: answers show source chips (quiz page and question, Canvas, Gmail) and a Caveats list. No status footer is shown under answers.
 
 ## M. About me tab (student input)
 
@@ -107,7 +107,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 ## L. AI privacy modes
 
 - [ ] **L1. Panel.** Do: **Sources → Privacy & AI**. Expect three options. Local shows qwen2.5 when Ollama is running; Cloud is unavailable without an OpenRouter key.
-- [ ] **L2. Local.** Do: select Local and Ask "Focus this week?". Expect: a 5–25 s wait, then either "worded by local:qwen2.5" or a note that the rewrite was discarded (the guardrail).
+- [ ] **L2. Local.** Do: select Local and Ask "Classes to take next?". Expect: a 5–25 s wait while the local model words the answer. (Which model produced an answer is no longer shown in the chat; the API still reports it in `llm_used` / `llm_provider`.)
 - [ ] **L3. Ollama off.** Do: quit Ollama and Ask something. Expect: an answer within ~2 s, with "No local model server reachable".
 - [ ] **L4. Kept on reset.** Do: Reset. Expect: the privacy choice is unchanged.
 
