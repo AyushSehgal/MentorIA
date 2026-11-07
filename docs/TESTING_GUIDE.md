@@ -60,11 +60,12 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 ## C. Ask tab (questions)
 
-- [ ] **C1. Focus this week?** Expect:
-  - priorities: 1. Backpropagation (HW5, 3 graded answers), 2. Policy Gradients (HW3), …;
-  - a "Linked to your goal: **Transformers & Language Models** — HW 5: GPT-2 Training… Current estimate 0.69" line;
-  - the free-hours line and the seminar;
-  - study-block approval cards at times inside free slots, before the deadlines.
+- [ ] **C1. Focus this week?** Expect a short answer in this shape:
+  - "Given your 10-601 Quiz 2 — you got the neural networks question right (Q3) but missed both backpropagation questions (Q4 and Q5), and your 10-605 lecture quizzes agree — I'd make **Backpropagation** your focus this week."
+  - "Your next 10-601 lecture is "Backpropagation I" (Mon …), and Homework 5 is due Tue …"
+  - "Review before then:" Goodfellow et al. §6.5 and Bishop §5.3 (suggested readings, not course-assigned)
+  - "Also this week: **Policy Gradients** for HW3 …" and a drafted 50-minute study block to approve.
+  - In Local AI mode the answer appears after 10–25 s; if the model's rewrite drops citations, MentorIA shows this exact text and notes it in the footer.
 - [ ] **C2. Classes to take next?** Expect:
   - "I don't have a verified course catalog…" and no invented course numbers;
   - your goals, with the main goal showing "(in N sources)";

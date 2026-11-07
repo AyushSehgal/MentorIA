@@ -61,6 +61,14 @@ ML = {
         ("cnns_rnns", "transformers_lms", "prerequisite_of"),
         ("mle_map", "logistic_regression", "related_to"),
     ],
+    # Standard texts suggested by MentorIA (not claimed as assigned by the course).
+    "readings_header": "Suggested readings (standard texts chosen by MentorIA, not assigned by the course):",
+    "readings": [
+        ("Goodfellow, Bengio & Courville, Deep Learning, Sec. 6.5: Back-Propagation and Other Differentiation Algorithms",
+         "https://www.deeplearningbook.org/contents/mlp.html", "backpropagation, neural_networks"),
+        ("Bishop, Pattern Recognition and Machine Learning, Sec. 5.3: Error Backpropagation",
+         "", "backpropagation"),
+    ],
 }
 
 RL = {
@@ -235,9 +243,10 @@ def course_overview(course: dict, path: Path):
             p.line(f"Shared concept: {cid} | taught here as: {note}", size=8.5, gap=3, fit=True)
     if course.get("readings"):
         p.space()
-        p.line("Reading list (from the course page):", bold=True)
+        p.line(course.get("readings_header", "Reading list (from the course page):"), bold=True)
         for title, url, concepts in course["readings"]:
-            p.line(f"Reading: {title} | url: {url} | concepts: {concepts}", size=8, gap=3, fit=True)
+            link = f" | url: {url}" if url else ""
+            p.line(f"Reading: {title}{link} | concepts: {concepts}", size=8, gap=3, fit=True)
     p.space()
     p.line("How topics build on each other (MentorIA annotation, not official prerequisites):", bold=True)
     for a, b, rel in course["relations"]:
@@ -314,15 +323,22 @@ def ics(path: Path, today: date):
     def stamp(dt: datetime) -> str:
         return dt.strftime("%Y%m%dT%H%M%S")
 
+    topics = {
+        "10-601": iter(["Backpropagation I", "Backpropagation II", "Societal Impacts of ML", "PAC Learning"]),
+        "16-831": iter(["Policy Gradient Methods", "Actor-Critic Methods", "Advanced RL Algorithms"]),
+        "10-605": iter(["KV Caching and Model Compression Recap", "Contrastive Learning and Retrieval",
+                        "RAG / Optimizing Transformer Architectures"]),
+    }
+    nxt = lambda code: next(topics[code], "lecture")  # noqa: E731
     events = []
     for d in range(0, 8):
         day = today + timedelta(days=d)
         wd = day.weekday()  # 0=Mon
         if wd in (0, 2, 4):
-            events.append(("10-601 Introduction to Machine Learning - lecture", d, 11, 0, 12, 20, "Lecture hall"))
+            events.append((f"10-601 lecture: {nxt('10-601')}", d, 11, 0, 12, 20, "Lecture hall"))
         if wd in (0, 2):
-            events.append(("16-831 Introduction to Robot Learning - lecture", d, 9, 30, 10, 50, "Lecture hall"))
-            events.append(("10-605 ML with Large Datasets - lecture", d, 15, 30, 16, 50, "Lecture hall"))
+            events.append((f"16-831 lecture: {nxt('16-831')}", d, 9, 30, 10, 50, "Lecture hall"))
+            events.append((f"10-605 lecture: {nxt('10-605')}", d, 15, 30, 16, 50, "Lecture hall"))
         if wd == 1:
             events.append(("16-831 office hours", d, 11, 0, 11, 45, "Faculty office"))
             events.append(("Campus job shift", d, 17, 0, 20, 0, ""))

@@ -77,7 +77,7 @@ def test_full_demo_sequence(empty_client):
     assert opps["Quant Finance Club: "]["relevance_score"] < 0.3
     assert all(a["added"] for a in empty_client.get("/api/imports/demo").json())
     w = empty_client.post("/api/chat", json={"message": "What should I focus on this week?"}).json()
-    assert "Backpropagation" in w["answer"] and "Policy Gradients" in w["answer"] and "Linked to your goal" in w["answer"]
+    assert "Backpropagation" in w["answer"] and "Policy Gradients" in w["answer"] and "Review before then" in w["answer"]
 
 
 def test_goal_merges_across_statement_email_and_chat(empty_client):

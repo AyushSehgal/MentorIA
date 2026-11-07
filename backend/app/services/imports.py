@@ -288,7 +288,7 @@ def _import_ics(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
             id=record_id("google_calendar", uid, t.student_id), student_id=t.student_id, provider="google_calendar",
             external_id=uid, kind="calendar_event", title=title,
             body=props.get("DESCRIPTION", ("", ""))[1].replace("\\n", "\n")[:500], occurred_at=start, fetched_at=now_iso(),
-            course_id=catalog.course_for_text(title), concept_ids=[],
+            course_id=catalog.course_for_text(title), concept_ids=catalog.match_concepts(title, catalog.course_for_text(title)),
             metadata={"end": end, "all_day": len(props.get("DTSTART", ("", ""))[1].strip()) == 8, "imported": True,
                       "location": props.get("LOCATION", ("", ""))[1]},
             is_fixture=is_fixture))

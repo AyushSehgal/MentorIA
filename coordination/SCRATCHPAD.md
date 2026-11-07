@@ -127,3 +127,9 @@ overrides for every hard-coded light colour (styles.css). Verified in browser in
 POST /api/assignments/{id}/complete (contract v1.7); choice persisted in meta and re-applied on every upsert so syncs/imports
 can't undo it; workload recomputed. Dashboard: round check button per row, strikethrough, "done" tag; toggled rows stay
 in place until reload. pytest 56/56; browser-verified complete + undo.
+
+[2026-11-07 22:30 EST] coordinator | clearer weekly-focus answer | DONE
+weekly_focus rewritten as a short story (graded evidence -> next lecture + deadline -> suggested readings -> one secondary
+item -> study block), built from records, not hardcoded. Sample data: lecture topics on calendar events (10-601/16-831 in
+public-schedule order; 10-605 real Nov 9/11 lectures), concept tags on calendar events, 10-601 suggested readings
+(Goodfellow §6.5, Bishop §5.3) explicitly labeled as not course-assigned. pytest 56/56; browser-verified.

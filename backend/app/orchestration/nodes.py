@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Any
 
 from ..memory import catalog, store, updates
-from ..memory.context import (build_context, concept_states, goal_concepts, profile, record_evidence,
+from ..memory.context import (build_context, concept_states, goal_concepts, obs_evidence, profile, record_evidence,
                               active_propositions)
 from ..schemas import EvidenceRef
 from ..services import opportunity_ranking, planning
@@ -118,61 +118,108 @@ def struggling(state: State) -> State:
             "trace": state["trace"] + ["retrieve_context", "struggling"]}
 
 
+def _when(iso: str | None) -> str:
+    """'Mon, Nov 9 at 11:00 AM' in the student's timezone."""
+    dt = parse(iso)
+    return dt.astimezone(now().tzinfo).strftime("%a, %b %-d at %-I:%M %p") if dt else "soon"
+
+
+def _qs(obs) -> str:
+    qs = [str(o.payload.get("question_id")) for o in obs]
+    return ", ".join(qs[:-1]) + (" and " if len(qs) > 1 else "") + qs[-1] if qs else ""
+
+
 def weekly_focus(state: State) -> State:
+    """Short, story-shaped weekly plan: why (graded evidence) → what's next (lecture, deadline) → what to read →
+    one secondary item → a study block to approve. Every claim comes from stored records."""
     sid = state["student_id"]
     prios = planning.priorities(sid, limit=4)
     recs = planning.propose_study_sessions(sid, prios)
-    refs: list[EvidenceRef] = []
-    lines = []
+    trace = state["trace"] + ["retrieve_context", "plan_week"]
     if not prios:
-        lines.append("I don't have graded evidence or upcoming deadlines to build a grounded plan yet. Sync your sources or upload a graded quiz.")
+        return {"draft": "I don't have graded evidence or upcoming deadlines to build a grounded plan yet.",
+                "sources": [], "recs": recs, "beliefs_used": [], "uncertainties": [], "trace": trace}
+
+    top = prios[0]
+    c = top.concept
+    refs: list[EvidenceRef] = []
+    answers = [o for o in store.list_observations(sid, c.concept_id, "assessment_answer") if o.status == "accepted"]
+    wrong = [o for o in answers if o.payload.get("correct") is False]
+
+    # 1) Why: the graded work behind it, anchored on the document with the most misses on this concept.
+    by_doc: dict[str, list] = {}
+    for o in wrong:
+        by_doc.setdefault(str(o.payload.get("document_id")), []).append(o)
+    lines = []
+    if by_doc:
+        doc_id, doc_wrong = max(by_doc.items(), key=lambda kv: (len(kv[1]), kv[1][0].occurred_at))
+        doc_name = str(doc_wrong[0].payload.get("document_title", "your last quiz")).replace(" (graded)", "")
+        prereqs = {e["source"].split(":", 1)[1] for e in catalog.load()["edges"]
+                   if e["relation"] == "prerequisite_of" and e["target"] == f"concept:{c.concept_id}"}
+        right_pre = [o for o in store.list_observations(sid, event_type="assessment_answer")
+                     if o.status == "accepted" and o.payload.get("correct") is True and o.concept_id in prereqs
+                     and str(o.payload.get("document_id")) == doc_id]
+        lead = f"Given your {doc_name} — "
+        if right_pre:
+            lead += (f"you got the {catalog.concept_label(right_pre[0].concept_id).lower()} question right ({_qs(right_pre)}) "
+                     f"but missed {'both' if len(doc_wrong) == 2 else len(doc_wrong)} {c.label.lower()} question"
+                     f"{'s' if len(doc_wrong) > 1 else ''} ({_qs(doc_wrong)})")
+        else:
+            lead += f"you missed {len(doc_wrong)} {c.label.lower()} question{'s' if len(doc_wrong) > 1 else ''} ({_qs(doc_wrong)})"
+        others = [o for d, obs in by_doc.items() if d != doc_id for o in obs]
+        if others:
+            lead += f", and your {str(others[0].payload.get('document_title', '')).replace(' (graded)', '')} agree"
+        lead += f" — I'd make **{c.label}** your focus this week."
+        lines.append(lead)
+        refs += [obs_evidence(o) for o in doc_wrong]
     else:
-        lines.append("Here's how I'd prioritize this week, combining graded evidence, deadlines, your goals, and free calendar time:")
-        for i, p in enumerate(prios, 1):
-            s = p.concept
-            f = {x.name: x for x in p.factors}
-            bits = [f["concept_gap"].explanation if s.mastery is not None else "no graded evidence yet"]
-            if p.deadline:
-                bits.append(f"{p.deadline.title} due {human(parse(p.deadline.occurred_at))}")
-            if f["goal_relevance"].value == 1.0:
-                bits.append("linked to your stated goal")
-            if s.blind_spot:
-                bits.append("possible blind spot (confidence ≫ estimate)")
-            lines.append(f"{i}. **{s.label}** (priority {p.score:.2f}) — " + "; ".join(bits) + ".")
-            refs += p.evidence
-    listed = {p.concept.concept_id for p in prios}
-    goal_ids = goal_concepts(sid)
-    soon = sorted([a for a in store.list_records(sid, kind="assignment") if not a.metadata.get("completed")
-                   and (d := parse(a.occurred_at)) and now() <= d <= now() + timedelta(days=14)], key=lambda a: a.occurred_at)
-    for a in soon:
-        linked = [c for c in a.concept_ids if c in goal_ids and c not in listed]
-        if linked:
-            st = next((x for x in concept_states(sid) if x.concept_id == linked[0]), None)
-            note = (f"Current estimate {st.mastery:.2f}." if st and st.mastery is not None
-                    else "There's no graded evidence on it yet, so plan an early start.")
-            lines.append(f"Linked to your goal: **{catalog.concept_label(linked[0])}** — “{a.title}” is due "
-                         f"{human(parse(a.occurred_at))}. {note}")
-            refs.append(record_evidence(a))
-            break
-    windows = free_windows(sid)
-    if windows:
-        total = sum(w.minutes for w in windows) // 60
-        lines.append(f"Your calendar shows about {total} free hours across {len(windows)} windows (9am–9pm) over the next 7 days.")
-    if recs:
-        lines.append("I've drafted study block(s) below. Nothing is added to your calendar unless you approve it.")
-    opps = [o for o in opportunity_ranking.propose_event_recommendations(sid, opportunity_ranking.rank(sid))
-            if o.event_start and o.relevance_score >= 0.5 and parse(o.event_start) <= now() + timedelta(days=7) and parse(o.event_start) > now()]
-    if opps:
-        o = opps[0]
-        lines.append(f"Also relevant to your goals: **{o.record.title}** — {o.timing_label}.")
-        refs.append(record_evidence(o.record))
-        if o.recommendation_id and (r := store.get_recommendation(o.recommendation_id)) and r.status == "pending":
-            recs.append(r)
-    refs = _dedupe(refs)
-    unc = [BKT_CAVEAT, "Priority weights are transparent heuristics (gap × urgency × goal relevance × feasible time), not a trained model."]
-    return {"draft": "\n".join(lines), "sources": refs, "recs": recs,
+        lines.append(f"I'd make **{c.label}** your focus this week: it has the most pressing deadline and no graded evidence yet.")
+
+    # 2) What's next: the next lecture on this concept and the deadline that depends on it.
+    upcoming = sorted([e for e in store.list_records(sid, kind="calendar_event")
+                       if c.concept_id in e.concept_ids and (d := parse(e.occurred_at)) and d > now()],
+                      key=lambda e: e.occurred_at)
+    nxt = []
+    if upcoming:
+        lec = upcoming[0]
+        code = lec.title.split(" ", 1)[0] if lec.title[:2].isdigit() else ""
+        nxt.append(f"Your next {code + ' ' if code else ''}lecture is “{lec.title.split(': ', 1)[-1]}” ({_when(lec.occurred_at)})")
+    if top.deadline:
+        nxt.append(f"{top.deadline.title.split(':')[0]} is due {_when(top.deadline.occurred_at)}")
+        refs.append(record_evidence(top.deadline))
+    if nxt:
+        lines.append(", and ".join(nxt) + ".")
+
+    # 3) What to read: suggested readings that cover this concept.
+    readings = [r for r in store.list_records(sid, provider="documents") if r.kind == "reading" and c.concept_id in r.concept_ids]
+    if readings:
+        lines.append("Review before then:")
+        lines += [f"- {r.title}" for r in readings[:2]]
+        refs += [record_evidence(r) for r in readings[:2]]
+
+    # 4) One secondary item.
+    if len(prios) > 1 and prios[1].deadline:
+        p2 = prios[1]
+        lines.append(f"Also this week: **{p2.concept.label}** for {p2.deadline.title.split(':')[0]} "
+                     f"(due {_when(p2.deadline.occurred_at)}).")
+
+    # 5) The block to approve.
+    block = next((r for r in recs if r.proposed_action and r.proposed_action.args.get("concept_id") == c.concept_id), None)
+    if block:
+        lines.append(f"I've drafted a {block.duration_minutes}-minute study block on {_when(block.suggested_start)} — "
+                     "approve it below if it works. Nothing goes on your calendar without your OK.")
+
+    unc = [BKT_CAVEAT, "Priority is a transparent heuristic (gap × urgency × goal relevance × free time), not a trained model.",
+           "Readings are standard texts suggested by MentorIA, not assigned by the course."]
+    # Blank lines between sections so each renders as its own paragraph; bullets stay together under their heading.
+    draft = ""
+    for i, ln in enumerate(lines):
+        if i:
+            draft += "\n" if ln.startswith("- ") else "\n\n"
+        draft += ln
+    return {"draft": draft, "sources": _dedupe(refs)[:5], "recs": [r for r in recs if r.type == "study_session"],
             "beliefs_used": [f"belief_{sid}_{p.concept.concept_id}_mastery" for p in prios if p.concept.mastery is not None],
-            "uncertainties": unc + _demo_caveat(refs), "trace": state["trace"] + ["retrieve_context", "plan_week"]}
+            "uncertainties": unc, "trace": trace}
 
 
 def course_next(state: State) -> State:
