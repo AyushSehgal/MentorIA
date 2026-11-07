@@ -3,7 +3,7 @@ import type { DashboardResponse, KnowledgeCounts, SourceRecord } from "../api/ty
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
 import { WeekCalendar } from "../components/WeekCalendar";
-import { Bar, Block, Empty, EvidenceChips, ExpandItem, Facts, MoreList } from "../components/Common";
+import { Bar, Block, Empty, ExpandItem, Facts, MoreList } from "../components/Common";
 import { fmtDay, fmtShort, pct } from "../lib/format";
 
 
@@ -38,7 +38,7 @@ export function Dashboard({
               </div>
             ) : (
               <>
-                <InsightsBlock data={data} />
+                <RecapBlock data={data} tz={tz} />
                 <ApprovalsBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <CalendarBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <div className="grid-2">
@@ -59,33 +59,61 @@ export function Dashboard({
   );
 }
 
-function InsightsBlock({ data }: { data: DashboardResponse }) {
+type RecapBox = { key: string; label: string; text: string; sub?: string; tone: "goal" | "focus" | "due" | "warn" };
+
+/** Collapse many insights into at most four plain boxes: goal, focus, due soon, watch out. */
+function recapBoxes(data: DashboardResponse, tz: string): RecapBox[] {
+  const ins = data.insights;
+  const boxes: RecapBox[] = [];
+  const goal = ins.find((i) => i.kind === "goal");
+  if (goal) {
+    const n = goal.evidence.length;
+    boxes.push({ key: "goal", label: "Your goal", text: goal.detail, sub: n > 1 ? `Stated in ${n} places` : undefined, tone: "goal" });
+  }
+  const focus = ins.filter((i) => i.kind === "focus_area").map((i) => i.title.replace(/^Focus #\d+: /, ""));
+  if (focus.length) {
+    boxes.push({ key: "focus", label: "Focus this week", text: focus.slice(0, 2).join(" · "), sub: "Weakest topics with deadlines coming up", tone: "focus" });
+  }
+  const due = data.cards.canvas.items
+    .filter((a) => a.kind === "assignment" && !a.metadata?.completed && a.occurred_at && new Date(a.occurred_at).getTime() > Date.now())
+    .sort((a, b) => (a.occurred_at ?? "").localeCompare(b.occurred_at ?? ""));
+  if (due.length) {
+    boxes.push({
+      key: "due",
+      label: "Due next",
+      text: due[0].title,
+      sub: `${fmtShort(due[0].occurred_at, tz)}${due.length > 1 ? ` · +${due.length - 1} more coming up` : ""}`,
+      tone: "due",
+    });
+  }
+  const blind = ins.find((i) => i.kind === "blind_spot");
+  if (blind) {
+    boxes.push({ key: "warn", label: "Watch out", text: blind.title.replace(/^Possible blind spot: /, ""), sub: "You feel more confident than your graded work shows", tone: "warn" });
+  }
+  return boxes.slice(0, 4);
+}
+
+function RecapBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+  const [open, setOpen] = useState(false);
+  const boxes = recapBoxes(data, tz);
+  if (!boxes.length) return null;
   return (
-    <Block icon="💡" title="Insights">
-      {data.insights.length === 0 ? (
-        <Empty>No insights yet</Empty>
-      ) : (
-        <MoreList
-          className="xitems"
-          items={data.insights}
-          limit={5}
-          render={(ins) => {
-            const sources = ins.kind === "goal" ? ins.evidence.length : 0;
-            return (
-              <ExpandItem
-                key={ins.id}
-                title={ins.kind === "goal" ? ins.detail : ins.title.replace(/^Focus #\d+: /, "Focus: ")}
-                badge={sources > 1 ? `${sources} sources` : undefined}
-              >
-                {ins.kind !== "goal" && <p>{ins.detail}</p>}
-                {ins.confidence_note && <p className="muted small">{ins.confidence_note}</p>}
-                <EvidenceChips evidence={ins.evidence} />
-              </ExpandItem>
-            );
-          }}
-        />
+    <section className="recap">
+      <button className={`btn recap-btn ${open ? "" : "primary"}`} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        {open ? "Hide recap" : "Quick Recap"}
+      </button>
+      {open && (
+        <div className="recap-grid">
+          {boxes.map((b) => (
+            <div key={b.key} className={`recap-box tone-${b.tone}`}>
+              <div className="recap-label">{b.label}</div>
+              <div className="recap-text">{b.text}</div>
+              {b.sub && <div className="recap-sub">{b.sub}</div>}
+            </div>
+          ))}
+        </div>
       )}
-    </Block>
+    </section>
   );
 }
 

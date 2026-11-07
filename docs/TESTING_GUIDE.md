@@ -17,9 +17,10 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 ## E. Prepopulated start
 
-- [ ] **E1. Dashboard.** Expect the Insights, Needs approval, Calendar, Assignments, Opportunities, Discussions and Documents blocks (no stats row).
+- [ ] **E1. Dashboard.** Expect a **Quick Recap** button, then the Needs approval, Calendar, Assignments, Opportunities, Discussions and Documents blocks.
+- [ ] **E1b. Quick Recap.** Do: click **Quick Recap**. Expect up to four boxes: Your goal ("Stated in 2 places"), Focus this week (Backpropagation · Policy Gradients), Due next (HW5) and, only when there's a blind spot, Watch out. **Hide recap** closes them.
 - [ ] **E2. Clean UI.** Expect: no "Add data" tab, and no text anywhere saying "demo".
-- [ ] **E3. Your goal.** Expect: the first insight is your goal "…startup that builds robots that understand natural language" with a **2 sources** badge (career statement + advisor email).
+- [ ] **E3. Your goal.** Expect: the Your goal box reads "…startup that builds robots that understand natural language", "Stated in 2 places".
 - [ ] **E4. Three courses.** Do: open **Student Model**. Expect: 10-601, 16-831 and 10-605.
 
 ## O. Course overlap (10-601 ↔ 10-605)
@@ -32,7 +33,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 ## D. Dashboard: titles first, details on click
 
 - [ ] **D1. Calm by default.** Expect: every block lists one-line titles only, with at most one small badge ("soon", "★ match", "2 sources", a date) and ≤4 items plus "+N more".
-- [ ] **D2. Expand.** Do: click "Focus: Backpropagation". Expect: it opens to show the reason, a confidence note and quiz evidence chips. Click again to close it.
+- [ ] **D2. Expand.** Do: click HW5 in Assignments. Expect: its details open. Click again to close them.
 - [ ] **D3. Approvals.** Do: click the seminar under **Needs approval**. Expect: Approve and Reject appear inside.
 - [ ] **D4. Assignment details.** Do: click HW5. Expect: the course, due date, points and description.
 - [ ] **D5. Opportunity details.** Do: click the robotics seminar. Expect: When, Speaker, Where, a match bar, reasons and the event link.

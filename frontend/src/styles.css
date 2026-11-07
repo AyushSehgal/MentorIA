@@ -426,3 +426,18 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 
 /* v1.4 shared concepts */
 .pill-shared { display: inline-block; margin-left: 6px; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; vertical-align: 1px; }
+
+/* ---- Quick Recap ---- */
+.recap { display: flex; flex-direction: column; gap: 12px; margin-bottom: 4px; }
+.recap-btn { align-self: flex-start; padding: 8px 18px; font-size: 14px; font-weight: 600; border-radius: 999px; }
+.recap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.recap-box { border-radius: 14px; padding: 16px 18px; border: 1px solid var(--border, #e5e7eb); background: var(--card, #fff);
+  display: flex; flex-direction: column; gap: 6px; border-top: 4px solid var(--tone); min-height: 112px; }
+.recap-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tone); }
+.recap-text { font-size: 16px; font-weight: 600; line-height: 1.35; color: var(--text, #111827);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.recap-sub { font-size: 12.5px; color: var(--muted, #6b7280); margin-top: auto; }
+.tone-goal { --tone: #4f46e5; }
+.tone-focus { --tone: #0891b2; }
+.tone-due { --tone: #c2410c; }
+.tone-warn { --tone: #b91c1c; }
