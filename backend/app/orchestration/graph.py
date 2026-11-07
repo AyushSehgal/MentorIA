@@ -65,7 +65,9 @@ def after_memory(state: ChatState) -> str:
 
 
 def compose(state: ChatState) -> ChatState:
-    if state.get("mode") == "tell":  # short confirmations: never worth an LLM round-trip
+    # Never reworded by an LLM: "About me" confirmations (short) and the weekly plan (already story-shaped and
+    # citation-dense; kept verbatim so it is instant and exact in demos). Other answers follow the privacy mode.
+    if state.get("mode") == "tell" or state.get("intent") == "weekly_focus":
         return {"answer": state["draft"], "llm_used": False, "llm_provider": None, "llm_note": None,
                 "trace": state["trace"] + ["compose"]}
     r = polish(state["message"], state["draft"])

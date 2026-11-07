@@ -139,3 +139,11 @@ def test_local_default_without_server_still_answers(client, monkeypatch):
     monkeypatch.setattr(settings, "llm_mode", "local")
     r = client.post("/api/chat", json={"message": Q}).json()
     assert r["answer"] and r["llm_used"] is False and "No local model server" in r["llm_note"]
+
+
+def test_weekly_focus_is_never_reworded(client, fake_local):
+    load_doc(client, "graded")
+    client.post("/api/settings/privacy", json={"mode": "local"})
+    fake_local["reply"] = lambda body: "REWORDED " + _draft_of(body)
+    r = client.post("/api/chat", json={"message": "What should I focus on this week?"}).json()
+    assert r["llm_used"] is False and not r["answer"].startswith("REWORDED") and fake_local["post"] == []
