@@ -109,9 +109,55 @@ To connect real services: copy `.env.example` to `.env`, fill in credentials, ru
 - `services/planning.py`, `opportunity_ranking.py`, `actions.py` (approval validation + idempotent execution).
 - `frontend/`: Vite + React + TS; pages Dashboard, Student Model, Documents, Sources; persistent chat panel.
 
+## Testing
+- Automated: `cd backend && .venv/bin/python -m pytest -q` (36 tests) and `npm --prefix frontend run build`.
+- Manual: [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md), a 90-step checklist covering every feature.
+
 ## Known gaps
-- No live connector verified (no credentials in this environment). BKT parameters are illustrative, uncalibrated.
-- Concept map, courses and prerequisites come from the synthetic file; no course catalog (course recommendations say so).
-- Intent routing is keyword-based; free-form questions outside the main intents get a context summary.
-- No OCR for scanned PDFs; questions spanning a page break are not parsed.
-- Single-user local demo: no auth on the API.
+- **No live connector verified.** Canvas, Google Calendar/Gmail and Piazza adapters exist but have never made a real call. Data comes from `fixtures/synthetic_world.md`.
+- **Concept map is synthetic.** Real Canvas courses won't map to concepts, so real assignments mostly won't link to quiz evidence.
+- **Keyword intent routing.** Phrasings outside the main question types get a general summary, and some overlap (e.g. "What's due this week?" goes to the weekly plan).
+- **BKT is uncalibrated.** Slip, guess and learn parameters are illustrative; there's no forgetting over time beyond a 60-day "stale" flag.
+- **PDF parsing is narrow.** It needs explicit `Topic:` and `Result:`/`Score:` lines per question. There's no OCR for scanned PDFs, and questions spanning a page break aren't parsed.
+- **LLM guardrail is partial.** It catches added numbers and dropped citations or topics, not dropped sentences. Local rewording adds 5–25 s per answer.
+- **Single-user local demo.** The API has no auth; the database isn't encrypted.
+
+## Next steps & roadmap
+
+### 1. Before the live demo (hours)
+- [ ] Run the manual guide end to end ([docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)) and fix anything that fails.
+- [ ] Decide the demo AI mode: **Off** (instant, deterministic) or **Local** (privacy story, slower). Pre-warm Ollama with one question so the first answer isn't cold.
+- [ ] Rehearse the demo script; record a backup screen capture in case of Wi-Fi or laptop issues.
+- [ ] Tune `fixtures/synthetic_world.md` to tell the story you want (your courses, a talk that fits the judges' interests).
+
+### 2. Real data (first week after)
+- [ ] **Canvas live read:** create a token, sync, and fix whatever the first real response breaks. Mark verified only after a successful call.
+- [ ] **Google Calendar + Gmail:** create an OAuth client, run `scripts/google_auth.py`, verify reads, then test one approved calendar write end to end (and confirm it's created exactly once).
+- [ ] **Concept map for real courses:** generate concepts per course from the syllabus PDF or Canvas modules, with student review before they're used. This is what connects real assignments to evidence.
+- [ ] **Real graded work:** extend PDF parsing to common real formats (Gradescope exports, ✓/✗ marks, "x/y pts" per question). Anything ambiguous goes to a review queue instead of being guessed.
+- [ ] **Review queue UI:** let the student accept, edit or reject "pending review" answers (e.g. partial credit, inferred topics) so they can count.
+- [ ] **Piazza:** only if needed; it's an unofficial API, so keep it behind the flag.
+
+### 3. Smarter, still grounded (weeks)
+- [ ] **LLM-assisted intent routing** with the keyword router as a fallback, so free-form questions land in the right place; log misroutes to improve the rules.
+- [ ] **Stronger rewrite guardrail:** also require kept caveats and disclaimers, or have the model output structured fields that NOVA renders itself.
+- [ ] **Conversation memory:** use chat history for follow-ups ("what about the second one?").
+- [ ] **Forgetting / spaced review:** add decay (e.g. an FSRS-style recall estimate) as a separate signal next to BKT, plus "review again" suggestions.
+- [ ] **Calibrate BKT** per course once enough real graded answers exist; show confidence intervals rather than single numbers.
+- [ ] **Better planning:** respect stated study preferences (time of day, block length), avoid stacking blocks, balance across courses, and re-plan when the calendar changes.
+- [ ] **Course recommendations from a real catalog:** ingest a department catalog or degree audit and match it against goals and evidence, citing catalog pages for every claimed prerequisite.
+- [ ] **Semantic search** over documents (local embeddings) for "where did we cover X?" questions with page citations.
+
+### 4. Proactive & multi-source (later)
+- [ ] Background sync on a schedule with a "what changed since yesterday" digest.
+- [ ] More sources: Gradescope, Google Drive/Docs notes, course websites, university event feeds.
+- [ ] Notifications for approval-worthy items (a matching talk, a deadline at risk), still never acting without approval.
+- [ ] Post-session check-ins ("How did the cache coherence block go?") feeding engagement and confidence, never mastery.
+
+### 5. Privacy, security & production (before real users)
+- [ ] User accounts and per-student data isolation; auth on every API route.
+- [ ] Encrypt the local database and token file at rest; one-click "export my data" and "delete everything".
+- [ ] Per-source consent screens and a visible log of what each connector read.
+- [ ] Optional redaction (names, emails) before anything goes to a cloud LLM; make Local the only option for sensitive sources.
+- [ ] Packaging: a one-command install (e.g. Docker Compose with Ollama) and a desktop build.
+- [ ] CI that runs the backend tests and frontend build on every push.
