@@ -67,3 +67,15 @@ Contract assumptions: CONTRACTS.md v1.2. Shared files are additive-only (see TAS
 Coordination: dashboard-agent owns T19 (Dashboard). concept_states() behavior stays fixed because dashboard insights and planning use it.
 Baseline: pytest 36/36 pass; frontend `npm run build` passes.
 Blockers: none
+
+[2026-11-07 15:55 EST] student-model-agent | T18 | READY_FOR_REVIEW (graph-first Student Model page, v1)
+Branch: student-model
+Files: frontend/src/pages/Knowledge.tsx (rewritten: Map / Timeline / Details tabs + inspector), frontend/src/pages/knowledge.css (new, sm- prefix),
+frontend/src/components/student-model/{replay.ts, ConceptMap.tsx (moved from components/KnowledgeGraph.tsx), Inspector.tsx, Timeline.tsx, Details.tsx},
+backend/app/api/memory.py (self_confidence event_id now unique per request), backend/tests/test_student_model.py (new).
+Tests: pytest 37/37 (new: rapid confidence updates all apply; fails without the fix). `npm run build` passes.
+Manual (isolated API on a scratch DB + demo assets 01,02,03,05,06,07,08): frontend BKT replay matches backend mastery for all 8 graded
+concepts and the blind-spot flag; replay slider, timeline, details, goal confirm, keyboard confidence edits, 375px width. No console errors on load.
+Interfaces changed: none (types.ts / schemas.py untouched; no API shape change). Shared files untouched.
+Notes: replay recomputes BKT in the browser from /api/memory/history using the same params/order as backend (replay.ts mirrors bkt.py,
+ADR-005, ADR-007). If bkt.py params change, update replay.ts too. Running :8000 servers need a restart to pick up the memory.py fix.
