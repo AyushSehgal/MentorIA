@@ -307,6 +307,7 @@ class ChatRequest(BaseModel):
     message: str
     student_id: str = "demo_student"
     history: list[ChatMessage] = Field(default_factory=list)
+    mode: Literal["ask", "tell"] = "ask"
 
 
 class ChatResponse(BaseModel):

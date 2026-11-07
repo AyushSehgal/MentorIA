@@ -58,3 +58,17 @@ upload w/ "I wrote this" + dynamic course select, import history, graded-doc que
 components/ChatPanel.tsx (new chips + helper text), pages/Sources.tsx (reset/verified copy), styles.css (imported dot/badge, new blocks).
 Tests: npm run build passes (tsc strict, 0 errors). Not verified against v1.2 backend (routes not live yet).
 Interfaces changed: none (types.ts untouched).
+
+[2026-11-07 18:30 EST] coordinator | v1.2 empty-start + v1.3 about-me + rename | DONE (backend)
+Files: backend/app/{services/imports.py,services/demo_assets.py,demo_content.py,memory/catalog.py,memory/propositions.py,
+orchestration/*,services/dashboard.py,schemas.py}, tests/{conftest.py,test_imports.py,test_synthetic.py}, README, .env.example
+Tests: pytest 50/50. Scripted walkthrough of all 14 assets verified (goal merges to 3 sources; ranking; weekly plan).
+
+[2026-11-07 frontend-agent | ui-compact + about-me | DONE
+Files: frontend/src/{pages/Dashboard.tsx, components/Common.tsx (Block, MoreList, Item, Why), components/ChatPanel.tsx (Ask / About me tabs, mode "tell"), components/ApprovalCard.tsx (compact; label now "Approve"), lib/format.ts (fmtShort, fmtDay), pages/Documents.tsx, pages/Knowledge.tsx, pages/Sources.tsx, styles.css}
+Tests: `tsc --noEmit` clean for src; `vite build` passes. `npm run build` currently fails only on frontend/vite.config.ts (process.env without @types/node) — edited outside this task.
+Interfaces changed: none (types.ts untouched). Dashboard hides source blocks entirely while knowledge counts are all 0 (shows only "MentorIA is empty / Add data").
+
+[2026-11-07 19:10 EST] coordinator | rename + about-me + compact UI | DONE
+Verified in browser (API :8001 + UI :5180): empty state, Add all remaining (14 assets), compact blocks, About me example →
+goal pill "3 sources". Course ids now "10-601"/"16-831". pytest 50/50, frontend build passes. Testing guide rewritten (61 checks).

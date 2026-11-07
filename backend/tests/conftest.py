@@ -13,7 +13,7 @@ DOCS = {"graded": FIXTURES_DIR / "demo_docs" / "systems_quiz3_graded.pdf",
         "ungraded": FIXTURES_DIR / "demo_docs" / "systems_vm_practice_ungraded.pdf"}
 
 
-def upload(client, path: Path, authored: bool = False, data: bytes | None = None, name: str | None = None):
+def upload(client, path: Path | None, authored: bool = False, data: bytes | None = None, name: str | None = None):
     return client.post("/api/imports/upload", files={"file": (name or path.name, data if data is not None else path.read_bytes())},
                        data={"student_id": SID, "authored_by_me": "true" if authored else "false"})
 

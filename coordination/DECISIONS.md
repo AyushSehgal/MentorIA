@@ -41,3 +41,19 @@ Rationale: students decide where their data goes; local works offline; a small m
 Amendment (2026-11-07, user request): default changed from off to local. If no local server is up, answers fall back to the
 grounded draft after a ~1.5 s probe.
 Consequences: the local path adds 5–25 s latency per answer; the guard can reject a rewrite, so the draft is shown instead.
+
+## ADR-010 Start empty; data enters through manual imports
+Status: accepted (supersedes ADR-008's auto-loaded synthetic file).
+Decision: MentorIA starts with an empty DB and catalog. Courses/concepts come from course-overview PDFs (`Course ID:` +
+`Concept:` lines) or .md packs; graded PDFs become evidence; .eml/.ics/.md add source items; student-authored text
+(ticked "I wrote this", emails sent from MENTORIA_STUDENT_EMAIL, chat) yields goals/interests/preferences. Similar
+statements of the same category merge into one proposition with multiple evidence ids. Imported items survive live syncs.
+14 demo assets for 10-601 and 16-831 are generated daily (`demo_assets/`, gitignored).
+Rationale: the demo shows the model growing as context is added; one honest path for all data.
+
+## ADR-011 Rename NOVA → MentorIA
+Status: accepted. All text, env vars (MENTORIA_*), the demo marker and DB filename renamed. Old `backend/data/nova.db` is no longer read.
+
+## ADR-012 "About me" chat mode
+Status: accepted. Chat panel has Ask and About me tabs (ChatRequest.mode). In tell mode every message is saved: explicit
+patterns first, else a keyword classifier picks goal/interest/preference/mood, else a general note. Tell replies skip the LLM.

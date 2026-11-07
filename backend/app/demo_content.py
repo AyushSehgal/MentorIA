@@ -25,7 +25,7 @@ MARK = "MENTORIA-DEMO-ASSET"
 DEMO_NOTE = f"DEMO ASSET ({MARK}) - fictional content prepared for the MentorIA demo; not an official course document."
 
 ML = {
-    "id": "10601", "code": "10-601", "title": "Introduction to Machine Learning", "domain": "ml",
+    "id": "10-601", "code": "10-601", "title": "Introduction to Machine Learning", "domain": "ml",
     "aka": "intro to ml, machine learning, ml, 10-301, 10601",
     "source": "https://www.cs.cmu.edu/~mgormley/courses/10601/",
     "concepts": [
@@ -61,7 +61,7 @@ ML = {
 }
 
 RL = {
-    "id": "16831", "code": "16-831", "title": "Introduction to Robot Learning", "domain": "robotics",
+    "id": "16-831", "code": "16-831", "title": "Introduction to Robot Learning", "domain": "robotics",
     "aka": "robot learning, intro to robot learning, 16831",
     "source": "https://16-831-s24.github.io/",
     "concepts": [
@@ -285,13 +285,13 @@ topics are demo content.
 
 | id | course | title | due | concepts | points | done | description |
 |---|---|---|---|---|---|---|---|
-| c601_hw4 | 10601 | Homework 4: Logistic Regression | d-3 23:59 | logistic_regression | 100 | yes | Written + programming. |
-| c601_hw5 | 10601 | Homework 5: Neural Networks | d+3 23:59 | neural_networks, backpropagation | 100 | no | Implement a 2-layer network with backpropagation. |
-| c601_hw6 | 10601 | Homework 6: Learning Theory and Ethics | d+10 23:59 | pac_learning, societal_impacts | 60 | no | Written. |
-| c601_exam2 | 10601 | Exam 2 (in person) | d+12 19:00 | optimization_sgd, logistic_regression, neural_networks, backpropagation, regularization | 0 | no | Covers lectures 8-17. |
-| c831_hw2 | 16831 | HW2 | d-4 23:59 | imitation_learning, value_policy_iteration, q_learning | 100 | yes | Submitted. |
-| c831_hw3 | 16831 | HW3: Policy gradients and actor-critic | d+5 23:59 | policy_gradients, actor_critic | 100 | no | Derive and implement REINFORCE with a baseline. |
-| c831_proposal | 16831 | Project proposal: language-conditioned manipulation | d+11 23:59 | foundation_models_robotics, imitation_learning | 50 | no | One page: a robot arm that follows natural-language instructions. |
+| c601_hw4 | 10-601 | Homework 4: Logistic Regression | d-3 23:59 | logistic_regression | 100 | yes | Written + programming. |
+| c601_hw5 | 10-601 | Homework 5: Neural Networks | d+3 23:59 | neural_networks, backpropagation | 100 | no | Implement a 2-layer network with backpropagation. |
+| c601_hw6 | 10-601 | Homework 6: Learning Theory and Ethics | d+10 23:59 | pac_learning, societal_impacts | 60 | no | Written. |
+| c601_exam2 | 10-601 | Exam 2 (in person) | d+12 19:00 | optimization_sgd, logistic_regression, neural_networks, backpropagation, regularization | 0 | no | Covers lectures 8-17. |
+| c831_hw2 | 16-831 | HW2 | d-4 23:59 | imitation_learning, value_policy_iteration, q_learning | 100 | yes | Submitted. |
+| c831_hw3 | 16-831 | HW3: Policy gradients and actor-critic | d+5 23:59 | policy_gradients, actor_critic | 100 | no | Derive and implement REINFORCE with a baseline. |
+| c831_proposal | 16-831 | Project proposal: language-conditioned manipulation | d+11 23:59 | foundation_models_robotics, imitation_learning | 50 | no | One page: a robot arm that follows natural-language instructions. |
 """
 
 PIAZZA_PACK = f"""<!-- {MARK} -->
@@ -301,7 +301,7 @@ PIAZZA_PACK = f"""<!-- {MARK} -->
 
 ### HW5: clarification on backprop through the softmax layer
 - id: p601_1
-- course: 10601
+- course: 10-601
 - posted: d-1 16:10
 - author: instructor
 - type: announcement
@@ -311,7 +311,7 @@ When computing gradients for HW5, combine softmax and cross-entropy: the gradien
 
 ### Why do my gradients explode in HW5?
 - id: p601_2
-- course: 10601
+- course: 10-601
 - posted: d-1 22:40
 - author: student
 - type: question
@@ -321,7 +321,7 @@ My loss becomes NaN after a few epochs. Is this an initialization problem?
 
 ### HW3 released: policy gradient written problems
 - id: p831_1
-- course: 16831
+- course: 16-831
 - posted: d-2 09:00
 - author: instructor
 - type: announcement

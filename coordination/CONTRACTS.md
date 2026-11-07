@@ -52,3 +52,8 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
     (accepts .pdf, .eml, .ics, .md packs; 400 with `detail` on unsupported/invalid files)
   - `GET /api/imports?student_id=` → `ImportResult[]` newest first
 - `POST /api/demo/reset` now resets to an EMPTY state (no courses, no data). LLM mode is preserved.
+
+## v1.3 (2026-11-07) — "About me" input
+- `ChatRequest.mode?: "ask" | "tell"` (default "ask"). In "tell" mode every message is saved to the profile:
+  goal / interest / preference / self-confidence / mood, or a general note when no category fits. Response intent is
+  `memory_update`; `memory_updates` lists what was saved.

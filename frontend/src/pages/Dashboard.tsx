@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { DashboardResponse, Insight, KnowledgeCounts, SourceRecord } from "../api/types";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
-import { Bar, Card, EvidenceChips, Empty } from "../components/Common";
-import { dayKey, fmtDateTime, fmtTime, pct, relative } from "../lib/format";
+import { Bar, Block, Empty, Item, MoreList, Why } from "../components/Common";
+import { dayKey, fmtDay, fmtShort, fmtTime, pct } from "../lib/format";
 
 const anyFixture = (items: { is_fixture: boolean }[]) => items.some((i) => i.is_fixture);
 
@@ -18,12 +18,12 @@ const insightIcon: Record<Insight["kind"], string> = {
 };
 
 const KSTATS: { key: keyof KnowledgeCounts; label: string }[] = [
-  { key: "courses", label: "courses" },
-  { key: "concepts", label: "concepts" },
-  { key: "documents", label: "documents" },
-  { key: "graded_answers", label: "graded answers" },
-  { key: "goals", label: "goals & interests" },
-  { key: "source_items", label: "source items" },
+  { key: "courses", label: "Courses" },
+  { key: "concepts", label: "Concepts" },
+  { key: "documents", label: "Docs" },
+  { key: "graded_answers", label: "Graded" },
+  { key: "goals", label: "Goals" },
+  { key: "source_items", label: "Items" },
 ];
 
 function isEmpty(k: KnowledgeCounts | undefined) {
@@ -35,26 +35,21 @@ function KnowledgeBar({ k }: { k: KnowledgeCounts }) {
   const [grew, setGrew] = useState<Set<string>>(new Set());
   useEffect(() => {
     const p = prev.current;
-    if (p) {
-      const g = new Set(KSTATS.filter((s) => (k[s.key] ?? 0) > (p[s.key] ?? 0)).map((s) => s.key as string));
-      setGrew(g);
-      const t = setTimeout(() => setGrew(new Set()), 2500);
-      prev.current = k;
-      return () => clearTimeout(t);
-    }
     prev.current = k;
+    if (!p) return;
+    setGrew(new Set(KSTATS.filter((s) => (k[s.key] ?? 0) > (p[s.key] ?? 0)).map((s) => s.key as string)));
+    const t = setTimeout(() => setGrew(new Set()), 2500);
+    return () => clearTimeout(t);
   }, [k]);
   return (
     <div className="knowledge-bar" aria-label="What MentorIA knows">
       {KSTATS.map((s) => {
         const v = k[s.key] ?? 0;
+        const tip = s.key === "goals" && k.goal_sources ? `${k.goal_sources} sources back these goals` : undefined;
         return (
-          <div key={s.key} className={`kstat ${v ? "" : "zero"} ${grew.has(s.key) ? "grew" : ""}`}>
+          <div key={s.key} className={`kstat ${v ? "" : "zero"} ${grew.has(s.key) ? "grew" : ""}`} title={tip}>
             <div className="kval">{v}</div>
-            <div className="klabel">
-              {s.label}
-              {s.key === "goals" && k.goal_sources > 0 && ` · from ${k.goal_sources} source${k.goal_sources === 1 ? "" : "s"}`}
-            </div>
+            <div className="klabel">{s.label}</div>
           </div>
         );
       })}
@@ -76,36 +71,35 @@ export function Dashboard({
   navigate: (p: string) => void;
 }) {
   const tz = data?.student.timezone ?? "America/New_York";
+  const empty = data ? isEmpty(data.knowledge) : false;
   return (
     <div className="dash">
       <div className="dash-main">
-        {!data && loading && <div className="card"><p className="empty">Loading dashboard…</p></div>}
-        {!data && error && (
-          <div className="card">
-            <p className="error-text">Dashboard unavailable: {error}</p>
-            <p className="muted">The chat panel and other pages may still work once the backend is up.</p>
-          </div>
-        )}
+        {!data && loading && <div className="card"><p className="empty">Loading…</p></div>}
+        {!data && error && <div className="card"><p className="error-text">Dashboard unavailable: {error}</p></div>}
         {data && (
           <>
             {data.knowledge && <KnowledgeBar k={data.knowledge} />}
-            {isEmpty(data.knowledge) && (
+            {empty ? (
               <div className="card empty-hero">
                 <h2>MentorIA is empty</h2>
-                <p className="muted">Add a course overview on the Add data page to begin. Everything MentorIA knows will come from what you add.</p>
                 <button className="btn primary" onClick={() => navigate("/documents")}>
-                  Go to Add data
+                  Add data
                 </button>
               </div>
+            ) : (
+              <>
+                <InsightsBlock data={data} />
+                <ApprovalsBlock data={data} tz={tz} onRefresh={onRefresh} />
+                <div className="grid-2">
+                  <AssignmentsBlock data={data} tz={tz} />
+                  <CalendarBlock data={data} tz={tz} />
+                  <OpportunitiesBlock data={data} tz={tz} />
+                  <DiscussionsBlock data={data} tz={tz} />
+                </div>
+                <DocumentsBlock data={data} tz={tz} navigate={navigate} />
+              </>
             )}
-            <InsightsCard data={data} tz={tz} onRefresh={onRefresh} />
-            <div className="grid-2">
-              <CanvasCard data={data} tz={tz} />
-              <CalendarCard data={data} tz={tz} />
-              <GmailCard data={data} tz={tz} />
-              <PiazzaCard data={data} tz={tz} />
-            </div>
-            <DocumentsCard data={data} tz={tz} navigate={navigate} />
           </>
         )}
       </div>
@@ -116,210 +110,176 @@ export function Dashboard({
   );
 }
 
-function InsightsCard({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
+function InsightsBlock({ data }: { data: DashboardResponse }) {
   return (
-    <Card title="MentorIA Insights & Priorities" className="insights">
-      {data.insights.length === 0 && data.recommendations.length === 0 && (
-        <Empty>No insights yet — they appear as you add courses, deadlines, graded work and goals.</Empty>
+    <Block icon="💡" title="Insights">
+      {data.insights.length === 0 ? (
+        <Empty>No insights yet</Empty>
+      ) : (
+        <MoreList
+          className="insight-tiles"
+          items={data.insights}
+          limit={6}
+          render={(ins) => {
+            const sources = ins.kind === "goal" ? ins.evidence.length : 0;
+            const tip = [ins.detail, ins.confidence_note, ...ins.evidence.map((e) => `• ${e.label}`)].filter(Boolean).join("\n");
+            return (
+              <li key={ins.id} className={`tile insight-${ins.kind}`} title={tip}>
+                <div className="tile-title">
+                  <span aria-hidden>{insightIcon[ins.kind] ?? "•"}</span> {ins.kind === "goal" ? "Your goal" : ins.title}
+                  {sources > 1 && <span className="pill pill-accent">{sources} sources</span>}
+                </div>
+                <div className="tile-detail">{ins.detail}</div>
+              </li>
+            );
+          }}
+        />
       )}
-      {data.insights.length > 0 && (
-        <ul className="insight-list">
-          {data.insights.map((ins) => (
-            <li key={ins.id} className={`insight insight-${ins.kind}`}>
-              <div className="insight-title">
-                <span aria-hidden>{insightIcon[ins.kind] ?? "•"}</span> {ins.title}
-              </div>
-              <div className="insight-detail">{ins.detail}</div>
-              {ins.confidence_note && <div className="muted small">{ins.confidence_note}</div>}
-              <EvidenceChips evidence={ins.evidence} />
-            </li>
-          ))}
-        </ul>
-      )}
-      {data.recommendations.length > 0 && (
-        <div className="rec-list">
-          <h3 className="section-label">Awaiting your approval</h3>
-          {data.recommendations.map((r) => (
-            <ApprovalCard key={r.id} rec={r} tz={tz} onChanged={onRefresh} />
-          ))}
-        </div>
-      )}
-    </Card>
+    </Block>
   );
 }
 
-function SourceLink({ r }: { r: SourceRecord }) {
-  if (!r.source_url) return null;
+function ApprovalsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
+  if (data.recommendations.length === 0) return null;
   return (
-    <a className="src-link" href={r.source_url} target="_blank" rel="noreferrer">
-      open ↗
-    </a>
+    <Block icon="✅" title="Needs approval" demo={anyFixture(data.recommendations)}>
+      <MoreList
+        className="approvals"
+        items={data.recommendations}
+        limit={3}
+        render={(r) => (
+          <li key={r.id}>
+            <ApprovalCard rec={r} tz={tz} onChanged={onRefresh} compact />
+          </li>
+        )}
+      />
+    </Block>
   );
 }
 
-function CanvasCard({ data, tz }: { data: DashboardResponse; tz: string }) {
+function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.canvas;
   const items = [...card.items].sort((a, b) => {
     const ca = a.metadata?.completed ? 1 : 0;
     const cb = b.metadata?.completed ? 1 : 0;
     if (ca !== cb) return ca - cb;
-    const ta = a.occurred_at ? new Date(a.occurred_at).getTime() : Infinity;
-    const tb = b.occurred_at ? new Date(b.occurred_at).getTime() : Infinity;
-    return ta - tb;
+    return (a.occurred_at ?? "9999").localeCompare(b.occurred_at ?? "9999");
   });
   return (
-    <Card title="Canvas — Due Soon" status={card.status} demo={card.status.state === "demo_data" || anyFixture(items)}>
+    <Block icon="📚" title="Assignments" status={card.status} demo={anyFixture(items)}>
       {items.length === 0 ? (
-        <Empty>No assignments yet — add a Canvas export on Add data.</Empty>
+        <Empty>No assignments yet</Empty>
       ) : (
-        <ul className="rows">
-          {items.map((r) => {
+        <MoreList
+          items={items}
+          render={(r) => {
             const done = !!r.metadata?.completed;
             const dueMs = r.occurred_at ? new Date(r.occurred_at).getTime() - Date.now() : null;
             const urgent = !done && dueMs !== null && dueMs >= 0 && dueMs < 3 * 864e5;
-            const overdue = !done && dueMs !== null && dueMs < 0;
             return (
-              <li key={r.id} className={`row ${done ? "done" : ""}`}>
-                <div className="row-main">
-                  <span className="row-title">
-                    {done ? "✓ " : ""}
-                    {r.title}
-                  </span>
-                  <span className="muted small">{String(r.metadata?.course_name ?? r.course_id ?? "")}</span>
-                </div>
-                <div className="row-side">
-                  <span className={`pill ${overdue ? "pill-bad" : urgent ? "pill-warn" : ""}`}>
-                    {done ? "completed" : r.occurred_at ? `due ${relative(r.occurred_at)}` : "no due date"}
-                  </span>
-                  <span className="muted small">{fmtDateTime(r.occurred_at, tz)}</span>
-                  <SourceLink r={r} />
-                </div>
-              </li>
+              <Item
+                key={r.id}
+                done={done}
+                tip={r.body || undefined}
+                title={r.source_url ? <a href={r.source_url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}
+                meta={`${courseShort(r)} · ${done ? "done" : `due ${fmtShort(r.occurred_at, tz)}`}`}
+                side={urgent ? <span className="pill pill-warn">soon</span> : done ? <span className="pill pill-good">✓</span> : null}
+              />
             );
-          })}
-        </ul>
+          }}
+        />
       )}
-    </Card>
+    </Block>
   );
 }
 
-function CalendarCard({ data, tz }: { data: DashboardResponse; tz: string }) {
+function courseShort(r: SourceRecord): string {
+  const name = String(r.metadata?.course_name ?? r.course_id ?? "");
+  const code = name.match(/\d{2}-\d{3}/);
+  return code ? code[0] : name || "—";
+}
+
+function CalendarBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.google_calendar;
-  const groups = new Map<string, SourceRecord[]>();
+  const [showFree, setShowFree] = useState(false);
+  const days = new Map<string, SourceRecord[]>();
   [...card.items]
     .sort((a, b) => (a.occurred_at ?? "").localeCompare(b.occurred_at ?? ""))
     .forEach((r) => {
       const k = dayKey(r.occurred_at, tz);
-      groups.set(k, [...(groups.get(k) ?? []), r]);
+      days.set(k, [...(days.get(k) ?? []), r]);
     });
+  const free = card.free_windows;
   return (
-    <Card
-      title="Google Calendar — This Week"
-      status={card.status}
-      demo={card.status.state === "demo_data" || anyFixture(card.items)}
-    >
+    <Block icon="📅" title="Calendar" status={card.status} demo={anyFixture(card.items)}>
       {card.items.length === 0 ? (
-        <Empty>No events yet — add a calendar file (.ics) on Add data.</Empty>
+        <Empty>No events yet</Empty>
       ) : (
-        <div className="cal">
-          {[...groups.entries()].map(([day, evs]) => (
-            <div key={day} className="cal-day">
-              <div className="cal-day-label">{day}</div>
-              <ul>
-                {evs.map((e) => (
-                  <li key={e.id}>
-                    <span className="cal-time">
-                      {fmtTime(e.occurred_at, tz)}
-                      {typeof e.metadata?.end === "string" ? `–${fmtTime(e.metadata.end as string, tz)}` : ""}
-                    </span>{" "}
-                    {e.title}
-                    {e.metadata?.created_by_mentoria ? <span className="pill pill-good">MentorIA</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <MoreList
+          items={[...days.entries()]}
+          limit={3}
+          className="items cal-days"
+          render={([day, evs]) => (
+            <Item
+              key={day}
+              title={day}
+              meta={evs.map((e) => `${fmtTime(e.occurred_at, tz)} ${e.title}`).join(" · ")}
+              tip={evs.map((e) => `${fmtTime(e.occurred_at, tz)}–${fmtTime(e.metadata?.end as string, tz)} ${e.title}`).join("\n")}
+            />
+          )}
+        />
+      )}
+      {free.length > 0 && (
+        <div className="free-line">
+          <button className="link-btn" onClick={() => setShowFree((s) => !s)}>
+            Free: {free.length} slots this week {showFree ? "▴" : "▾"}
+          </button>
+          {showFree && (
+            <ul className="why-list">
+              {free.map((w, i) => (
+                <li key={i}>
+                  {fmtShort(w.start, tz)}–{fmtTime(w.end, tz)} · {w.minutes} min
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
-      <h3 className="section-label">Free windows (candidate study blocks)</h3>
-      {card.free_windows.length === 0 ? (
-        <Empty>{card.items.length === 0 ? "Free time is computed once a calendar is added." : "No free windows found."}</Empty>
-      ) : (
-        <ul className="windows">
-          {card.free_windows.slice(0, 8).map((w, i) => (
-            <li key={i}>
-              <span className="window-bar" style={{ width: `${Math.min(100, (w.minutes / 240) * 100)}%` }} />
-              <span>
-                {fmtDateTime(w.start, tz)} – {fmtTime(w.end, tz)} · {w.minutes} min
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    </Block>
   );
 }
 
-function GmailCard({ data, tz }: { data: DashboardResponse; tz: string }) {
+function OpportunitiesBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.gmail;
   const opps = [...card.opportunities].sort((a, b) => b.relevance_score - a.relevance_score);
-  const recIds = new Set(data.recommendations.map((r) => r.id));
   return (
-    <Card
-      title="Gmail — Academic Opportunities"
-      status={card.status}
-      demo={card.status.state === "demo_data" || anyFixture(card.items)}
-    >
+    <Block icon="✉️" title="Opportunities" status={card.status} demo={anyFixture(card.items)}>
       {opps.length === 0 ? (
-        <Empty>No emails yet — add .eml files on Add data.</Empty>
+        <Empty>No emails yet</Empty>
       ) : (
-        <ul className="opps">
-          {opps.map((o) => (
-            <li key={o.record.id} className="opp">
-              <div className="opp-head">
-                <span className="row-title">{o.record.title}</span>
-                <SourceLink r={o.record} />
-              </div>
-              <div className="opp-score">
-                <Bar value={o.relevance_score} />
-                <span className="small">relevance {pct(o.relevance_score)}</span>
-              </div>
-              <div className={`opp-timing ${o.event_start ? "" : "undated"}`}>
-                {o.event_start ? `📅 ${o.timing_label}` : `🔎 ${o.timing_label}`}
-              </div>
-              <div className="muted small">
-                {o.speaker && <>Speaker: {o.speaker} · </>}
-                {o.venue && <>Venue: {o.venue} · </>}
-                {o.url && (
-                  <a href={o.url} target="_blank" rel="noreferrer">
-                    link
-                  </a>
-                )}
-                {o.record.occurred_at && <> · received {fmtDateTime(o.record.occurred_at, tz)}</>}
-              </div>
-              {o.relevance_reasons.length > 0 && (
-                <ul className="reasons">
-                  {o.relevance_reasons.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              )}
-              {o.recommendation_id && (
-                <div className="small">
-                  {recIds.has(o.recommendation_id)
-                    ? "→ Calendar proposal awaiting approval in Insights"
-                    : "→ Proposal already handled"}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <MoreList
+          items={opps}
+          render={(o) => (
+            <Item
+              key={o.record.id}
+              title={o.record.title}
+              tip={[o.timing_label, o.speaker, o.venue].filter(Boolean).join(" · ")}
+              meta={
+                <>
+                  {o.event_start ? fmtDay(o.event_start, tz) + " " + fmtTime(o.event_start, tz) : "no date"} ·{" "}
+                  <Bar value={o.relevance_score} /> {pct(o.relevance_score)}{" "}
+                  <Why reasons={o.relevance_reasons} />
+                </>
+              }
+            />
+          )}
+        />
       )}
-    </Card>
+    </Block>
   );
 }
 
-function PiazzaCard({ data, tz }: { data: DashboardResponse; tz: string }) {
+function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.piazza;
   const items = [...card.items].sort((a, b) => {
     const ia = a.metadata?.is_instructor ? 0 : 1;
@@ -328,37 +288,33 @@ function PiazzaCard({ data, tz }: { data: DashboardResponse; tz: string }) {
     return (b.occurred_at ?? "").localeCompare(a.occurred_at ?? "");
   });
   return (
-    <Card title="Piazza — Course Discussions" status={card.status} demo={card.status.state === "demo_data" || anyFixture(items)}>
+    <Block icon="💬" title="Discussions" status={card.status} demo={anyFixture(items)}>
       {items.length === 0 ? (
-        <Empty>No discussions yet — add a Piazza export on Add data.</Empty>
+        <Empty>No discussions yet</Empty>
       ) : (
-        <ul className="rows">
-          {items.map((r) => (
-            <li key={r.id} className="row">
-              <div className="row-main">
-                <span className="row-title">
-                  {r.metadata?.is_instructor ? <span className="pill pill-accent">Instructor</span> : null} {r.title}
-                </span>
-                <span className="muted small clamp">{r.body}</span>
-              </div>
-              <div className="row-side">
-                <span className="muted small">{String(r.metadata?.course_name ?? r.course_id ?? "")}</span>
-                <span className="muted small">{fmtDateTime(r.occurred_at, tz)}</span>
-                <SourceLink r={r} />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <MoreList
+          items={items}
+          render={(r) => (
+            <Item
+              key={r.id}
+              tip={r.body}
+              title={r.source_url ? <a href={r.source_url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}
+              meta={`${courseShort(r)} · ${fmtDay(r.occurred_at, tz)}`}
+              side={r.metadata?.is_instructor ? <span className="pill pill-accent">Instructor</span> : null}
+            />
+          )}
+        />
       )}
-    </Card>
+    </Block>
   );
 }
 
-function DocumentsCard({ data, tz, navigate }: { data: DashboardResponse; tz: string; navigate: (p: string) => void }) {
+function DocumentsBlock({ data, tz, navigate }: { data: DashboardResponse; tz: string; navigate: (p: string) => void }) {
   const card = data.cards.documents;
   return (
-    <Card
-      title="Documents — Academic Sources"
+    <Block
+      icon="📄"
+      title="Documents"
       status={card.status}
       demo={anyFixture(card.documents)}
       actions={
@@ -368,30 +324,31 @@ function DocumentsCard({ data, tz, navigate }: { data: DashboardResponse; tz: st
       }
     >
       {card.documents.length === 0 ? (
-        <Empty>No documents yet — add course overviews, graded work or notes on Add data.</Empty>
+        <Empty>No documents yet</Empty>
       ) : (
-        <ul className="rows">
-          {card.documents.map((d) => (
-            <li key={d.id} className="row">
-              <div className="row-main">
-                <span className="row-title">{d.title || d.filename}</span>
-                <span className="muted small">
-                  {d.kind === "graded_assessment" ? "Graded assessment" : "Study material"} · {d.page_count} pages ·{" "}
-                  {d.course_id ?? "no course"} · {d.observations_created} observations
-                  {d.pending_review > 0 && ` · ${d.pending_review} pending review`}
-                </span>
-              </div>
-              <div className="row-side">
-                <span className={`pill ${d.status === "failed" ? "pill-bad" : "pill-good"}`}>{d.status}</span>
-                <span className="muted small">{fmtDateTime(d.uploaded_at, tz)}</span>
-                <a className="src-link" href={d.file_url} target="_blank" rel="noreferrer">
-                  PDF ↗
+        <MoreList
+          items={card.documents}
+          render={(d) => (
+            <Item
+              key={d.id}
+              title={
+                <a href={d.file_url} target="_blank" rel="noreferrer">
+                  {d.title || d.filename}
                 </a>
-              </div>
-            </li>
-          ))}
-        </ul>
+              }
+              tip={d.error ?? undefined}
+              meta={`${d.kind === "graded_assessment" ? "Graded" : "Material"} · ${d.page_count} p · ${fmtDay(d.uploaded_at, tz)}`}
+              side={
+                d.status === "failed" ? (
+                  <span className="pill pill-bad">failed</span>
+                ) : d.kind === "graded_assessment" ? (
+                  <span className="pill pill-good">{d.observations_created} answers</span>
+                ) : null
+              }
+            />
+          )}
+        />
       )}
-    </Card>
+    </Block>
   );
 }

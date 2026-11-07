@@ -260,6 +260,9 @@ export interface ChatRequest {
   message: string;
   student_id: string;
   history?: ChatMessage[];
+  // v1.3: "ask" (default) answers questions; "tell" saves the message to the student's profile
+  // (goals, interests, preferences, confidence, how they feel) and replies with what was saved.
+  mode?: "ask" | "tell";
 }
 
 export interface ChatResponse {

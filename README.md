@@ -27,20 +27,28 @@ Reset the demo (also available as a button on the Sources page): `backend/.venv/
 
 Tests: `cd backend && .venv/bin/python -m pytest -q` · Frontend typecheck/build: `npm --prefix frontend run build`
 
-## Synthetic data (current mode)
+## Adding data (MentorIA starts empty)
 
-Until real connectors are configured, **all source data comes from one file: [`fixtures/synthetic_world.md`](fixtures/synthetic_world.md)**.
-It holds the courses and concept map, the student profile and self-reports, Canvas assignments, calendar events,
-Gmail messages and Piazza posts — as markdown tables and `###` blocks.
+MentorIA starts with **no data**. Everything enters through the **Add data** page (or, later, live connectors):
 
-- Edit the file, save, press **Sync all** (no restart). Added, changed and removed items all follow the file.
-- Times are relative (`d+3 16:00` = 3 days from today at 4 pm) so the demo stays current; ISO timestamps also work.
-- A typo or unknown concept id never breaks the app: the previous valid version keeps showing and the source cards
-  explain what's wrong ("Latest edit NOT loaded: …").
-- Everything from this file is labeled **Demo data** in the UI. Point `MENTORIA_SYNTHETIC_FILE` at another file to swap scenarios.
-- Graded quizzes stay PDFs (Documents page), because the PDF → page reference → evidence path is part of the product.
+| File | What MentorIA learns |
+|---|---|
+| Course overview PDF (`Course ID:` + `Concept:` lines) | A course and its concepts (the knowledge map grows) |
+| Graded quiz / homework PDF (`Topic:` + `Result:`/`Score:` per question) | Evidence → mastery estimates, with page + question citations |
+| Your own writing (statement, notes) — tick **I wrote this** | Goals, interests, preferences |
+| `.eml` email | Inbox opportunities; if *you* sent it, your stated goals |
+| `.ics` calendar | Events and free study windows |
+| `.md` source pack (e.g. `fixtures/synthetic_world.md`) | Canvas assignments, Piazza posts, courses, self-reports |
 
-When a real connector is configured, that provider switches to live data and the others keep using the file.
+Re-adding a file changes nothing. A goal stated in several files merges into **one** goal "stated in N sources".
+
+**Demo assets** — 14 ready-made files for **10-601 Intro to ML** and **16-831 Intro to Robot Learning** (concepts from the
+public course pages; student, grades, emails and events are fictional and labeled *Demo*). They're regenerated daily in
+`demo_assets/` so dates stay current (`backend/.venv/bin/python scripts/make_demo_assets.py` to force).
+
+**About me** — the chat panel has two tabs: **Ask** (questions) and **About me** (everything you type is saved to your
+profile: goals, interests, how you study, confidence, how you feel). Confidence is kept separate from quiz-based mastery;
+moods expire after 24 h.
 
 ## Language models & privacy
 
@@ -75,21 +83,24 @@ For the snappiest live demo, switch to **Off**; it answers instantly.
 
 **OpenRouter setup:** set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (any id from openrouter.ai/models) in `.env`, restart the API, then choose **Cloud model**.
 
-## Demo script (3–4 min)
-1. **Dashboard**: Canvas due-soon, Calendar + free windows, Gmail opportunities, Piazza, Documents — each card shows its connector state; fixtures say **Demo data**.
-2. Ask chat **“What systems topics am I struggling with?”** → honest “no graded evidence yet”.
-3. **Documents → Load demo graded quiz**: 7 questions with page refs; 6 accepted, Q7 (partial credit) held for review.
-4. Ask again → Cache Coherence 0.12 (Q2 p.1, Q3 p.2 incorrect), blind-spot candidate (self-confidence 0.85), Synchronization 0.15; caveats listed.
-5. **“What should I focus on this week?”** → priorities from gap × deadline × goal × free time; approval cards. Approve → labeled *Simulated* (Calendar write not configured); Reject → no side effect.
-6. **“Any research talks I should attend?”** → robotics seminar matched to the embodied-AI goal with an approval-gated calendar proposal; the undated RA call shows “Worth reviewing — no event date found”.
-7. **Student Model**: mastery vs. self-confidence, provenance chips, propositions (confirm/dispute), knowledge graph, belief-update history.
-8. Optional: type “I'm interested in tactile sensing” or “I'm feeling unmotivated today” to show explicit memory updates (the latter expires in 24h).
+## Demo script (4–5 min)
+1. **Reset** (Sources → Reset demo). Dashboard is empty; Ask "What ML topics am I struggling with?" → "I don't know your courses yet".
+2. **Add data → 01, 02** (course overviews): Courses 2 · Concepts 35; Student Model lists them with no estimates.
+3. **03 Canvas, 04 Calendar**: Assignments and Calendar blocks fill; free study slots appear.
+4. **05 10-601 Quiz 2, 06 16-831 HW2**: Backpropagation and Policy Gradients drop to 0.12; Q7 (partial credit) held for review.
+   Ask again → gaps cited by quiz page + question.
+5. **07 Career goals statement**: goal card appears ("startup that builds robots that understand natural language").
+6. **08 Email you sent your advisor**: same goal, now **2 sources**.
+7. **About me** tab → "I want a job at a startup that makes robots understand language" → **3 sources**; reply lists matching concepts and opportunities.
+8. **09–12 emails**: language-robotics seminar and startup mixer rank top (goal match); RL reading group ranks for a knowledge gap; quant club filtered out.
+9. Ask **"What should I focus on this week?"** → Backprop (HW5), Policy Gradients (HW3), goal-linked project proposal; approve a block → *Simulated*.
+10. **Student Model**: mastery vs. confidence, goal with its 3 source chips, knowledge graph across both courses.
 
 ## Integration status (truthful)
 
 | Source | Status | Notes |
 |---|---|---|
-| Canvas | **MOCK_ONLY** | REST adapter implemented (`connectors/canvas.py`), not tested live: no credentials were available. Demo reads `fixtures/synthetic_world.md`. |
+| Canvas | **MOCK_ONLY** | REST adapter implemented (`connectors/canvas.py`), not tested live: no credentials were available. Demo data is added from files. |
 | Google Calendar read | **MOCK_ONLY** | Adapter + token refresh implemented, untested live. |
 | Google Calendar write | **MOCK_ONLY** | Approved writes are *simulated* and labeled unless `GOOGLE_CALENDAR_WRITE_ENABLED=true` and the token has `calendar.events` scope. Idempotent via private extended property. Untested live. |
 | Gmail | **MOCK_ONLY** | Read-only, query-filtered, bodies clipped. Untested live. |
@@ -110,12 +121,13 @@ To connect real services: copy `.env.example` to `.env`, fill in credentials, ru
 - `frontend/`: Vite + React + TS; pages Dashboard, Student Model, Documents, Sources; persistent chat panel.
 
 ## Testing
-- Automated: `cd backend && .venv/bin/python -m pytest -q` (36 tests) and `npm --prefix frontend run build`.
+- Automated: `cd backend && .venv/bin/python -m pytest -q` (50 tests) and `npm --prefix frontend run build`.
 - Manual: [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md), a 90-step checklist covering every feature.
 
 ## Known gaps
-- **No live connector verified.** Canvas, Google Calendar/Gmail and Piazza adapters exist but have never made a real call. Data comes from `fixtures/synthetic_world.md`.
-- **Concept map is synthetic.** Real Canvas courses won't map to concepts, so real assignments mostly won't link to quiz evidence.
+- **No live connector verified.** Canvas, Google Calendar/Gmail and Piazza adapters exist but have never made a real call. Data is added from files.
+- **Course overviews need MentorIA's format.** Concepts come from `Concept:` lines; a real syllabus PDF won't define concepts yet (roadmap: extraction with student review).
+- **Goal extraction is pattern-based.** "I want to…", "I'm interested in…", "I prefer…"; the About me tab saves anything else as the closest category or a note.
 - **Keyword intent routing.** Phrasings outside the main question types get a general summary, and some overlap (e.g. "What's due this week?" goes to the weekly plan).
 - **BKT is uncalibrated.** Slip, guess and learn parameters are illustrative; there's no forgetting over time beyond a 60-day "stale" flag.
 - **PDF parsing is narrow.** It needs explicit `Topic:` and `Result:`/`Score:` lines per question. There's no OCR for scanned PDFs, and questions spanning a page break aren't parsed.

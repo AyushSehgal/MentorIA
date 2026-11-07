@@ -127,10 +127,7 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
           </button>
         }
       >
-        <p className="muted small">
-          MentorIA starts empty. Add these prepared files one at a time and watch the dashboard, student model and chat change.
-          They are sample files (labeled “Demo data”), not your real accounts.
-        </p>
+        <p className="muted small">Add in order and watch MentorIA learn. Sample files, labeled Demo.</p>
         {error && <p className="error-text">{error}</p>}
         {sortedAssets === null && !error && <Empty>Loading…</Empty>}
         {sortedAssets && sortedAssets.length === 0 && <Empty>No demo assets found on the server.</Empty>}
@@ -151,14 +148,9 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
                     {busy === a.name ? "Adding…" : a.added ? "Add again" : "Add"}
                   </button>
                 </div>
-                <div className="muted small">
-                  {a.description} <span className="muted">({a.name})</span>
+                <div className="muted small" title={`${a.description} (${a.name})`}>
+                  👀 {a.what_to_notice}
                 </div>
-                {a.what_to_notice && (
-                  <div className="asset-notice">
-                    <strong>What to notice:</strong> {a.what_to_notice}
-                  </div>
-                )}
                 {assetErrors[a.name] && <p className="error-text">{assetErrors[a.name]}</p>}
                 {results[a.name] && <ImportResultView r={results[a.name]} />}
               </li>
@@ -168,10 +160,8 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
       </Card>
 
       <Card title="Upload your own file">
-        <p className="muted small">
-          Accepts PDFs (course overviews, graded quizzes/homework, notes, your own writing), emails (.eml), calendars (.ics)
-          and Canvas/Piazza export packs (.md). Only graded questions with explicit marks change knowledge estimates; goals
-          and preferences are learned only from files you wrote.
+        <p className="muted small" title="Only explicitly graded questions change estimates; goals are learned only from files you wrote.">
+          PDF, .eml, .ics or .md export.
         </p>
         <form className="upload" onSubmit={onUpload}>
           <input
@@ -235,9 +225,8 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
             </a>
           }
         >
-          <p className="muted small">
-            {d.filename} · {d.page_count} pages · course {d.course_id ?? "unassigned"} · graded work · {d.observations_created}{" "}
-            answers counted{d.pending_review > 0 && ` · ${d.pending_review} pending review`} · added {fmtDateTime(d.uploaded_at, tz)}
+          <p className="muted small" title={`${d.filename} · added ${fmtDateTime(d.uploaded_at, tz)}`}>
+            {d.page_count} p · {d.observations_created} answers counted{d.pending_review > 0 && ` · ${d.pending_review} for review`}
           </p>
           {d.error && <p className="error-text">{d.error}</p>}
           <div className="table-wrap">

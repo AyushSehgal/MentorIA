@@ -15,6 +15,7 @@ from .tools import extract_contributions, route
 class ChatState(TypedDict, total=False):
     student_id: str
     message: str
+    mode: str
     history: list[dict]
     intent: str
     has_contributions: bool
@@ -46,6 +47,8 @@ def _node_for(intent: str) -> str:
 
 
 def route_node(state: ChatState) -> ChatState:
+    if state.get("mode") == "tell":
+        return {"intent": "memory_update", "has_contributions": True, "trace": state.get("trace", []) + ["route:tell"]}
     intent = route(state["message"])
     has = bool(extract_contributions(state["student_id"], state["message"]))
     if intent == "general" and has:
@@ -58,10 +61,13 @@ def after_route(state: ChatState) -> str:
 
 
 def after_memory(state: ChatState) -> str:
-    return _node_for(state["intent"])
+    return "tell" if state.get("mode") == "tell" else _node_for(state["intent"])
 
 
 def compose(state: ChatState) -> ChatState:
+    if state.get("mode") == "tell":  # short confirmations: never worth an LLM round-trip
+        return {"answer": state["draft"], "llm_used": False, "llm_provider": None, "llm_note": None,
+                "trace": state["trace"] + ["compose"]}
     r = polish(state["message"], state["draft"])
     return {"answer": r.text, "llm_used": r.used, "llm_provider": r.provider, "llm_note": r.note,
             "trace": state["trace"] + ["compose" + (f"+{r.provider}" if r.used else "")]}
@@ -75,16 +81,18 @@ def build_graph():
     for name, fn in CAPABILITIES.items():
         g.add_node(name, fn)
         g.add_edge(name, "compose")
+    g.add_node("tell", nodes.tell)
+    g.add_edge("tell", "compose")
     g.add_node("compose", compose)
     g.add_edge(START, "route")
     g.add_conditional_edges("route", after_route, ["memory_update", *CAPABILITIES])
-    g.add_conditional_edges("memory_update", after_memory, list(CAPABILITIES))
+    g.add_conditional_edges("memory_update", after_memory, [*CAPABILITIES, "tell"])
     g.add_edge("compose", END)
     return g.compile()
 
 
 def run_chat(req: ChatRequest) -> ChatResponse:
-    out = build_graph().invoke({"student_id": req.student_id, "message": req.message,
+    out = build_graph().invoke({"student_id": req.student_id, "message": req.message, "mode": req.mode,
                                 "history": [m.model_dump() for m in req.history], "trace": [], "memory_updates": []})
     return ChatResponse(answer=out["answer"], intent=out["intent"], sources=out.get("sources", []),
                         beliefs_used=out.get("beliefs_used", []), uncertainties=out.get("uncertainties", []),

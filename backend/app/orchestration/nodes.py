@@ -11,7 +11,7 @@ from ..schemas import EvidenceRef
 from ..services import opportunity_ranking, planning
 from ..services.aggregation import free_windows
 from ..timeutil import human, now, parse
-from .tools import extract_contributions
+from .tools import classify_tell, extract_contributions
 
 State = dict[str, Any]
 BKT_CAVEAT = "Mastery numbers are Bayesian Knowledge Tracing estimates with illustrative, uncalibrated parameters."
@@ -32,6 +32,8 @@ def _dedupe(refs: list[EvidenceRef]) -> list[EvidenceRef]:
 
 def memory_update(state: State) -> State:
     obs = extract_contributions(state["student_id"], state["message"])
+    if not obs and state.get("mode") == "tell":
+        obs = [classify_tell(state["student_id"], state["message"])]
     notes = []
     if obs:
         updates.ingest_observations(obs)
@@ -46,6 +48,8 @@ def memory_update(state: State) -> State:
                                  f"{len(prop.evidence_ids)} sources.")
                 else:
                     notes.append(f"Saved {o.event_type}: “{o.payload['statement']}” (self-reported; you can correct it on the Student Model page).")
+            elif o.event_type == "note":
+                notes.append(f"Saved a note about you: “{o.payload['statement']}”.")
             elif o.event_type == "mood":
                 notes.append("Noted how you're feeling today as a short-lived self-report (expires in 24h; not a permanent trait).")
     return {"memory_updates": notes, "trace": state["trace"] + ["memory_update"]}
@@ -294,3 +298,31 @@ def general(state: State) -> State:
     refs = ctx.evidence_refs[:8]
     return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [b.id for b in ctx.relevant_beliefs][:10],
             "uncertainties": ctx.uncertainties, "trace": state["trace"] + ["retrieve_context", "general"]}
+
+
+def tell(state: State) -> State:
+    """'About me' replies: confirm what was saved and what it connects to. Never invents facts about the student."""
+    sid, notes = state["student_id"], state.get("memory_updates", [])
+    lines, refs = [], []
+    if not notes:
+        lines.append("I couldn't find anything to save in that. Try starting with “My goal is…”, “I'm interested in…” or “I prefer…”.")
+    if any(("goal" in n or "interest" in n) for n in notes):
+        gc = sorted(goal_concepts(sid))
+        if gc:
+            lines.append("Connects to: " + ", ".join(catalog.concept_label(c) for c in gc) + ".")
+        opps = [o for o in opportunity_ranking.rank(sid) if o.relevance_score >= 0.5]
+        if opps:
+            lines.append("Fits these opportunities:")
+            lines += [f"- **{o.record.title}** — {o.timing_label}" for o in opps[:3]]
+            refs = [record_evidence(o.record) for o in opps[:3]]
+    if any("confidence" in n for n in notes):
+        lines.append("Kept separate from your quiz-based mastery estimates.")
+        flagged = [s.label for s in concept_states(sid) if s.blind_spot]
+        if flagged:
+            lines.append("Possible blind spot (confidence well above graded evidence): " + ", ".join(flagged) + ".")
+    if any("short-lived" in n for n in notes):
+        lines.append("Thanks for telling me. This expires in 24 hours and isn't treated as a lasting trait.")
+    if not lines:
+        lines.append("Saved. You can review or correct it on the Student Model page.")
+    return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [], "uncertainties": [],
+            "trace": state["trace"] + ["tell"]}

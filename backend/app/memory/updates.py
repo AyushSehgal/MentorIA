@@ -16,7 +16,7 @@ from ..schemas import Belief, BeliefScope, BeliefUpdate, Observation, SemanticPr
 from ..timeutil import iso, now, now_iso, parse
 from . import bkt, catalog, propositions, store
 
-PROPOSITION_TYPES = {"goal": "goal", "interest": "interest", "preference": "preference"}
+PROPOSITION_TYPES = {"goal": "goal", "interest": "interest", "preference": "preference", "note": "other"}
 
 
 def mastery_belief_id(student_id: str, concept_id: str) -> str:

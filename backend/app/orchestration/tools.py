@@ -27,6 +27,24 @@ MOOD = re.compile(r"\b(?:i(?:'m| am)|feeling|i feel)\s+(?:really |so |a bit |kin
 QUESTIONISH = re.compile(r"\b(know|what|which|how|should)\b|\?", re.I)
 
 
+TELL_RULES: list[tuple[str, re.Pattern]] = [
+    ("mood", re.compile(r"\b(feel|feeling|tired|stressed|overwhelmed|anxious|burn(?:ed|t) out|exhausted|motivated|excited|sad|happy)\b", re.I)),
+    ("goal", re.compile(r"\b(goal|career|job|become|dream|aspire|after graduation|want to be|hope to|plan to|ambition)\b", re.I)),
+    ("interest", re.compile(r"\b(interested|love|enjoy|fascinated|curious|passionate|into)\b", re.I)),
+    ("preference", re.compile(r"\b(prefer|study best|mornings?|afternoons?|evenings?|nights?|quiet|alone|groups?|pomodoro|flashcards)\b", re.I)),
+]
+
+
+def classify_tell(student_id: str, message: str) -> Observation:
+    """'About me' fallback: every message is saved; pick the closest category, or keep it as a general note."""
+    kind = next((k for k, rx in TELL_RULES if rx.search(message)), "note")
+    statement = re.sub(r"\s+", " ", message).strip()[:300]
+    return Observation(event_id=_oid(student_id, f"tell:{kind}", statement), student_id=student_id, source="chat",
+                       event_type=kind, occurred_at=now_iso(),
+                       payload={"statement": statement, "concept_ids": catalog.match_concepts(statement)},
+                       extraction_confidence=0.7, status="accepted")
+
+
 def route(message: str) -> str:
     for intent, rx in INTENT_RULES:
         if rx.search(message):

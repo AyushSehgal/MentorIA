@@ -85,3 +85,25 @@ export function providerLabel(p: string): string {
       return p;
   }
 }
+
+/** Compact "Tue 11:59 PM" style label. */
+export function fmtShort(iso: string | null | undefined, tz: string = FALLBACK_TZ): string {
+  const d = safeDate(iso);
+  if (!d) return "no date";
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", hour: "numeric", minute: "2-digit" }).format(d);
+  } catch {
+    return d.toLocaleString();
+  }
+}
+
+/** Compact "Tue Nov 10" style label. */
+export function fmtDay(iso: string | null | undefined, tz: string = FALLBACK_TZ): string {
+  const d = safeDate(iso);
+  if (!d) return "no date";
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric" }).format(d);
+  } catch {
+    return d.toDateString();
+  }
+}

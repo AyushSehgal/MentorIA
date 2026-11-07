@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import type { ConnectorStatus, EvidenceRef } from "../api/types";
 import { fmtDateTime, providerLabel } from "../lib/format";
 
@@ -151,4 +151,117 @@ export function MarkdownLite({ text }: { text: string }) {
   flushPara();
   flushList();
   return <div className="md">{blocks}</div>;
+}
+
+/** Compact dashboard block: icon + short title + status dot (details in tooltip) + one Demo pill. */
+export function Block({
+  icon,
+  title,
+  status,
+  demo,
+  actions,
+  children,
+  className,
+}: {
+  icon: string;
+  title: string;
+  status?: ConnectorStatus;
+  demo?: boolean;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`card block ${className ?? ""}`}>
+      <header className="block-head">
+        <span className="block-icon" aria-hidden>
+          {icon}
+        </span>
+        <h2>{title}</h2>
+        {status && <StatusDot status={status} />}
+        {demo && <span className="pill pill-demo">Demo</span>}
+        <span className="block-actions">{actions}</span>
+      </header>
+      {status?.state === "failed" && (
+        <div className="block-error" title={status.detail}>
+          Sync failed
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+/** Shows the first `limit` items with a "+N more" toggle. */
+export function MoreList<T>({
+  items,
+  limit = 4,
+  render,
+  className = "items",
+}: {
+  items: T[];
+  limit?: number;
+  render: (item: T, i: number) => ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? items : items.slice(0, limit);
+  return (
+    <>
+      <ul className={className}>{shown.map((it, i) => render(it, i))}</ul>
+      {items.length > limit && (
+        <button className="link-btn more-btn" onClick={() => setOpen((o) => !o)}>
+          {open ? "Show less" : `+${items.length - limit} more`}
+        </button>
+      )}
+    </>
+  );
+}
+
+/** One-line item: title + muted meta line, optional right-side element. */
+export function Item({
+  title,
+  meta,
+  side,
+  tip,
+  done,
+  children,
+}: {
+  title: ReactNode;
+  meta?: ReactNode;
+  side?: ReactNode;
+  tip?: string;
+  done?: boolean;
+  children?: ReactNode;
+}) {
+  return (
+    <li className={`item ${done ? "done" : ""}`} title={tip}>
+      <div className="item-main">
+        <div className="item-title">{title}</div>
+        {meta && <div className="item-meta">{meta}</div>}
+        {children}
+      </div>
+      {side && <div className="item-side">{side}</div>}
+    </li>
+  );
+}
+
+/** Small "why?" toggle that reveals a short list of reasons. */
+export function Why({ reasons, label = "why?" }: { reasons: string[]; label?: string }) {
+  const [open, setOpen] = useState(false);
+  if (!reasons.length) return null;
+  return (
+    <>
+      <button className="link-btn why-btn" onClick={() => setOpen((o) => !o)}>
+        {open ? "hide" : label}
+      </button>
+      {open && (
+        <ul className="why-list">
+          {reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
 }

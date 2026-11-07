@@ -37,11 +37,9 @@ export function Knowledge({ tz }: { tz: string }) {
         {model && (
           <>
             <p className="narrative">{model.narrative}</p>
-            {model.courses.length === 0 && <Empty>No courses yet — add a course overview on the Add data page.</Empty>}
-            <p className="muted small">
-              BKT mastery is a model estimate from graded assessment evidence (illustrative parameters, not calibrated).
-              Self-confidence is your own report and is stored separately. Blind spots are candidate signals, not diagnoses.
-              State version {model.state_version}.
+            {model.courses.length === 0 && <Empty>No courses yet.</Empty>}
+            <p className="muted small" title="BKT parameters are illustrative, not calibrated. Blind spots are candidate signals, not diagnoses.">
+              Mastery = estimate from graded work · Confidence = your own rating.
             </p>
             {[...byCourse.entries()].map(([course, concepts]) => (
               <div key={course} className="course-block">

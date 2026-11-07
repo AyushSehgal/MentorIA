@@ -66,9 +66,8 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
           </button>
         }
       >
-        <p className="muted small">
-          “verified” means a live API call succeeded in this server process. “imported” means items were added from files on the
-          Add data page — not a live connection. Demo files are sample content, never a claim about your real accounts.
+        <p className="muted small" title="“imported” = added from files, not a live connection. “verified” = a live API call succeeded.">
+          Live connections and imported files.
         </p>
         {error && <p className="error-text">{error}</p>}
         {msg && <p className="info-text">{msg}</p>}
@@ -116,9 +115,9 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
 }
 
 const MODES: { mode: LLMMode; title: string; blurb: string }[] = [
-  { mode: "off", title: "Off — most private", blurb: "No language model. Answers are assembled directly from your stored evidence." },
-  { mode: "local", title: "Local model", blurb: "A model running on this computer (e.g. Ollama) rewords answers. Nothing leaves your device." },
-  { mode: "cloud", title: "Cloud model", blurb: "A hosted model (OpenRouter) rewords answers. Your question and MentorIA's draft answer are sent to that provider." },
+  { mode: "off", title: "Off — most private", blurb: "No AI. Answers built from your data." },
+  { mode: "local", title: "Local model", blurb: "On this computer. Nothing leaves." },
+  { mode: "cloud", title: "Cloud model", blurb: "OpenRouter. Question + draft are sent." },
 ];
 
 function PrivacyCard() {
@@ -148,9 +147,8 @@ function PrivacyCard() {
 
   return (
     <Card title="Privacy & AI">
-      <p className="muted small">
-        Every answer is first built from your stored evidence with citations. A language model, if you enable one, may only
-        reword that draft; rewrites that add numbers or drop citations are discarded automatically.
+      <p className="muted small" title="Rewrites that add numbers or drop citations are discarded automatically.">
+        AI only rewords evidence-based answers.
       </p>
       {err && <p className="error-text">{err}</p>}
       <div className="privacy-modes" role="radiogroup" aria-label="Language model mode">
@@ -174,7 +172,7 @@ function PrivacyCard() {
       {p && (
         <p className="small">
           {p.data_leaves_device ? "⚠️ Data leaves this device in the current mode. " : "🔒 Nothing leaves this device in the current mode. "}
-          <span className="muted">What an LLM receives: {p.sent_to_llm}</span>
+          <span className="muted" title={p.sent_to_llm}>(what's sent?)</span>
         </p>
       )}
     </Card>

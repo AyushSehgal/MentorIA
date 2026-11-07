@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api, DEFAULT_STUDENT } from "../api/client";
 import type { ApproveResponse, Recommendation } from "../api/types";
 import { fmtDateTime } from "../lib/format";
-import { Bar, DemoLabel, EvidenceChips } from "./Common";
+import { Bar, EvidenceChips } from "./Common";
 
 const typeLabel: Record<Recommendation["type"], string> = {
   study_session: "Study session",
@@ -25,7 +25,7 @@ export function ApprovalCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApproveResponse | null>(null);
-  const [showFactors, setShowFactors] = useState(!compact);
+  const [showFactors, setShowFactors] = useState(false);
 
   const pending = current.status === "pending";
   const hasCalendarAction = current.proposed_action?.provider === "google_calendar";
@@ -69,77 +69,61 @@ export function ApprovalCard({
   const simulated = result?.simulated || current.status === "executed_simulated";
 
   return (
-    <div className={`approval status-${current.status}`}>
-      <div className="approval-head">
-        <span className="approval-type">{typeLabel[current.type] ?? current.type}</span>
-        <span className={`rec-status rec-${current.status}`}>{current.status.replace("_", " ")}</span>
-        <DemoLabel show={current.is_fixture} />
-      </div>
-      <h3 className="approval-title">{current.title}</h3>
-      <dl className="approval-meta">
-        <div>
-          <dt>Start</dt>
-          <dd>{current.suggested_start ? fmtDateTime(current.suggested_start, tz) : "No time proposed"}</dd>
-        </div>
-        <div>
-          <dt>Duration</dt>
-          <dd>{current.duration_minutes ? `${current.duration_minutes} min` : "—"}</dd>
-        </div>
-        {current.proposed_action && (
-          <div>
-            <dt>Action</dt>
-            <dd>
-              {current.proposed_action.provider} · {current.proposed_action.operation}
-            </dd>
+    <div className={`approval status-${current.status} ${compact ? "compact" : ""}`}>
+      <div className="approval-row">
+        <div className="approval-main">
+          <div className="approval-title">{current.title}</div>
+          <div className="item-meta">
+            {typeLabel[current.type] ?? current.type} ·{" "}
+            {current.suggested_start ? fmtDateTime(current.suggested_start, tz) : "no time"}
+            {current.duration_minutes ? ` · ${current.duration_minutes} min` : ""}
+            {current.is_fixture && !compact ? " · Demo" : ""}
           </div>
+        </div>
+        {pending ? (
+          <div className="approval-actions">
+            <button
+              className="btn primary small-btn"
+              disabled={busy}
+              onClick={approve}
+              title={hasCalendarAction ? "Add to calendar — nothing is written without your approval" : "Approve"}
+            >
+              Approve
+            </button>
+            <button className="btn small-btn" disabled={busy} onClick={reject}>
+              Reject
+            </button>
+          </div>
+        ) : (
+          <span className={`rec-status rec-${current.status}`}>{current.status.replace("_", " ")}</span>
         )}
-      </dl>
-      <p className="approval-reason">{current.reason}</p>
-      {current.factors.length > 0 && (
-        <div className="factors">
-          <button className="link-btn" onClick={() => setShowFactors((s) => !s)}>
-            {showFactors ? "Hide" : "Show"} prioritization factors ({current.factors.length})
-          </button>
-          {showFactors && (
-            <ul>
+      </div>
+      {simulated && <div className="simulated-banner">Simulated — Calendar not connected; nothing written</div>}
+      {current.status === "rejected" && <div className="approval-result">Rejected — no external action taken.</div>}
+      {error && <p className="error-text">{error}</p>}
+      <button className="link-btn why-btn" onClick={() => setShowFactors((s) => !s)}>
+        {showFactors ? "hide details" : "details"}
+      </button>
+      {showFactors && (
+        <div className="approval-details">
+          <p className="approval-reason">{current.reason}</p>
+          {current.factors.length > 0 && (
+            <ul className="factors">
               {current.factors.map((f) => (
-                <li key={f.name}>
+                <li key={f.name} title={f.explanation}>
                   <span className="factor-name">{f.name.replace(/_/g, " ")}</span>
                   <Bar value={f.value} />
                   <span className="factor-val">{f.value.toFixed(2)}</span>
-                  <span className="factor-exp">{f.explanation}</span>
                 </li>
               ))}
             </ul>
           )}
-        </div>
-      )}
-      <EvidenceChips evidence={current.evidence} />
-      {pending && (
-        <div className="approval-actions">
-          {current.proposed_action ? (
-            <button className="btn primary" disabled={busy} onClick={approve}>
-              {hasCalendarAction ? "Approve & add to calendar" : "Approve"}
-            </button>
-          ) : (
-            <button className="btn primary" disabled={busy} onClick={approve}>
-              Mark approved
-            </button>
+          {(result?.result_detail || current.result_detail) && (
+            <p className="approval-result">{result?.result_detail ?? current.result_detail}</p>
           )}
-          <button className="btn" disabled={busy} onClick={reject}>
-            Reject
-          </button>
-          <span className="approval-note">Nothing is written externally without your approval.</span>
+          <EvidenceChips evidence={current.evidence} />
         </div>
       )}
-      {simulated && (
-        <div className="simulated-banner">Simulated — Calendar not connected; nothing written</div>
-      )}
-      {(result?.result_detail || current.result_detail) && (
-        <p className="approval-result">{result?.result_detail ?? current.result_detail}</p>
-      )}
-      {current.status === "rejected" && <p className="approval-result">Rejected — no external action taken.</p>}
-      {error && <p className="error-text">{error}</p>}
     </div>
   );
 }
