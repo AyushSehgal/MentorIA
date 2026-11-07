@@ -1,21 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import type { DashboardResponse, Insight, KnowledgeCounts, SourceRecord } from "../api/types";
+import type { DashboardResponse, KnowledgeCounts, SourceRecord } from "../api/types";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
 import { WeekCalendar } from "../components/WeekCalendar";
 import { Bar, Block, Empty, EvidenceChips, ExpandItem, Facts, MoreList } from "../components/Common";
 import { fmtDay, fmtShort, pct } from "../lib/format";
 
-
-const insightIcon: Record<Insight["kind"], string> = {
-  focus_area: "🎯",
-  blind_spot: "⚠️",
-  deadline: "⏰",
-  stale_evidence: "🕰️",
-  opportunity: "✨",
-  missing_evidence: "❔",
-  goal: "🧭",
-};
 
 const KSTATS: { key: keyof KnowledgeCounts; label: string }[] = [
   { key: "courses", label: "Courses" },
@@ -121,7 +111,6 @@ function InsightsBlock({ data }: { data: DashboardResponse }) {
             return (
               <ExpandItem
                 key={ins.id}
-                icon={insightIcon[ins.kind] ?? "•"}
                 title={ins.kind === "goal" ? ins.detail : ins.title.replace(/^Focus #\d+: /, "Focus: ")}
                 badge={sources > 1 ? `${sources} sources` : undefined}
               >
