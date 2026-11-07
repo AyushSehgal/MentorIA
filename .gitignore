@@ -1,0 +1,14 @@
+.env
+*.db
+*.sqlite
+backend/.venv/
+backend/data/
+node_modules/
+frontend/dist/
+__pycache__/
+.pytest_cache/
+secrets/
+*.token.json
+google_token.json
+uploads/
+.DS_Store

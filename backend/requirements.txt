@@ -1,0 +1,12 @@
+fastapi==0.162.2
+uvicorn[standard]
+pydantic>=2.7
+langgraph>=1.0
+pypdf>=5.0
+reportlab>=4.0
+python-multipart
+python-dotenv
+requests
+anthropic
+pytest
+httpx
