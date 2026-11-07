@@ -40,7 +40,12 @@ def memory_update(state: State) -> State:
                 notes.append(f"Recorded self-reported confidence {o.payload['value']:.2f} for {catalog.concept_label(o.concept_id)} "
                              "(kept separate from quiz-based mastery).")
             elif o.event_type in ("goal", "interest", "preference"):
-                notes.append(f"Saved {o.event_type}: “{o.payload['statement']}” (self-reported; you can correct it on the Student Model page).")
+                prop = next((p for p in store.list_propositions(state["student_id"]) if o.event_id in p.evidence_ids), None)
+                if prop and len(prop.evidence_ids) > 1:
+                    notes.append(f"This matches a {o.event_type} you already stated elsewhere — “{prop.statement}” is now backed by "
+                                 f"{len(prop.evidence_ids)} sources.")
+                else:
+                    notes.append(f"Saved {o.event_type}: “{o.payload['statement']}” (self-reported; you can correct it on the Student Model page).")
             elif o.event_type == "mood":
                 notes.append("Noted how you're feeling today as a short-lived self-report (expires in 24h; not a permanent trait).")
     return {"memory_updates": notes, "trace": state["trace"] + ["memory_update"]}
@@ -48,8 +53,12 @@ def memory_update(state: State) -> State:
 
 def struggling(state: State) -> State:
     sid, msg = state["student_id"], state["message"].lower()
-    course_ids = catalog.domain_courses("systems") if "system" in msg else \
-        catalog.domain_courses("robotics") if any(w in msg for w in ("robot", "embodied")) else [c["id"] for c in catalog.courses()]
+    course_ids = catalog.courses_in_text(state["message"]) or [c["id"] for c in catalog.courses()]
+    if not course_ids:
+        return {"draft": "I don't know about any of your courses yet. Add a course overview and some graded work on the "
+                         "Add data page, and I'll tell you where the evidence points.",
+                "sources": [], "beliefs_used": [], "uncertainties": ["No courses or graded evidence added yet."],
+                "trace": state["trace"] + ["struggling"]}
     states = [s for s in concept_states(sid) if s.course_id in course_ids]
     graded = [s for s in states if s.mastery is not None]
     scope = " / ".join(catalog.course_label(c) for c in course_ids)
@@ -85,7 +94,8 @@ def struggling(state: State) -> State:
         lines.append("Looking solid on the same evidence: " + ", ".join(f"{s.label} ({s.mastery:.2f})" for s in ok) + ".")
         refs += [e for s in ok for e in s.evidence if e.provider == "documents"]
     if none:
-        lines.append("Not enough graded evidence to evaluate: " + ", ".join(s.label for s in none) + ".")
+        shown = ", ".join(s.label for s in none[:5]) + (f", and {len(none) - 5} more" if len(none) > 5 else "")
+        lines.append(f"Not enough graded evidence to evaluate: {shown}.")
     pending = [o for o in store.list_observations(sid, event_type="assessment_answer") if o.status == "pending_review"]
     unc = [BKT_CAVEAT]
     if pending:
@@ -105,7 +115,7 @@ def struggling(state: State) -> State:
 
 def weekly_focus(state: State) -> State:
     sid = state["student_id"]
-    prios = planning.priorities(sid)
+    prios = planning.priorities(sid, limit=4)
     recs = planning.propose_study_sessions(sid, prios)
     refs: list[EvidenceRef] = []
     lines = []
@@ -125,6 +135,17 @@ def weekly_focus(state: State) -> State:
                 bits.append("possible blind spot (confidence ≫ estimate)")
             lines.append(f"{i}. **{s.label}** (priority {p.score:.2f}) — " + "; ".join(bits) + ".")
             refs += p.evidence
+    listed = {p.concept.concept_id for p in prios}
+    goal_ids = goal_concepts(sid)
+    soon = sorted([a for a in store.list_records(sid, kind="assignment") if not a.metadata.get("completed")
+                   and (d := parse(a.occurred_at)) and now() <= d <= now() + timedelta(days=14)], key=lambda a: a.occurred_at)
+    for a in soon:
+        linked = [c for c in a.concept_ids if c in goal_ids and c not in listed]
+        if linked:
+            lines.append(f"Linked to your goal: **{catalog.concept_label(linked[0])}** — “{a.title}” is due "
+                         f"{human(parse(a.occurred_at))}. There's no graded evidence on it yet, so plan an early start.")
+            refs.append(record_evidence(a))
+            break
     windows = free_windows(sid)
     if windows:
         total = sum(w.minutes for w in windows) // 60
@@ -149,21 +170,25 @@ def weekly_focus(state: State) -> State:
 def course_next(state: State) -> State:
     sid = state["student_id"]
     prof = profile()
-    goals = [p for p in active_propositions(sid) if p.category in ("goal", "interest")]
+    goals = sorted([p for p in active_propositions(sid) if p.category == "goal"], key=lambda p: -len(p.evidence_ids))
     gc = goal_concepts(sid)
     lines = ["I don't have a verified course catalog or official prerequisite data, so I won't name specific courses or claim prerequisites."]
     if goals:
-        lines.append("Your stated goals: " + "; ".join(f"“{g.statement}”" for g in goals) + ".")
+        lines.append("Your stated goals: " + "; ".join(
+            f"“{g.statement}”" + (f" (in {len(g.evidence_ids)} sources)" if len(g.evidence_ids) > 1 else "") for g in goals) + ".")
     if prof.get("completed_courses"):
-        lines.append("Completed courses on record (demo data): " + ", ".join(c["label"] for c in prof["completed_courses"]) + ".")
+        lines.append("Completed courses on record: " + ", ".join(c["label"] for c in prof["completed_courses"]) + ".")
+    current = [c["label"] for c in catalog.courses()]
+    if current:
+        lines.append("Courses I know you're taking: " + ", ".join(current) + ".")
     if gc:
         lines.append("Subject areas that line up with those goals (from the demo concept map, not a catalog): "
                      + ", ".join(catalog.concept_label(c) for c in sorted(gc)) + ".")
     weak = [s for s in concept_states(sid) if s.mastery is not None and s.mastery < 0.5]
     if weak:
-        lines.append("Before systems-heavy coursework, consider shoring up: " + ", ".join(s.label for s in weak)
-                     + " (based on graded evidence).")
-    hits = store.search_pages(sid, ["prerequisite", "prerequisites", "catalog"], limit=3)
+        lines.append("Before taking more advanced courses that build on them, consider shoring up: "
+                     + ", ".join(s.label for s in weak) + " (based on graded evidence).")
+    hits = [h for h in store.search_pages(sid, ["course catalog", "degree audit", "degree requirements"], limit=3)]
     refs = []
     if hits:
         for h in hits:
@@ -177,7 +202,7 @@ def course_next(state: State) -> State:
         lines.append("To get specific recommendations, upload your department's course catalog or degree audit (PDF) and I'll match it against your goals and evidence.")
     return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [],
             "uncertainties": ["No verified course catalog or prerequisite data available.",
-                              "Completed-course records are demo data."],
+                              "I have no record of your completed courses."],
             "trace": state["trace"] + ["retrieve_context", "course_next"]}
 
 
@@ -243,6 +268,19 @@ def general(state: State) -> State:
                      "or skip planning today. I won't treat this as a lasting trait.")
         return {"draft": "\n".join(lines), "sources": [], "beliefs_used": [f"belief_{sid}_motivation_selfreport"],
                 "uncertainties": [], "trace": state["trace"] + ["general"]}
+    if any(("goal" in n or "interest" in n) for n in state.get("memory_updates", [])):
+        gc = sorted(goal_concepts(sid))
+        if gc:
+            lines.append("Concepts in your courses that connect to your goals: " + ", ".join(catalog.concept_label(c) for c in gc) + ".")
+        opps = [o for o in opportunity_ranking.rank(sid) if o.relevance_score >= 0.5]
+        if opps:
+            lines.append("Opportunities in your inbox that fit:")
+            lines += [f"- **{o.record.title}** — {o.timing_label}" for o in opps[:3]]
+        lines.append("Ask “What should I focus on this week?” to see how this changes your priorities.")
+        refs = [record_evidence(o.record) for o in opps[:3]]
+        return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [], "uncertainties": [
+                    "Goals are what you told me; I don't infer them from your activity."],
+                "trace": state["trace"] + ["retrieve_context", "general"]}
     if ctx.facts:
         lines.append("Here's what I know that's relevant:")
         lines += [f"- {f}" for f in ctx.facts[:6]]

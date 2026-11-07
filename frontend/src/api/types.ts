@@ -3,12 +3,12 @@
 
 export type Provider = "canvas" | "google_calendar" | "gmail" | "piazza" | "documents";
 
-export type ConnectorState = "connected" | "needs_auth" | "failed" | "demo_data" | "not_available";
+export type ConnectorState = "connected" | "needs_auth" | "failed" | "demo_data" | "not_available" | "imported";
 
 export interface ConnectorStatus {
   provider: Provider;
   state: ConnectorState;
-  mode: "live" | "fixture" | "none";
+  mode: "live" | "fixture" | "none" | "import"; // "import" = items added from files, not a live connection
   detail: string;
   last_synced_at: string | null;
   record_count: number;
@@ -119,6 +119,7 @@ export interface StudentModel {
   propositions: SemanticProposition[];
   global_beliefs: Belief[];
   narrative: string;
+  proposition_evidence: Record<string, EvidenceRef[]>; // proposition id -> every source that stated it (v1.2)
   state_version: number;
 }
 
@@ -224,7 +225,7 @@ export interface SourceCard {
 
 export interface Insight {
   id: string;
-  kind: "focus_area" | "blind_spot" | "deadline" | "stale_evidence" | "opportunity" | "missing_evidence";
+  kind: "focus_area" | "blind_spot" | "deadline" | "stale_evidence" | "opportunity" | "missing_evidence" | "goal";
   title: string;
   detail: string;
   course_id: string | null;
@@ -247,6 +248,7 @@ export interface DashboardResponse {
   insights: Insight[];
   recommendations: Recommendation[]; // pending only
   connectors: ConnectorStatus[];
+  knowledge: KnowledgeCounts; // v1.2: what NOVA knows so far (drives the "context growing" bar)
 }
 
 export interface ChatMessage {
@@ -313,4 +315,52 @@ export interface PrivacySettings {
   cloud_detail: string;
   data_leaves_device: boolean;
   sent_to_llm: string;
+}
+
+// ---- v1.2: start empty, add data manually ------------------------------------------------
+export interface KnowledgeCounts {
+  courses: number;
+  concepts: number;
+  documents: number;
+  graded_answers: number;
+  goals: number; // active goal/interest propositions
+  goal_sources: number; // total sources backing those goals
+  source_items: number; // Canvas/Calendar/Gmail/Piazza items
+  imports: number;
+}
+
+export type ImportKind =
+  | "course_overview"
+  | "graded_assessment"
+  | "study_material"
+  | "personal_document"
+  | "email"
+  | "calendar"
+  | "source_pack";
+
+export interface ImportResult {
+  id: string;
+  filename: string;
+  kind: ImportKind;
+  title: string;
+  summary: string; // one line, e.g. "Added course 10-601 with 15 concepts"
+  changes: string[]; // human-readable list of what changed in NOVA's model
+  records_added: number;
+  observations_added: number;
+  concepts_added: number;
+  goals_added: number; // new or reinforced goals/interests
+  document: DocumentSummary | null;
+  is_fixture: boolean;
+  imported_at: string;
+  warnings: string[];
+}
+
+export interface DemoAsset {
+  name: string; // file name in demo_assets/
+  step: number; // suggested order
+  title: string;
+  description: string;
+  kind: ImportKind;
+  what_to_notice: string; // what changes in the UI after adding it
+  added: boolean;
 }

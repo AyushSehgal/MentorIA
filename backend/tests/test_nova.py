@@ -6,6 +6,8 @@ from app.schemas import Observation
 from app.services import opportunity_ranking
 from app.timeutil import now_iso
 
+from .conftest import load_doc
+
 SID = "demo_student"
 
 
@@ -58,20 +60,20 @@ def test_self_report_does_not_change_mastery(client):
 
 # ---- Documents ---------------------------------------------------------------
 def test_graded_quiz_pdf_page_refs_and_idempotent(client):
-    d = client.post("/api/documents/demo/graded_quiz").json()
+    d = load_doc(client, "graded")
     assert d["kind"] == "graded_assessment" and d["observations_created"] == 6 and d["pending_review"] == 1
     q2 = next(q for q in d["questions"] if q["question_id"] == "Q2")
     assert (q2["page"], q2["concept_id"], q2["correct"]) == (1, "cache_coherence", False)
     m1 = mastery("cache_coherence")
     assert m1 is not None and m1 < 0.3
     assert mastery("processes_signals") is None  # partial credit -> pending_review, no update
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     assert mastery("cache_coherence") == m1
     assert len(store.list_observations(SID, event_type="assessment_answer")) == 7
 
 
 def test_question_pdf_without_grade_does_not_generate_score(client):
-    d = client.post("/api/documents/demo/ungraded_sheet").json()
+    d = load_doc(client, "ungraded")
     assert d["kind"] == "study_material" and d["observations_created"] == 0
     assert all(q["status"] == "no_grade" and q["correct"] is None for q in d["questions"])
     assert store.list_beliefs(SID, key="knowledge.mastery") == []
@@ -93,10 +95,10 @@ def test_connector_partial_failure(client, monkeypatch):
     res = client.post("/api/connectors/sync").json()
     by = {r["provider"]: r for r in res}
     assert by["canvas"]["status"]["state"] == "failed" and by["canvas"]["errors"]
-    assert by["gmail"]["status"]["state"] == "demo_data"
+    assert by["gmail"]["status"]["state"] == "not_available"  # unconfigured, untouched
     d = client.get("/api/dashboard").json()
-    assert d["cards"]["canvas"]["status"]["state"] == "failed"
-    assert all(i["is_fixture"] for i in d["cards"]["canvas"]["items"])  # labeled fallback, never "live"
+    assert len(d["cards"]["canvas"]["items"]) == 5  # items added from files survive a failed live sync
+    assert "Live sync failed" in d["cards"]["canvas"]["status"]["detail"]
     assert len(d["cards"]["google_calendar"]["items"]) > 0
 
 
@@ -104,13 +106,14 @@ def test_fixture_records_are_labeled(client):
     d = client.get("/api/dashboard").json()
     for key in ("canvas", "google_calendar", "gmail", "piazza"):
         card = d["cards"][key]
-        assert card["status"]["state"] == "demo_data" and not card["status"]["verified_live"]
+        assert card["status"]["state"] == "imported" and card["status"]["mode"] == "import"
+        assert not card["status"]["verified_live"]
         assert all(r["is_fixture"] for r in card["items"])
 
 
 # ---- Chat --------------------------------------------------------------------
 def test_chat_response_has_source_refs(client):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     r = client.post("/api/chat", json={"message": "What systems topics am I struggling with?", "student_id": SID}).json()
     assert r["intent"] == "struggling"
     assert "Cache Coherence" in r["answer"] and "Q2" in r["answer"]
@@ -139,7 +142,7 @@ def test_goal_from_chat_becomes_proposition(client):
 
 # ---- Approvals ---------------------------------------------------------------
 def _pending_rec(client):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     w = client.post("/api/chat", json={"message": "What should I focus on this week?", "student_id": SID}).json()
     return w["proposed_recommendations"][0]
 

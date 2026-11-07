@@ -17,7 +17,7 @@ export function StatusBadge({ status }: { status: ConnectorStatus | undefined })
     <span className={`badge badge-${status.state}`} title={status.detail}>
       <StatusDot status={status} />
       {status.state.replace("_", " ")}
-      {status.mode !== "none" && <span className="badge-mode"> · {status.mode}</span>}
+      {status.mode !== "none" && <span className="badge-mode"> · {status.mode === "import" ? "from files" : status.mode}</span>}
       {status.verified_live && <span className="badge-mode"> · verified</span>}
     </span>
   );

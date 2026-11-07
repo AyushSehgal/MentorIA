@@ -11,7 +11,7 @@ import { Sources } from "./pages/Sources";
 const ROUTES = [
   { path: "/", label: "Dashboard" },
   { path: "/knowledge", label: "Student Model" },
-  { path: "/documents", label: "Documents" },
+  { path: "/documents", label: "Add data" },
   { path: "/sources", label: "Sources" },
 ];
 

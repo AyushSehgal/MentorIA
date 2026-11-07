@@ -24,7 +24,9 @@ def sync_provider(provider: str, student_id: str) -> SyncResponse:
     added = 0
     if result.records or result.status.state in ("connected", "demo_data"):
         # Replace this provider's records with the fresh snapshot (removes deleted events / stale fixtures).
-        store.delete_records(student_id, provider, keep_external_ids={r.external_id for r in result.records})
+        keep = {r.external_id for r in result.records} | {r.external_id for r in store.list_records(student_id, provider=provider)
+                                                           if r.metadata.get("imported")}
+        store.delete_records(student_id, provider, keep_external_ids=keep)
         added, _ = updates.ingest_records(result.records)
     store.put_status(result.status)
     updates.recompute_workload(student_id)
@@ -40,8 +42,20 @@ def sync_all(student_id: str) -> list[SyncResponse]:
 def statuses(student_id: str) -> list[ConnectorStatus]:
     out = []
     for p in PROVIDERS:
-        s = store.get_status(p) or ConnectorStatus(provider=p, state="not_available", mode="none", detail="Not synced yet")
-        out.append(s)
+        s = store.get_status(p)
+        imported = [r for r in store.list_records(student_id, provider=p) if r.metadata.get("imported")]
+        if s and s.state == "connected":
+            out.append(s)
+        elif imported:
+            demo = all(r.is_fixture for r in imported)
+            detail = f"{len(imported)} item(s) added from files" + (" (sample demo data)" if demo else "") + " — not a live connection."
+            if s and s.state == "failed":
+                detail += f" Live sync failed: {s.detail}"
+            out.append(ConnectorStatus(provider=p, state="imported", mode="import", detail=detail, record_count=len(imported),
+                                       last_synced_at=max((r.fetched_at for r in imported), default=None), verified_live=False))
+        else:
+            out.append(s or ConnectorStatus(provider=p, state="not_available", mode="none",
+                                            detail="Not connected. Add exported files on the Add data page."))
     docs = store.list_documents(student_id)
     out.append(ConnectorStatus(provider="documents", state="connected", mode="live",
                                detail=f"Local PDF uploads ({len(docs)} document(s))", record_count=len(docs),

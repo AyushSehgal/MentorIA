@@ -12,3 +12,4 @@ secrets/
 google_token.json
 uploads/
 .DS_Store
+demo_assets/

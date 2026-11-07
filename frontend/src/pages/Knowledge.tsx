@@ -37,6 +37,7 @@ export function Knowledge({ tz }: { tz: string }) {
         {model && (
           <>
             <p className="narrative">{model.narrative}</p>
+            {model.courses.length === 0 && <Empty>No courses yet — add a course overview on the Add data page.</Empty>}
             <p className="muted small">
               BKT mastery is a model estimate from graded assessment evidence (illustrative parameters, not calibrated).
               Self-confidence is your own report and is stored separately. Blind spots are candidate signals, not diagnoses.
@@ -82,13 +83,17 @@ export function Knowledge({ tz }: { tz: string }) {
         {!model ? (
           <Empty>—</Empty>
         ) : model.propositions.length === 0 ? (
-          <Empty>No propositions yet. Tell NOVA your goals in chat.</Empty>
+          <Empty>No goals yet. Tell NOVA your goals in chat, or add something you wrote on the Add data page.</Empty>
         ) : (
           <ul className="props">
-            {model.propositions.map((p) => (
+            {model.propositions.map((p) => {
+              const sources = model.proposition_evidence?.[p.id] ?? [];
+              return (
               <li key={p.id} className={`prop prop-${p.status}`}>
                 <div>
                   <span className="pill">{p.category}</span> {p.statement}
+                  {sources.length >= 2 && <span className="prop-sources">stated in {sources.length} sources</span>}
+                  <EvidenceChips evidence={sources} />
                 </div>
                 <div className="prop-side">
                   <span className={`pill status-${p.status}`}>{p.status.replace("_", " ")}</span>
@@ -109,7 +114,8 @@ export function Knowledge({ tz }: { tz: string }) {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
         {model && model.global_beliefs.length > 0 && (

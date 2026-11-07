@@ -5,11 +5,11 @@ from datetime import timedelta
 
 from ..config import settings
 from ..memory import catalog, store
-from ..memory.context import concept_states, record_evidence, student_info
+from ..memory.context import active_propositions, concept_states, obs_evidence, record_evidence, student_info
 from ..schemas import (CalendarCard, ConnectorStatus, DashboardCards, DashboardResponse, DocumentsCard, GmailCard, Insight,
-                       SourceCard)
+                       KnowledgeCounts, SourceCard)
 from ..timeutil import human, now, now_iso, parse
-from . import opportunity_ranking, planning
+from . import imports, opportunity_ranking, planning
 from .aggregation import free_windows, statuses
 
 
@@ -17,8 +17,24 @@ def _status(all_s: list[ConnectorStatus], p: str) -> ConnectorStatus:
     return next(s for s in all_s if s.provider == p)
 
 
+def knowledge(student_id: str) -> KnowledgeCounts:
+    goals = [p for p in active_propositions(student_id) if p.category in ("goal", "interest")]
+    answers = [o for o in store.list_observations(student_id, event_type="assessment_answer") if o.status == "accepted"]
+    items = sum(len(store.list_records(student_id, provider=p)) for p in ("canvas", "google_calendar", "gmail", "piazza"))
+    return KnowledgeCounts(courses=len(catalog.courses()), concepts=len(catalog.concepts()),
+                           documents=len(store.list_documents(student_id)), graded_answers=len(answers), goals=len(goals),
+                           goal_sources=sum(len(p.evidence_ids) for p in goals), source_items=items,
+                           imports=len(imports.list_imports(student_id)))
+
+
 def insights(student_id: str) -> list[Insight]:
     out: list[Insight] = []
+    goals = sorted([p for p in active_propositions(student_id) if p.category == "goal"], key=lambda p: -len(p.evidence_ids))
+    for p in goals[:2]:
+        n = len(p.evidence_ids)
+        out.append(Insight(id=f"ins_goal_{p.id}", kind="goal", title="Your goal" + (f" — stated in {n} sources" if n > 1 else ""),
+                           detail=p.statement, evidence=[obs_evidence(o) for eid in p.evidence_ids if (o := store.get_observation(eid))],
+                           confidence_note="Self-reported. Correct it on the Student Model page if it's wrong."))
     states = concept_states(student_id)
     for s in states:
         if s.blind_spot:
@@ -67,11 +83,12 @@ def dashboard(student_id: str) -> DashboardResponse:
         google_calendar=CalendarCard(provider="google_calendar", label="Google Calendar — This Week",
                                      status=_status(st, "google_calendar"), items=cal, free_windows=free_windows(student_id)),
         gmail=GmailCard(provider="gmail", label="Gmail — Academic Opportunities", status=_status(st, "gmail"),
-                        items=[o.record for o in opps], opportunities=opps),
+                        items=[r for r in store.list_records(student_id, provider="gmail")], opportunities=opps),
         piazza=SourceCard(provider="piazza", label="Piazza — Course Discussions", status=_status(st, "piazza"), items=piazza),
         documents=DocumentsCard(label="Documents — Academic Sources", status=_status(st, "documents"),
                                 documents=store.list_documents(student_id)),
     )
     return DashboardResponse(student=student_info(student_id), generated_at=now_iso(), demo_mode=settings.demo_mode,
                              cards=cards, insights=insights(student_id),
-                             recommendations=store.list_recommendations(student_id, status="pending"), connectors=st)
+                             recommendations=store.list_recommendations(student_id, status="pending"), connectors=st,
+                             knowledge=knowledge(student_id))

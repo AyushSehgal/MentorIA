@@ -38,3 +38,17 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
 - `ChatResponse.llm_provider: string|null`, `ChatResponse.llm_note: string|null`
 - `HealthResponse.llm.mode: "off"|"local"|"cloud"`
 - New `PrivacySettings` type + `/api/settings/privacy` routes (ADR-009)
+
+## v1.2 (2026-11-07) — start empty, add data manually (ADR-010)
+- `ConnectorState` += `"imported"`; `ConnectorStatus.mode` += `"import"` (items added from files, not live)
+- `Insight.kind` += `"goal"`
+- `DashboardResponse.knowledge: KnowledgeCounts`
+- `StudentModel.proposition_evidence: Record<propId, EvidenceRef[]>`
+- New types `ImportResult`, `DemoAsset`, `ImportKind`
+- Routes:
+  - `GET /api/imports/demo?student_id=` → `DemoAsset[]` (ordered, with `added`)
+  - `POST /api/imports/demo/{name}?student_id=` → `ImportResult`
+  - `POST /api/imports/upload` multipart `file`, `student_id`, `authored_by_me` ("true"/"false"), optional `course_id` → `ImportResult`
+    (accepts .pdf, .eml, .ics, .md packs; 400 with `detail` on unsupported/invalid files)
+  - `GET /api/imports?student_id=` → `ImportResult[]` newest first
+- `POST /api/demo/reset` now resets to an EMPTY state (no courses, no data). LLM mode is preserved.

@@ -31,6 +31,8 @@ class Settings:
     db_path: Path
     upload_dir: Path
     synthetic_file: Path
+    student_name: str
+    student_email: str
     llm_mode: str
     llm_timeout: float
     llm_local_base_url: str
@@ -64,6 +66,8 @@ def load_settings() -> Settings:
         db_path=db_path,
         upload_dir=_path("NOVA_UPLOAD_DIR", str(db_path.parent / "uploads")),
         synthetic_file=_path("NOVA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
+        student_name=os.getenv("NOVA_STUDENT_NAME", "Ayush"),
+        student_email=os.getenv("NOVA_STUDENT_EMAIL", "ayush.student@example.edu"),
         llm_mode=os.getenv("LLM_MODE", "local").strip().lower(),
         llm_timeout=float(os.getenv("LLM_TIMEOUT_SECONDS", "90")),
         llm_local_base_url=os.getenv("LLM_LOCAL_BASE_URL", "http://localhost:11434/v1").rstrip("/"),

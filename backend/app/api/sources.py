@@ -6,15 +6,13 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from .. import db
-from ..config import FIXTURES_DIR, settings
+from ..config import settings
 from ..memory import store
-from ..schemas import PrivacySettings, PrivacyUpdate, ConnectorStatus, DashboardResponse, DocumentSummary, HealthResponse, SyncResponse
+from ..schemas import DemoAsset, ImportResult, PrivacySettings, PrivacyUpdate, ConnectorStatus, DashboardResponse, DocumentSummary, HealthResponse, SyncResponse
 from ..orchestration import llm
-from ..services import aggregation, dashboard as dash, seed
-from ..services.document_ingest import ingest_pdf
+from ..services import aggregation, dashboard as dash, demo_assets as demo_assets_svc, imports
 
 router = APIRouter(prefix="/api")
-DEMO_DOCS = {"graded_quiz": "systems_quiz3_graded.pdf", "ungraded_sheet": "systems_vm_practice_ungraded.pdf"}
 MAX_UPLOAD = 25 * 1024 * 1024
 
 
@@ -39,11 +37,6 @@ def connectors(student_id: str = "demo_student"):
 
 @router.post("/connectors/sync", response_model=list[SyncResponse])
 def sync_all(student_id: str = "demo_student"):
-    if settings.demo_mode:
-        try:
-            seed.ingest_self_reports(student_id)  # new self-report rows in the synthetic file
-        except Exception:
-            pass  # a bad edit is reported on the source cards; don't block the sync
     return aggregation.sync_all(student_id)
 
 
@@ -56,20 +49,37 @@ def sync_one(provider: str, student_id: str = "demo_student"):
 
 @router.post("/documents/upload", response_model=DocumentSummary)
 async def upload(file: UploadFile = File(...), course_id: Optional[str] = Form(None), student_id: str = Form("demo_student")):
+    """Legacy PDF route; prefer /api/imports/upload."""
     data = await file.read()
-    if len(data) > MAX_UPLOAD:
-        raise HTTPException(413, "PDF too large (25 MB max)")
     if not data.startswith(b"%PDF"):
         raise HTTPException(400, "Only PDF files are supported")
-    return ingest_pdf(data, file.filename or "upload.pdf", student_id, course_id or None, is_fixture=False)
+    res = imports.import_file(data, file.filename or "upload.pdf", student_id, False, course_id or None)
+    return res.document
 
 
-@router.post("/documents/demo/{name}", response_model=DocumentSummary)
-def demo_doc(name: str, student_id: str = "demo_student"):
-    if name not in DEMO_DOCS:
-        raise HTTPException(404, "Unknown demo document")
-    path = FIXTURES_DIR / "demo_docs" / DEMO_DOCS[name]
-    return ingest_pdf(path.read_bytes(), path.name, student_id, None, is_fixture=True)
+@router.post("/imports/upload", response_model=ImportResult)
+async def import_upload(file: UploadFile = File(...), student_id: str = Form("demo_student"),
+                        authored_by_me: str = Form("false"), course_id: Optional[str] = Form(None)):
+    data = await file.read()
+    if len(data) > MAX_UPLOAD:
+        raise HTTPException(413, "File too large (25 MB max)")
+    return imports.import_file(data, file.filename or "upload", student_id, authored_by_me.lower() == "true", course_id or None)
+
+
+@router.get("/imports", response_model=list[ImportResult])
+def import_history(student_id: str = "demo_student"):
+    return imports.list_imports(student_id)
+
+
+@router.get("/imports/demo", response_model=list[DemoAsset])
+def demo_assets(student_id: str = "demo_student"):
+    return demo_assets_svc.list_assets(student_id)
+
+
+@router.post("/imports/demo/{name}", response_model=ImportResult)
+def add_demo_asset(name: str, student_id: str = "demo_student"):
+    path = demo_assets_svc.asset_path(name)
+    return imports.import_file(path.read_bytes(), path.name, student_id, False, None)
 
 
 @router.get("/documents", response_model=list[DocumentSummary])

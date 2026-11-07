@@ -5,7 +5,7 @@ import re
 from datetime import timedelta
 from typing import Optional
 
-from .. import db, synthetic
+from .. import db
 from ..config import settings
 from ..schemas import (Belief, ConceptState, ContextResponse, CourseSummary, EvidenceRef, GraphEdge, GraphNode,
                        GraphResponse, Observation, SemanticProposition, StudentInfo, StudentModel)
@@ -21,13 +21,13 @@ STOP = set("the a an and or of to in on for with about what which how should i m
 
 
 def profile() -> dict:
-    return synthetic.world()["profile"]
+    """Student identity comes from settings; everything else is learned from imported data and chat."""
+    return {"id": "demo_student", "name": settings.student_name, "completed_courses": []}
 
 
 def student_info(student_id: str) -> StudentInfo:
-    p = profile()
-    name = p["name"] if student_id == p["id"] else student_id
-    return StudentInfo(id=student_id, name=name, timezone=settings.timezone)
+    return StudentInfo(id=student_id, name=settings.student_name if student_id == "demo_student" else student_id,
+                       timezone=settings.timezone)
 
 
 def obs_evidence(o: Observation) -> EvidenceRef:
@@ -38,6 +38,16 @@ def obs_evidence(o: Observation) -> EvidenceRef:
         label = f"{doc}, p. {page}, {q}" if page else f"{doc}, {q}"
         url = f"/api/documents/{o.payload.get('document_id')}/file#page={page}" if o.payload.get("document_id") else None
         provider = "documents"
+    elif o.source == "document":
+        label = f"{o.payload.get('document_title', 'Your document')}, p. {page}"
+        url = f"/api/documents/{o.payload.get('document_id')}/file#page={page}" if o.payload.get("document_id") else None
+        provider = "documents"
+    elif o.source == "email":
+        label = f"Email you sent: “{str(o.payload.get('subject', ''))[:60]}”"
+        url, provider = None, "gmail"
+    elif o.source == "chat":
+        label = f"Chat: “{str(o.payload.get('statement', ''))[:60]}”"
+        url, provider = None, "chat"
     else:
         label = f"{o.source.replace('_', ' ')}: “{str(o.payload.get('statement', o.event_type))[:70]}”"
         url, provider = None, o.source
@@ -105,9 +115,11 @@ def _global_beliefs(student_id: str) -> list[Belief]:
 def narrative(student_id: str) -> str:
     """Derived summary for chat consumption — regenerated from structured state, never a source of authority."""
     parts = []
-    goals = [p.statement for p in active_propositions(student_id) if p.category in ("goal", "interest")]
+    goals = [p for p in active_propositions(student_id) if p.category in ("goal", "interest")]
     if goals:
-        parts.append("Stated goals/interests: " + "; ".join(g.rstrip(". ") for g in goals) + ".")
+        parts.append("Stated goals/interests: " + "; ".join(
+            g.statement.rstrip(". ") + (f" (stated in {len(g.evidence_ids)} sources)" if len(g.evidence_ids) > 1 else "")
+            for g in goals) + ".")
     prefs = [p.statement for p in active_propositions(student_id) if p.category == "preference"]
     if prefs:
         parts.append("Preferences: " + "; ".join(p.rstrip(". ") for p in prefs) + ".")
@@ -118,8 +130,10 @@ def narrative(student_id: str) -> str:
         parts.append("Assessment evidence suggests gaps in: " + ", ".join(f"{s.label} ({s.mastery:.2f})" for s in weak) + ".")
     if strong:
         parts.append("Assessment evidence suggests solid footing in: " + ", ".join(s.label for s in strong) + ".")
-    if not any(s.mastery is not None for s in states):
-        parts.append("No graded assessment evidence has been ingested yet, so there are no mastery estimates.")
+    if not catalog.courses():
+        parts.append("No courses added yet.")
+    elif not any(s.mastery is not None for s in states):
+        parts.append("No graded assessment evidence has been added yet, so there are no mastery estimates.")
     bs = [s.label for s in states if s.blind_spot]
     if bs:
         parts.append("Possible blind spots (self-confidence well above estimate): " + ", ".join(bs) + ".")
@@ -136,10 +150,12 @@ def student_model(student_id: str) -> StudentModel:
     for c in catalog.courses():
         wl = store.get_belief(f"belief_{student_id}_{c['id']}_workload")
         courses.append(CourseSummary(course_id=c["id"], label=c["label"], upcoming_due=int(float(wl.value)) if wl and wl.value else 0,
-                                     is_fixture=True))
+                                     is_fixture=bool(c.get("is_fixture", True))))
+    props = store.list_propositions(student_id)
+    prop_ev = {p.id: [obs_evidence(o) for eid in p.evidence_ids if (o := store.get_observation(eid))] for p in props}
     return StudentModel(student=student_info(student_id), concepts=concept_states(student_id), courses=courses,
-                        propositions=store.list_propositions(student_id), global_beliefs=_global_beliefs(student_id),
-                        narrative=narrative(student_id), state_version=db.get_state_version())
+                        propositions=props, global_beliefs=_global_beliefs(student_id),
+                        narrative=narrative(student_id), state_version=db.get_state_version(), proposition_evidence=prop_ev)
 
 
 def graph(student_id: str) -> GraphResponse:
@@ -165,7 +181,8 @@ def graph(student_id: str) -> GraphResponse:
     for p in active_propositions(student_id):
         if p.category not in ("goal", "interest"):
             continue
-        nodes.append(GraphNode(id=f"goal:{p.id}", type="goal", label=p.statement, data={"status": p.status}))
+        nodes.append(GraphNode(id=f"goal:{p.id}", type="goal", label=p.statement,
+                               data={"status": p.status, "sources": len(p.evidence_ids)}))
         linked = set(catalog.match_concepts(p.statement))
         for eid in p.evidence_ids:
             if (o := store.get_observation(eid)):
@@ -182,8 +199,8 @@ def query_terms(q: str) -> list[str]:
 def build_context(student_id: str, query: str = "", agent: str = "orchestrator") -> ContextResponse:
     terms = query_terms(query)
     concept_hits = set(catalog.match_concepts(query))
-    if "systems" in terms:
-        concept_hits |= {c["id"] for c in catalog.concepts() if c["course_id"] in catalog.domain_courses("systems")}
+    for cid in catalog.courses_in_text(query):
+        concept_hits |= {c["id"] for c in catalog.concepts() if c["course_id"] == cid}
     beliefs = [b for b in store.list_beliefs(student_id)
                if not concept_hits or b.scope.concept_id in concept_hits or b.scope.level != "concept"]
     records = store.list_records(student_id)

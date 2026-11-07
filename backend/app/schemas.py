@@ -6,14 +6,14 @@ from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 Provider = Literal["canvas", "google_calendar", "gmail", "piazza", "documents"]
-ConnectorState = Literal["connected", "needs_auth", "failed", "demo_data", "not_available"]
+ConnectorState = Literal["connected", "needs_auth", "failed", "demo_data", "not_available", "imported"]
 Strength = Literal["none", "weak", "moderate", "strong"]
 
 
 class ConnectorStatus(BaseModel):
     provider: Provider
     state: ConnectorState
-    mode: Literal["live", "fixture", "none"]
+    mode: Literal["live", "fixture", "none", "import"]
     detail: str
     last_synced_at: Optional[str] = None
     record_count: int = 0
@@ -144,6 +144,7 @@ class StudentModel(BaseModel):
     global_beliefs: list[Belief]
     narrative: str
     state_version: int
+    proposition_evidence: dict[str, list[EvidenceRef]] = Field(default_factory=dict)
 
 
 class GraphResponse(BaseModel):
@@ -269,7 +270,7 @@ class DocumentsCard(BaseModel):
 
 class Insight(BaseModel):
     id: str
-    kind: Literal["focus_area", "blind_spot", "deadline", "stale_evidence", "opportunity", "missing_evidence"]
+    kind: Literal["focus_area", "blind_spot", "deadline", "stale_evidence", "opportunity", "missing_evidence", "goal"]
     title: str
     detail: str
     course_id: Optional[str] = None
@@ -294,6 +295,7 @@ class DashboardResponse(BaseModel):
     insights: list[Insight]
     recommendations: list[Recommendation]
     connectors: list[ConnectorStatus]
+    knowledge: "KnowledgeCounts"
 
 
 class ChatMessage(BaseModel):
@@ -411,3 +413,49 @@ class HealthResponse(BaseModel):
     demo_mode: bool
     llm: LLMInfo
     providers: list[ConnectorStatus]
+
+
+# ---- v1.2: start empty, add data manually ----
+ImportKind = Literal["course_overview", "graded_assessment", "study_material", "personal_document", "email", "calendar",
+                     "source_pack"]
+
+
+class KnowledgeCounts(BaseModel):
+    courses: int = 0
+    concepts: int = 0
+    documents: int = 0
+    graded_answers: int = 0
+    goals: int = 0
+    goal_sources: int = 0
+    source_items: int = 0
+    imports: int = 0
+
+
+class ImportResult(BaseModel):
+    id: str
+    filename: str
+    kind: ImportKind
+    title: str
+    summary: str
+    changes: list[str]
+    records_added: int = 0
+    observations_added: int = 0
+    concepts_added: int = 0
+    goals_added: int = 0
+    document: Optional[DocumentSummary] = None
+    is_fixture: bool = False
+    imported_at: str
+    warnings: list[str] = Field(default_factory=list)
+
+
+class DemoAsset(BaseModel):
+    name: str
+    step: int
+    title: str
+    description: str
+    kind: ImportKind
+    what_to_notice: str
+    added: bool = False
+
+
+DashboardResponse.model_rebuild()

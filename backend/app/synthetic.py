@@ -1,22 +1,18 @@
-"""Parse fixtures/synthetic_world.md — the single source of synthetic data.
+"""Parse NOVA "source pack" markdown files (e.g. fixtures/synthetic_world.md, demo_assets/*.md).
 
-The file is re-read whenever it changes on disk (mtime-based cache), so edits show up on the next sync.
-Format (see the file's header for the human-facing version):
+A pack can contain any subset of these sections:
   ## Courses / ## Concepts / ## Concept relations     -> markdown tables
   ## Student  (- id:, - name:, ### Completed courses table, ### Self-reports table)
   ## Canvas assignments / ## Calendar events           -> markdown tables
   ## Gmail messages / ## Piazza posts                  -> one ### block per item: "- key: value" fields, blank line, body
+Packs are imported on demand (Add data page); nothing is loaded automatically.
 """
 from __future__ import annotations
 
 import re
-import threading
 from datetime import datetime
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
-
-from .config import settings
 
 
 class SyntheticDataError(ValueError):
@@ -31,8 +27,6 @@ class _Block:
 
 
 _FIELD = re.compile(r"^\s*[-*]\s*([A-Za-z_ ]+?)\s*:\s*(.*)$")
-_lock = threading.Lock()
-_cache: dict[str, Any] = {"key": None, "world": None, "error": None}
 
 
 def _blocks(text: str) -> dict[str, _Block]:
@@ -135,18 +129,19 @@ def _unique(items: list[dict], key: str, where: str) -> None:
         seen.add(it[key])
 
 
-def parse_world(text: str) -> dict:
+def parse_world(text: str, known_courses: set[str] | None = None, known_concepts: dict[str, str] | None = None) -> dict:
+    """known_courses / known_concepts (id -> course_id) let a pack reference catalog entries imported earlier."""
     s = _blocks(text)
-    courses = [{"id": r["id"], "label": r["label"], "domain": r.get("domain", "")}
-               for r in _table(_section(s, "courses").lines, "Courses", ["id", "label"])]
-    course_ids = {c["id"] for c in courses}
+    courses = [{"id": r["id"], "label": r["label"], "domain": r.get("domain", ""), "code": r.get("code", "")}
+               for r in _table(s["courses"].lines, "Courses", ["id", "label"])] if "courses" in s else []
+    course_ids = {c["id"] for c in courses} | set(known_courses or ())
     concepts = []
-    for r in _table(_section(s, "concepts").lines, "Concepts", ["id", "course", "label"]):
+    for r in (_table(s["concepts"].lines, "Concepts", ["id", "course", "label"]) if "concepts" in s else []):
         if r["course"] not in course_ids:
             raise SyntheticDataError(f"Concepts row {r['_row']}: unknown course '{r['course']}'")
         concepts.append({"id": r["id"], "course_id": r["course"], "label": r["label"], "aliases": _list(r.get("aliases", ""))})
     _unique(concepts, "id", "Concepts")
-    concept_course = {c["id"]: c["course_id"] for c in concepts}
+    concept_course = dict(known_concepts or {}) | {c["id"]: c["course_id"] for c in concepts}
 
     def check_concepts(ids: list[str], where: str) -> list[str]:
         bad = [c for c in ids if c not in concept_course]
@@ -160,7 +155,7 @@ def parse_world(text: str) -> dict:
             check_concepts([r["source"], r["target"]], f"Concept relations row {r['_row']}")
             edges.append({"source": f"concept:{r['source']}", "target": f"concept:{r['target']}", "relation": r["relation"]})
 
-    student = _section(s, "student")
+    student = s.get("student") or _Block("student")
     sfields, _ = _fields_and_body(student.lines)
     subs = {b.title.lower(): b for b in student.subs}
     completed = [{"label": r["course"], "term": r.get("term", "")}
@@ -193,6 +188,8 @@ def parse_world(text: str) -> dict:
     if "canvas assignments" in s:
         for r in _table(s["canvas assignments"].lines, "Canvas assignments", ["id", "course", "title", "due"]):
             where = f"Canvas assignments row {r['_row']}"
+            if r["course"] and r["course"] not in course_ids:
+                raise SyntheticDataError(f"{where}: unknown course '{r['course']}' (import its course overview first)")
             records["canvas"].append({
                 "external_id": r["id"], "kind": "assignment", "title": r["title"], "body": r.get("description", ""),
                 "when": _time(r["due"], where), "course_id": r["course"] or None,
@@ -230,43 +227,3 @@ def parse_world(text: str) -> dict:
     return {"courses": courses, "concepts": concepts, "edges": edges, "profile": profile, "records": records}
 
 
-def path() -> Path:
-    return settings.synthetic_file
-
-
-def world() -> dict:
-    """Parsed world, re-read when the file changes.
-
-    If an edit makes the file invalid, the last good version keeps serving and last_error() reports why,
-    so a typo never takes the whole dashboard down. With no good version yet, the error is raised.
-    """
-    p = path()
-    with _lock:
-        if not p.exists():
-            _cache["error"] = f"Synthetic data file not found: {p}"
-        else:
-            key = (str(p), p.stat().st_mtime_ns)
-            if _cache["key"] != key:
-                _cache["key"] = key
-                try:
-                    _cache["world"] = parse_world(p.read_text(encoding="utf-8"))
-                    _cache["error"] = None
-                except (SyntheticDataError, ValueError) as e:
-                    _cache["error"] = f"{p.name}: {e}"
-        if _cache["world"] is None:
-            raise SyntheticDataError(_cache["error"] or "Synthetic data unavailable")
-        return _cache["world"]
-
-
-def last_error() -> str | None:
-    """Error from the most recent read attempt (None if the current file parsed cleanly)."""
-    try:
-        world()
-    except SyntheticDataError:
-        pass
-    return _cache["error"]
-
-
-def reset_cache() -> None:
-    with _lock:
-        _cache.update({"key": None, "world": None, "error": None})

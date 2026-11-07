@@ -261,3 +261,30 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .privacy-mode.selected { border-color: var(--accent, #4f46e5); box-shadow: 0 0 0 1px var(--accent, #4f46e5) inset; }
 .privacy-mode.unavailable { opacity: 0.6; cursor: not-allowed; }
 .privacy-mode input { margin-top: 3px; }
+
+/* v1.2: imported state, knowledge bar, add-data page */
+.dot-imported { background: #3b82f6; }
+.badge-imported { color: #1e40af; border-color: #bfdbfe; background: #eff6ff; }
+.knowledge-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.kstat { flex: 1 1 110px; background: var(--card, #fff); border: 1px solid var(--border, #e3e5ec); border-radius: 10px; padding: 8px 12px; transition: box-shadow .3s; }
+.kstat .kval { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.kstat .klabel { font-size: 12px; color: var(--muted, #6b7280); }
+.kstat.zero .kval { color: var(--muted-2, #9ca3af); }
+.kstat.grew { box-shadow: 0 0 0 2px #93c5fd; }
+.empty-hero { text-align: center; padding: 28px 16px; }
+.empty-hero h2 { margin: 0 0 6px; }
+.insight-goal { border-left-color: #0ea5e9 !important; }
+.asset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.asset { border: 1px solid var(--border, #e3e5ec); border-radius: 10px; padding: 10px 12px; }
+.asset.added { background: #f8fafc; }
+.asset-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.asset-step { width: 26px; height: 26px; border-radius: 50%; background: var(--accent, #4f46e5); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none; }
+.asset.added .asset-step { background: #16a34a; }
+.asset-title { font-weight: 600; flex: 1 1 200px; }
+.asset-notice { font-size: 13px; margin-top: 4px; }
+.import-result { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 13px; }
+.import-result.warn { background: #fffbeb; border-color: #fde68a; }
+.import-result ul { margin: 4px 0 0 18px; padding: 0; }
+.kind-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; white-space: nowrap; }
+.prop-sources { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #e0f2fe; color: #075985; margin-left: 6px; }
+.upload-opts { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }

@@ -104,7 +104,7 @@ def ingest_pdf(data: bytes, filename: str, student_id: str, course_id: Optional[
                                                   correct=None, evidence_text="No grading marker on this question", status="no_grade"))
                 continue
             status = "accepted" if (correct is not None and concept_id and not inferred) else "pending_review"
-            oid = f"obs_{doc_id}_{qid}"
+            oid = f"obs_{doc_id}_{qid}_{concept_id or 'unmapped'}"
             evidence_text = f"{qid}: {ev_text}" + (f" — student answered “{ans.group(1).strip()[:80]}”" if ans else "")
             observations.append(Observation(
                 event_id=oid, student_id=student_id, source_record_id=src_id, source="pdf_assessment",

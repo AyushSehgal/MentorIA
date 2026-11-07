@@ -27,10 +27,15 @@ CREATE TABLE IF NOT EXISTS doc_pages (doc_id TEXT, student_id TEXT, page INTEGER
 CREATE TABLE IF NOT EXISTS connector_status (provider TEXT PRIMARY KEY, data TEXT);
 CREATE TABLE IF NOT EXISTS action_log (id TEXT PRIMARY KEY, recommendation_id TEXT UNIQUE, data TEXT);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS courses (id TEXT PRIMARY KEY, data TEXT);
+CREATE TABLE IF NOT EXISTS concepts (id TEXT PRIMARY KEY, course_id TEXT, data TEXT);
+CREATE TABLE IF NOT EXISTS concept_edges (source TEXT, target TEXT, relation TEXT, data TEXT, PRIMARY KEY(source, target, relation));
+CREATE TABLE IF NOT EXISTS imports (id TEXT PRIMARY KEY, student_id TEXT, imported_at TEXT, data TEXT);
 """
 
 TABLES = ["source_records", "observations", "beliefs", "belief_updates", "propositions",
-          "recommendations", "documents", "doc_pages", "connector_status", "action_log", "meta"]
+          "recommendations", "documents", "doc_pages", "connector_status", "action_log", "meta",
+          "courses", "concepts", "concept_edges", "imports"]
 
 
 def conn() -> sqlite3.Connection:

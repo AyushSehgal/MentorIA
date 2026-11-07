@@ -6,12 +6,14 @@ import type {
   ChatRequest,
   ChatResponse,
   ConnectorStatus,
+  DemoAsset,
   DashboardResponse,
   DocumentSummary,
   EvidenceRef,
   GraphResponse,
   HealthResponse,
   HistoryResponse,
+  ImportResult,
   LLMMode,
   Observation,
   PrivacySettings,
@@ -129,4 +131,16 @@ export const api = {
   resetDemo: () => request<{ ok: boolean }>("/api/demo/reset", { method: "POST" }),
   privacy: () => request<PrivacySettings>("/api/settings/privacy"),
   setPrivacy: (mode: LLMMode) => postJson<PrivacySettings>("/api/settings/privacy", { mode }),
+  demoAssets: (student_id = DEFAULT_STUDENT) => request<DemoAsset[]>(`/api/imports/demo?${q({ student_id })}`),
+  addDemoAsset: (name: string, student_id = DEFAULT_STUDENT) =>
+    request<ImportResult>(`/api/imports/demo/${encodeURIComponent(name)}?${q({ student_id })}`, { method: "POST" }),
+  importFile: (file: File, opts: { authoredByMe?: boolean; courseId?: string } = {}, student_id = DEFAULT_STUDENT) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("student_id", student_id);
+    fd.append("authored_by_me", opts.authoredByMe ? "true" : "false");
+    if (opts.courseId) fd.append("course_id", opts.courseId);
+    return request<ImportResult>("/api/imports/upload", { method: "POST", body: fd });
+  },
+  imports: (student_id = DEFAULT_STUDENT) => request<ImportResult[]>(`/api/imports?${q({ student_id })}`),
 };

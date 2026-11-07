@@ -14,7 +14,7 @@ from typing import Optional
 
 from ..schemas import Belief, BeliefScope, BeliefUpdate, Observation, SemanticProposition, SourceRecord
 from ..timeutil import iso, now, now_iso, parse
-from . import bkt, catalog, store
+from . import bkt, catalog, propositions, store
 
 PROPOSITION_TYPES = {"goal": "goal", "interest": "interest", "preference": "preference"}
 
@@ -65,10 +65,17 @@ def _apply(o: Observation) -> list[BeliefUpdate]:
     elif et in PROPOSITION_TYPES:
         statement = str(o.payload.get("statement", "")).strip()
         if statement:
-            store.put_proposition(SemanticProposition(
-                id=f"prop_{o.event_id}", student_id=o.student_id, statement=statement,
-                category=PROPOSITION_TYPES[et], scope=o.course_id or "global", status="self_reported",
-                evidence_ids=[o.event_id], updated_at=o.occurred_at))
+            existing = propositions.find_match(o.student_id, PROPOSITION_TYPES[et], statement)
+            if existing:
+                if o.event_id not in existing.evidence_ids:
+                    existing.evidence_ids.append(o.event_id)
+                    existing.updated_at = o.occurred_at
+                    store.put_proposition(existing)
+            else:
+                store.put_proposition(SemanticProposition(
+                    id=f"prop_{o.event_id}", student_id=o.student_id, statement=statement,
+                    category=PROPOSITION_TYPES[et], scope=o.course_id or "global", status="self_reported",
+                    evidence_ids=[o.event_id], updated_at=o.occurred_at))
     elif et == "mood":
         start = parse(o.occurred_at) or now()
         u = store.put_belief(Belief(

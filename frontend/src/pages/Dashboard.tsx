@@ -1,4 +1,5 @@
-import type { DashboardResponse, Insight, SourceRecord } from "../api/types";
+import { useEffect, useRef, useState } from "react";
+import type { DashboardResponse, Insight, KnowledgeCounts, SourceRecord } from "../api/types";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
 import { Bar, Card, EvidenceChips, Empty } from "../components/Common";
@@ -13,7 +14,53 @@ const insightIcon: Record<Insight["kind"], string> = {
   stale_evidence: "🕰️",
   opportunity: "✨",
   missing_evidence: "❔",
+  goal: "🧭",
 };
+
+const KSTATS: { key: keyof KnowledgeCounts; label: string }[] = [
+  { key: "courses", label: "courses" },
+  { key: "concepts", label: "concepts" },
+  { key: "documents", label: "documents" },
+  { key: "graded_answers", label: "graded answers" },
+  { key: "goals", label: "goals & interests" },
+  { key: "source_items", label: "source items" },
+];
+
+function isEmpty(k: KnowledgeCounts | undefined) {
+  return !k || Object.values(k).every((v) => !v);
+}
+
+function KnowledgeBar({ k }: { k: KnowledgeCounts }) {
+  const prev = useRef<KnowledgeCounts | null>(null);
+  const [grew, setGrew] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const p = prev.current;
+    if (p) {
+      const g = new Set(KSTATS.filter((s) => (k[s.key] ?? 0) > (p[s.key] ?? 0)).map((s) => s.key as string));
+      setGrew(g);
+      const t = setTimeout(() => setGrew(new Set()), 2500);
+      prev.current = k;
+      return () => clearTimeout(t);
+    }
+    prev.current = k;
+  }, [k]);
+  return (
+    <div className="knowledge-bar" aria-label="What NOVA knows">
+      {KSTATS.map((s) => {
+        const v = k[s.key] ?? 0;
+        return (
+          <div key={s.key} className={`kstat ${v ? "" : "zero"} ${grew.has(s.key) ? "grew" : ""}`}>
+            <div className="kval">{v}</div>
+            <div className="klabel">
+              {s.label}
+              {s.key === "goals" && k.goal_sources > 0 && ` · from ${k.goal_sources} source${k.goal_sources === 1 ? "" : "s"}`}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function Dashboard({
   data,
@@ -41,6 +88,16 @@ export function Dashboard({
         )}
         {data && (
           <>
+            {data.knowledge && <KnowledgeBar k={data.knowledge} />}
+            {isEmpty(data.knowledge) && (
+              <div className="card empty-hero">
+                <h2>NOVA is empty</h2>
+                <p className="muted">Add a course overview on the Add data page to begin. Everything NOVA knows will come from what you add.</p>
+                <button className="btn primary" onClick={() => navigate("/documents")}>
+                  Go to Add data
+                </button>
+              </div>
+            )}
             <InsightsCard data={data} tz={tz} onRefresh={onRefresh} />
             <div className="grid-2">
               <CanvasCard data={data} tz={tz} />
@@ -63,7 +120,7 @@ function InsightsCard({ data, tz, onRefresh }: { data: DashboardResponse; tz: st
   return (
     <Card title="NOVA Insights & Priorities" className="insights">
       {data.insights.length === 0 && data.recommendations.length === 0 && (
-        <Empty>No insights yet — sync sources or upload a graded quiz to build your student model.</Empty>
+        <Empty>No insights yet — they appear as you add courses, deadlines, graded work and goals.</Empty>
       )}
       {data.insights.length > 0 && (
         <ul className="insight-list">
@@ -113,7 +170,7 @@ function CanvasCard({ data, tz }: { data: DashboardResponse; tz: string }) {
   return (
     <Card title="Canvas — Due Soon" status={card.status} demo={card.status.state === "demo_data" || anyFixture(items)}>
       {items.length === 0 ? (
-        <Empty>No assignments.</Empty>
+        <Empty>No assignments yet — add a Canvas export on Add data.</Empty>
       ) : (
         <ul className="rows">
           {items.map((r) => {
@@ -162,7 +219,7 @@ function CalendarCard({ data, tz }: { data: DashboardResponse; tz: string }) {
       demo={card.status.state === "demo_data" || anyFixture(card.items)}
     >
       {card.items.length === 0 ? (
-        <Empty>No events this week.</Empty>
+        <Empty>No events yet — add a calendar file (.ics) on Add data.</Empty>
       ) : (
         <div className="cal">
           {[...groups.entries()].map(([day, evs]) => (
@@ -186,7 +243,7 @@ function CalendarCard({ data, tz }: { data: DashboardResponse; tz: string }) {
       )}
       <h3 className="section-label">Free windows (candidate study blocks)</h3>
       {card.free_windows.length === 0 ? (
-        <Empty>No free windows computed.</Empty>
+        <Empty>{card.items.length === 0 ? "Free time is computed once a calendar is added." : "No free windows found."}</Empty>
       ) : (
         <ul className="windows">
           {card.free_windows.slice(0, 8).map((w, i) => (
@@ -214,7 +271,7 @@ function GmailCard({ data, tz }: { data: DashboardResponse; tz: string }) {
       demo={card.status.state === "demo_data" || anyFixture(card.items)}
     >
       {opps.length === 0 ? (
-        <Empty>No relevant academic announcements found.</Empty>
+        <Empty>No emails yet — add .eml files on Add data.</Empty>
       ) : (
         <ul className="opps">
           {opps.map((o) => (
@@ -273,7 +330,7 @@ function PiazzaCard({ data, tz }: { data: DashboardResponse; tz: string }) {
   return (
     <Card title="Piazza — Course Discussions" status={card.status} demo={card.status.state === "demo_data" || anyFixture(items)}>
       {items.length === 0 ? (
-        <Empty>{card.status.state === "not_available" ? "Piazza is not connected." : "No discussions."}</Empty>
+        <Empty>No discussions yet — add a Piazza export on Add data.</Empty>
       ) : (
         <ul className="rows">
           {items.map((r) => (
@@ -306,12 +363,12 @@ function DocumentsCard({ data, tz, navigate }: { data: DashboardResponse; tz: st
       demo={anyFixture(card.documents)}
       actions={
         <button className="btn small-btn" onClick={() => navigate("/documents")}>
-          Upload
+          Add data
         </button>
       }
     >
       {card.documents.length === 0 ? (
-        <Empty>No documents yet. Upload a graded quiz or load the demo quiz from the Documents page.</Empty>
+        <Empty>No documents yet — add course overviews, graded work or notes on Add data.</Empty>
       ) : (
         <ul className="rows">
           {card.documents.map((d) => (

@@ -58,7 +58,8 @@ def _interest_words(student_id: str) -> set[str]:
     for p in active_propositions(student_id):
         if p.category in ("goal", "interest"):
             words |= {w for w in re.findall(r"[a-z]+", p.statement.lower()) if len(w) > 4}
-    return words - {"would", "ideally", "research", "think", "about", "really"}
+    return words - {"would", "ideally", "research", "think", "about", "really", "after", "graduation", "where", "which",
+                    "their", "there", "something", "early"}
 
 
 def rank(student_id: str) -> list[Opportunity]:
@@ -67,6 +68,8 @@ def rank(student_id: str) -> list[Opportunity]:
     weak = {s.concept_id for s in concept_states(student_id) if s.mastery is not None and s.mastery < 0.5}
     out = []
     for r in store.list_records(student_id, provider="gmail"):
+        if r.kind != "event_announcement":
+            continue  # e.g. emails the student sent
         text = f"{r.title}\n{r.body}"
         concepts = set(r.concept_ids) | set(catalog.match_concepts(text))
         score, reasons = 0.05, []
@@ -74,14 +77,14 @@ def rank(student_id: str) -> list[Opportunity]:
         if g:
             score += 0.55
             reasons.append("Matches your stated goal/interest: " + ", ".join(catalog.concept_label(c) for c in sorted(g)))
-        kw = sorted(w for w in words if w in text.lower())
-        if kw:
-            score += min(0.2, 0.07 * len(kw))
-            reasons.append("Shares keywords with your goals: " + ", ".join(kw[:4]))
         wk = concepts & weak
         if wk:
             score += 0.25
-            reasons.append("Covers a concept where assessment evidence shows a gap: " + ", ".join(catalog.concept_label(c) for c in sorted(wk)))
+            reasons.append("Covers a concept where your graded work shows a gap: " + ", ".join(catalog.concept_label(c) for c in sorted(wk)))
+        kw = sorted(w for w in words if re.search(rf"\b{re.escape(w)}s?\b", text.lower()))
+        if kw:
+            score += min(0.2, 0.07 * len(kw))
+            reasons.append("Shares keywords with your goals: " + ", ".join(kw[:4]))
         if not reasons:
             reasons.append("No overlap with your stated goals or current coursework found")
         sent = parse(r.occurred_at)

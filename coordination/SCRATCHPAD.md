@@ -45,3 +45,16 @@ Interfaces changed: contract v1.1 (additive) — see CONTRACTS.md.
 [2026-11-07 17:05 EST] coordinator | llm-default-local | DONE
 Default LLM mode changed off → local (config, .env.example, README, ADR-009 amendment). Running instance switched to local.
 Tests: 36/36 (3 new: default is local, fresh install reports local, local default with no server still answers).
+
+[2026-11-07 17:30 EST] frontend-agent | v1.2-ui | START
+Files: frontend/src/** (except api/types.ts)
+
+[2026-11-07 17:55 EST] frontend-agent | v1.2-ui | READY_FOR_REVIEW
+Files: frontend/src/api/client.ts (demoAssets, addDemoAsset, importFile, imports), App.tsx (nav "Add data"),
+pages/Documents.tsx (rebuilt as Add data: demo assets w/ Add / Add again / Add all remaining + inline ImportResult,
+upload w/ "I wrote this" + dynamic course select, import history, graded-doc question tables), pages/Dashboard.tsx
+("What NOVA knows" bar with growth highlight, empty hero, per-card empty states, goal insight icon), pages/Knowledge.tsx
+(no-courses empty state, proposition source chips + "stated in N sources"), components/Common.tsx (mode "import" → "from files"),
+components/ChatPanel.tsx (new chips + helper text), pages/Sources.tsx (reset/verified copy), styles.css (imported dot/badge, new blocks).
+Tests: npm run build passes (tsc strict, 0 errors). Not verified against v1.2 backend (routes not live yet).
+Interfaces changed: none (types.ts untouched).

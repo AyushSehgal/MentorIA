@@ -5,10 +5,11 @@ import { ApprovalCard } from "./ApprovalCard";
 import { EvidenceChips, MarkdownLite } from "./Common";
 
 const SUGGESTIONS = [
-  "What systems topics am I struggling with?",
+  "What ML topics am I struggling with?",
   "What should I focus on this week?",
   "What classes should I take next?",
-  "Any research talks I should attend?",
+  "Any events I should attend?",
+  "I want a job at a startup that makes robots understand language",
 ];
 
 interface Turn {
@@ -70,7 +71,7 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
         {turns.length === 0 && (
           <p className="empty">
             Ask about your courses, deadlines, knowledge gaps, or opportunities. You can also tell NOVA things like
-            “I’m confident with virtual memory” or “My goal is embodied AI research” to update your student model.
+            “I’m confident with backpropagation” or “I want a job at a startup that makes robots understand language” to update your student model.
           </p>
         )}
         {turns.map((t, i) => (

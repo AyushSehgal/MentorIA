@@ -5,7 +5,7 @@ import hashlib
 import re
 from typing import Optional
 
-from ..memory import catalog
+from ..memory import catalog, propositions
 from ..schemas import Observation
 from ..timeutil import now_iso
 
@@ -54,13 +54,8 @@ def extract_contributions(student_id: str, message: str) -> list[Observation]:
         for m in rx.finditer(message):
             for cid in catalog.match_concepts(m.group(1)):
                 add("self_confidence", {"value": val, "statement": m.group(0).strip()}, cid)
-    for rx, kind in ((GOAL, "goal"), (INTEREST, "interest"), (PREFER, "preference")):
-        for m in rx.finditer(message):
-            stmt = m.group(1).strip()
-            if kind == "goal" and QUESTIONISH.search(stmt):
-                continue  # "I want to know what..." is a question, not a goal
-            if len(stmt) >= 4:
-                add(kind, {"statement": m.group(0).strip(), "concept_ids": catalog.match_concepts(stmt)})
+    for kind, sentence in propositions.extract(message):  # same extractor as documents and emails
+        add(kind, {"statement": sentence, "concept_ids": catalog.match_concepts(sentence)})
     if (m := MOOD.search(message)):
         add("mood", {"statement": m.group(0).strip()})
     return out

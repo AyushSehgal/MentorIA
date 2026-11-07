@@ -41,11 +41,11 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
   }
 
   async function reset() {
-    if (!window.confirm("Reset the demo? This clears local NOVA state and re-seeds labeled fixtures.")) return;
+    if (!window.confirm("Reset NOVA to empty? This removes all added data (your AI privacy setting is kept).")) return;
     setBusy("reset");
     try {
       await api.resetDemo();
-      setMsg("Demo reset — fixtures re-seeded (no quiz ingested).");
+      setMsg("NOVA reset — empty. Add data to begin.");
       load();
       onChanged?.();
     } catch (e) {
@@ -67,8 +67,8 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
         }
       >
         <p className="muted small">
-          “verified” means a live API call succeeded in this server process. Demo data is fixture content, never a claim about
-          your real accounts.
+          “verified” means a live API call succeeded in this server process. “imported” means items were added from files on the
+          Add data page — not a live connection. Demo files are sample content, never a claim about your real accounts.
         </p>
         {error && <p className="error-text">{error}</p>}
         {msg && <p className="info-text">{msg}</p>}

@@ -8,14 +8,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import chat, memory, sources
-from .services.seed import ensure_seeded
+from .services.demo_assets import ensure_generated
 
 logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    ensure_seeded()
+    try:
+        ensure_generated()  # fresh demo assets for today's dates
+    except Exception as e:  # never block startup on demo content
+        logging.getLogger("nova").warning("Demo assets not generated: %s", e)
     yield
 
 

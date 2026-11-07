@@ -3,6 +3,8 @@ import pytest
 from app.config import settings
 from app.orchestration import llm
 
+from .conftest import load_doc
+
 SID = "demo_student"
 Q = "What systems topics am I struggling with?"
 
@@ -39,13 +41,13 @@ def _draft_of(body):
 
 
 def test_off_mode_makes_no_llm_call(client, fake_local):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     r = client.post("/api/chat", json={"message": Q}).json()
     assert r["llm_used"] is False and r["llm_provider"] is None and fake_local["post"] == []
 
 
 def test_local_mode_rewords_and_reports_provider(client, fake_local):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     assert client.post("/api/settings/privacy", json={"mode": "local"}).json()["data_leaves_device"] is False
     fake_local["reply"] = lambda body: "<think>hmm</think>Reworded: " + _draft_of(body)
     r = client.post("/api/chat", json={"message": Q}).json()
@@ -55,7 +57,7 @@ def test_local_mode_rewords_and_reports_provider(client, fake_local):
 
 
 def test_rewrite_adding_numbers_is_discarded(client, fake_local):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     client.post("/api/settings/privacy", json={"mode": "local"})
     fake_local["reply"] = lambda body: _draft_of(body) + "\nYou scored 37% overall."
     r = client.post("/api/chat", json={"message": Q}).json()
@@ -63,7 +65,7 @@ def test_rewrite_adding_numbers_is_discarded(client, fake_local):
 
 
 def test_rewrite_dropping_citations_is_discarded(client, fake_local):
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     client.post("/api/settings/privacy", json={"mode": "local"})
     fake_local["reply"] = lambda body: "You are struggling with Cache Coherence (MESI) and Synchronization & Races."
     r = client.post("/api/chat", json={"message": Q}).json()
@@ -97,7 +99,7 @@ def test_openrouter_requests_no_data_collection(client, fake_local, monkeypatch)
     monkeypatch.setattr(settings, "openrouter_api_key", "test-key")
     monkeypatch.setattr(settings, "openrouter_model", "some/model")
     monkeypatch.setattr(settings, "openrouter_allow_data_collection", False)
-    client.post("/api/documents/demo/graded_quiz")
+    load_doc(client, "graded")
     assert client.post("/api/settings/privacy", json={"mode": "cloud"}).json()["data_leaves_device"] is True
     fake_local["reply"] = _draft_of
     r = client.post("/api/chat", json={"message": Q}).json()
