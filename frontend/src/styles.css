@@ -346,3 +346,50 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .saved-list li { margin: 0.1rem 0; }
 .knowledge-bar .kstat { flex: 1 1 80px; padding: 6px 10px; text-align: center; }
 .knowledge-bar .kstat .kval { font-size: 20px; }
+
+/* ---- Interactive week calendar ---- */
+.wcal { display: flex; flex-direction: column; gap: 8px; }
+.wcal-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wcal-nav, .wcal-actions { display: flex; align-items: center; gap: 6px; }
+.wcal-range { margin-left: 6px; font-size: 14px; }
+.icon-btn { min-width: 30px; font-size: 16px; line-height: 1; }
+.wcal-toggle { font-size: 12px; color: var(--muted, #6b7280); display: flex; gap: 4px; align-items: center; }
+.wcal-note { font-size: 12px; color: var(--accent, #4f46e5); }
+.wcal-head, .wcal-grid { display: grid; }
+.wcal-dayhead { padding: 4px 4px 6px; border-bottom: 1px solid var(--border, #e5e7eb); text-align: center; min-width: 0; }
+.wcal-dayhead.today .wcal-date { background: var(--accent, #4f46e5); color: #fff; border-radius: 999px; padding: 0 8px; display: inline-block; }
+.wcal-dow { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #6b7280); }
+.wcal-date { font-size: 13px; font-weight: 600; }
+.wcal-deadline { display: block; width: 100%; margin-top: 3px; font-size: 10.5px; line-height: 1.3; text-align: left; border: 0; cursor: pointer;
+  background: #fee2e2; color: #991b1b; border-radius: 4px; padding: 1px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wcal-scroll { max-height: 440px; overflow-y: auto; border: 1px solid var(--border, #e5e7eb); border-radius: 10px; }
+.wcal-grid { position: relative; }
+.wcal-hours { position: relative; }
+.wcal-hour { position: absolute; right: 6px; transform: translateY(-6px); font-size: 10.5px; color: var(--muted, #6b7280); }
+.wcal-hour:first-child { transform: none; }
+.wcal-col { position: relative; border-left: 1px solid var(--border, #e5e7eb); min-width: 0; }
+.wcal-col.today { background: rgba(79, 70, 229, 0.03); }
+.wcal-line { position: absolute; left: 0; right: 0; border-top: 1px solid #f1f2f6; }
+.wcal-free { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, rgba(34,197,94,.10) 0 6px, rgba(34,197,94,.04) 6px 12px);
+  border: 0; cursor: pointer; padding: 0; }
+.wcal-free:hover { background: rgba(34,197,94,.18); }
+.wcal-ev, .wcal-rec { position: absolute; z-index: 2; text-align: left; border-radius: 6px; padding: 2px 5px; overflow: hidden; cursor: pointer;
+  font-size: 11px; line-height: 1.25; display: flex; flex-direction: column; border: 0; border-left: 3px solid; color: #111827; }
+.wcal-ev:hover, .wcal-rec:hover { filter: brightness(0.96); box-shadow: 0 1px 4px rgba(0,0,0,.12); z-index: 3; }
+.wcal-ev-time { font-weight: 600; font-size: 10.5px; opacity: .8; }
+.wcal-ev-title { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.wcal-rec.proposed { background: rgba(124, 58, 237, .06); border: 1.5px dashed #7c3aed; color: #5b21b6; }
+.wcal-rec.planned { background: #7c3aed; border-left-color: #5b21b6; color: #fff; }
+.wcal-now { position: absolute; left: -1px; right: 0; border-top: 2px solid #ef4444; z-index: 4; pointer-events: none; }
+.wcal-now::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+.wcal-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted, #6b7280); }
+.lg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; }
+.lg-ev { background: rgba(79,70,229,.15); border-left: 3px solid #4f46e5; }
+.lg-free { background: rgba(34,197,94,.25); }
+.lg-prop { border: 1.5px dashed #7c3aed; }
+.lg-plan { background: #7c3aed; }
+.wcal-detail { position: relative; border: 1px solid var(--border, #e5e7eb); border-radius: 10px; padding: 10px 32px 10px 12px;
+  display: flex; flex-direction: column; gap: 6px; background: var(--card, #fff); }
+.wcal-detail .btn { align-self: flex-start; }
+.wcal-close { position: absolute; top: 4px; right: 8px; border: 0; background: none; font-size: 18px; cursor: pointer; color: var(--muted, #6b7280); }
+.block-wide { grid-column: 1 / -1; }

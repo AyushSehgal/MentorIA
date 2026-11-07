@@ -75,8 +75,15 @@ def dashboard(student_id: str) -> DashboardResponse:
     st = statuses(student_id)
     opps = opportunity_ranking.propose_event_recommendations(student_id, opportunity_ranking.rank(student_id))
     canvas = sorted(store.list_records(student_id, provider="canvas"), key=lambda r: r.occurred_at or "9999")
-    cal = sorted([r for r in store.list_records(student_id, provider="google_calendar")
-                  if (d := parse(r.occurred_at)) and d >= now() - timedelta(hours=2)], key=lambda r: r.occurred_at or "")
+    def _still_relevant(r) -> bool:  # keep events that haven't ended yet (today's in-progress ones too)
+        start = parse(r.occurred_at)
+        if not start:
+            return False
+        end = parse(r.metadata.get("end")) or start + timedelta(hours=1)
+        return end >= now() - timedelta(minutes=30)
+
+    cal = sorted([r for r in store.list_records(student_id, provider="google_calendar") if _still_relevant(r)],
+                 key=lambda r: r.occurred_at or "")
     piazza = sorted(store.list_records(student_id, provider="piazza"), key=lambda r: r.occurred_at or "", reverse=True)
     cards = DashboardCards(
         canvas=SourceCard(provider="canvas", label="Canvas — Due Soon", status=_status(st, "canvas"), items=canvas),

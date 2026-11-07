@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import type { DashboardResponse, Insight, KnowledgeCounts, SourceRecord } from "../api/types";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
+import { WeekCalendar } from "../components/WeekCalendar";
 import { Bar, Block, Empty, Item, MoreList, Why } from "../components/Common";
-import { dayKey, fmtDay, fmtShort, fmtTime, pct } from "../lib/format";
+import { fmtDay, fmtShort, fmtTime, pct } from "../lib/format";
 
 const anyFixture = (items: { is_fixture: boolean }[]) => items.some((i) => i.is_fixture);
 
@@ -91,9 +92,9 @@ export function Dashboard({
               <>
                 <InsightsBlock data={data} />
                 <ApprovalsBlock data={data} tz={tz} onRefresh={onRefresh} />
+                <CalendarBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <div className="grid-2">
                   <AssignmentsBlock data={data} tz={tz} />
-                  <CalendarBlock data={data} tz={tz} />
                   <OpportunitiesBlock data={data} tz={tz} />
                   <DiscussionsBlock data={data} tz={tz} />
                 </div>
@@ -199,51 +200,15 @@ function courseShort(r: SourceRecord): string {
   return code ? code[0] : name || "—";
 }
 
-function CalendarBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+function CalendarBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   const card = data.cards.google_calendar;
-  const [showFree, setShowFree] = useState(false);
-  const days = new Map<string, SourceRecord[]>();
-  [...card.items]
-    .sort((a, b) => (a.occurred_at ?? "").localeCompare(b.occurred_at ?? ""))
-    .forEach((r) => {
-      const k = dayKey(r.occurred_at, tz);
-      days.set(k, [...(days.get(k) ?? []), r]);
-    });
-  const free = card.free_windows;
+  const deadlines = data.cards.canvas.items.filter((a) => a.kind === "assignment" && !a.metadata?.completed);
   return (
-    <Block icon="📅" title="Calendar" status={card.status} demo={anyFixture(card.items)}>
-      {card.items.length === 0 ? (
+    <Block icon="📅" title="Calendar" status={card.status} demo={anyFixture(card.items)} className="block-wide">
+      {card.items.length === 0 && deadlines.length === 0 ? (
         <Empty>No events yet</Empty>
       ) : (
-        <MoreList
-          items={[...days.entries()]}
-          limit={3}
-          className="items cal-days"
-          render={([day, evs]) => (
-            <Item
-              key={day}
-              title={day}
-              meta={evs.map((e) => `${fmtTime(e.occurred_at, tz)} ${e.title}`).join(" · ")}
-              tip={evs.map((e) => `${fmtTime(e.occurred_at, tz)}–${fmtTime(e.metadata?.end as string, tz)} ${e.title}`).join("\n")}
-            />
-          )}
-        />
-      )}
-      {free.length > 0 && (
-        <div className="free-line">
-          <button className="link-btn" onClick={() => setShowFree((s) => !s)}>
-            Free: {free.length} slots this week {showFree ? "▴" : "▾"}
-          </button>
-          {showFree && (
-            <ul className="why-list">
-              {free.map((w, i) => (
-                <li key={i}>
-                  {fmtShort(w.start, tz)}–{fmtTime(w.end, tz)} · {w.minutes} min
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <WeekCalendar events={card.items} deadlines={deadlines} freeWindows={card.free_windows} tz={tz} onChanged={onRefresh} />
       )}
     </Block>
   );

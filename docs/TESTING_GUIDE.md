@@ -29,7 +29,7 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **A1. Step 1, 10-601 course overview.** Expect changes: "Added course Introduction to Machine Learning (10-601)", "19 new concepts", "6 concept relations". The dashboard now shows blocks and tiles: Courses 1, Concepts 19. Student Model lists the concepts with no estimates.
 - [ ] **A2. Step 2, 16-831 course overview.** Expect: 16 new concepts and 8 relations. Tiles: Courses 2, Concepts 35.
 - [ ] **A3. Step 3, Canvas assignments.** Expect: "Canvas assignments: 7 new". The **Assignments** block shows HW5 (due d+3), HW3 (d+5) and more, with "+N more".
-- [ ] **A4. Step 4, my calendar.** Expect: "Calendar events: N new". The **Calendar** block shows lectures, office hours and job shifts, plus "Free: N slots this week".
+- [ ] **A4. Step 4, my calendar.** Expect: "Calendar events: N new". The **Calendar** block becomes a week grid (today highlighted, red "now" line), with lectures as course-coloured blocks at their times, free time shaded green, and ⏰ deadline chips in day headers (HW5, HW3).
 - [ ] **A5. Step 5, 10-601 Quiz 2 (graded).** Expect: "6 graded answers became evidence (3 incorrect: Q2, Q4, Q5)", "Backpropagation: 0.12", "Logistic Regression: 0.30", and "Q7 held for review". Tile: Graded 6.
 - [ ] **A6. Ask again.** Do: Ask "ML topics I'm struggling with?". Expect: Backpropagation 0.12 citing p.2 Q4 and Q5, and Logistic Regression 0.30 citing p.1 Q2. The untested-concepts list ends "…and N more", and "1 answer needs review" is noted.
 - [ ] **A7. Step 6, 16-831 HW2 (graded).** Expect: Policy Gradients 0.12 and Imitation Learning 0.92. Ask "What robot learning topics am I struggling with?" → Policy Gradients.
@@ -46,6 +46,18 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **A13. Re-add.** Do: **Add again** on step 5. Expect: "Already added — nothing new was learned from this file."
 - [ ] **A14. Order matters, then recovers.** Do: Reset, add step 5 first. Expect a warning: "…couldn't be matched to a known concept… Add the course overview first". Then add step 1, then step 5 again. Expect: the estimates now appear.
 - [ ] **A15. Add all remaining.** Do: Reset, then **Add all remaining**. Expect: all 14 added in order, and tiles Courses 2, Concepts 35, Graded 12.
+
+## W. Interactive calendar (after A4–A10)
+
+- [ ] **W1. Navigate.** Do: click **›** then **Today**. Expect: the range moves by a week and back. Days after the imported week are empty.
+- [ ] **W2. Event details.** Do: click a lecture block. Expect: a detail panel with its time range, location and Demo label; **×** closes it.
+- [ ] **W3. Deadline chip.** Do: click ⏰ HW5. Expect: the due time and course.
+- [ ] **W4. Free time.** Do: untick **Free time**. Expect: the green shading disappears. Tick it again, then click a green area. Expect: "Free 12:20 PM–9:00 PM" (or similar) and a **Suggest study blocks** button.
+- [ ] **W5. Plan my week.** Do: click **✨ Plan my week**. Expect: "2 study blocks proposed…" and dashed purple blocks appear inside free time, before the HW deadlines. The seminar proposal is dashed on its day at 4 PM.
+- [ ] **W6. Approve on the calendar.** Do: click a dashed block, then **Approve** in the panel. Expect: "Simulated — Calendar not connected; nothing written", and the block turns solid purple with ✓.
+- [ ] **W7. Reject on the calendar.** Do: click the other dashed block, then **Reject**. Expect: it disappears from the grid.
+- [ ] **W8. Overlaps.** Expect: overlapping items sit side by side, not on top of each other.
+- [ ] **W9. Phone width.** Do: narrow to ~375 px. Expect: a one-day view with ‹ › stepping a day at a time, and no sideways scroll.
 
 ## U. Upload your own files
 
