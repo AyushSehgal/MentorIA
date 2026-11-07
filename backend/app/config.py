@@ -59,15 +59,15 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    db_path = _path("NOVA_DB_PATH", "backend/data/nova.db")
+    db_path = _path("MENTORIA_DB_PATH", "backend/data/mentoria.db")
     return Settings(
         demo_mode=_bool("DEMO_MODE", True),
-        timezone=os.getenv("NOVA_TIMEZONE", "America/New_York"),
+        timezone=os.getenv("MENTORIA_TIMEZONE", "America/New_York"),
         db_path=db_path,
-        upload_dir=_path("NOVA_UPLOAD_DIR", str(db_path.parent / "uploads")),
-        synthetic_file=_path("NOVA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
-        student_name=os.getenv("NOVA_STUDENT_NAME", "Ayush"),
-        student_email=os.getenv("NOVA_STUDENT_EMAIL", "ayush.student@example.edu"),
+        upload_dir=_path("MENTORIA_UPLOAD_DIR", str(db_path.parent / "uploads")),
+        synthetic_file=_path("MENTORIA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
+        student_name=os.getenv("MENTORIA_STUDENT_NAME", "Ayush"),
+        student_email=os.getenv("MENTORIA_STUDENT_EMAIL", "ayush.student@example.edu"),
         llm_mode=os.getenv("LLM_MODE", "local").strip().lower(),
         llm_timeout=float(os.getenv("LLM_TIMEOUT_SECONDS", "90")),
         llm_local_base_url=os.getenv("LLM_LOCAL_BASE_URL", "http://localhost:11434/v1").rstrip("/"),

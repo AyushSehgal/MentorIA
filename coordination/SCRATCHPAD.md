@@ -1,4 +1,4 @@
-# NOVA Scratchpad (append-only)
+# MentorIA Scratchpad (append-only)
 
 [2026-11-07 14:15 EST] coordinator | T00/T01 | START
 Files: root config, coordination/, frontend/src/api/types.ts, backend/app/schemas.py
@@ -16,13 +16,13 @@ Files: frontend/{package.json,package-lock.json,tsconfig.json,vite.config.ts,ind
 Tests: `npm run build` passes (tsc strict, 0 errors). Smoke: UI renders with backend down (banner + per-card error, chat still usable). Not yet verified against live backend payloads.
 Interfaces changed: none (types.ts untouched).
 Needs integration: run `npm run dev` (port 5173, /api proxied to :8000). Chat history persists across route changes (module-level). Knowledge page refetches model/graph/history independently.
-Contract notes: (1) calendar end time read from metadata.end (ISO) if present; (2) Canvas course name from metadata.course_name, completion from metadata.completed; (3) Piazza instructor flag metadata.is_instructor; (4) NOVA-created calendar events flagged by metadata.created_by_nova.
+Contract notes: (1) calendar end time read from metadata.end (ISO) if present; (2) Canvas course name from metadata.course_name, completion from metadata.completed; (3) Piazza instructor flag metadata.is_instructor; (4) MentorIA-created calendar events flagged by metadata.created_by_mentoria.
 
 [2026-11-07 15:30 EST] coordinator | T00–T08, T13 | DONE
 Files: backend/**, scripts/{dev.sh,seed_demo.py,make_demo_pdfs.py,google_auth.py}, fixtures/**, README.md
 Tests: pytest 18/18 pass (BKT, idempotency, order independence, self-report isolation, graded/ungraded PDFs, connector partial failure, fixture labels, chat source refs, no-catalog honesty, goal→proposition, reject/approve idempotency, exact-confirm, undated opportunity, untrusted email text, smoke routes).
 Manual: live UI at :5173 against API :8000 — dashboard, weekly-focus chat with approval cards, approve → "Simulated" label, Student Model + graph, Documents table; mobile 375px no horizontal scroll; no console errors.
-Interfaces changed: added HealthResponse/LLMInfo to schemas.py (matches types.ts HealthResponse). Frontend contract notes (metadata.end, course_name, completed, is_instructor, created_by_nova) all match backend.
+Interfaces changed: added HealthResponse/LLMInfo to schemas.py (matches types.ts HealthResponse). Frontend contract notes (metadata.end, course_name, completed, is_instructor, created_by_mentoria) all match backend.
 Needs integration: T09–T12 live connectors are MOCK_ONLY — need real credentials in .env.
 
 [2026-11-07 15:30 EST] coordinator | T02/T07-UI/T14 | REVIEWED
@@ -33,7 +33,7 @@ Files: fixtures/synthetic_world.md (new, single source), backend/app/synthetic.p
 memory/context.py, services/seed.py, api/sources.py, config.py; removed fixtures/{source_records,student_profile,knowledge_graph}.json
 Tests: pytest 24/24 (6 new: parse, bad reference error, edit→sync, removal→sync, invalid edit keeps last good, new self-report row).
 Manual: running API — edited a calendar row in the md, Sync all → dashboard showed the edit; reverted.
-Interfaces changed: none (API contract unchanged). New env var NOVA_SYNTHETIC_FILE.
+Interfaces changed: none (API contract unchanged). New env var MENTORIA_SYNTHETIC_FILE.
 
 [2026-11-07 16:50 EST] coordinator | llm-privacy | DONE
 Files: backend/app/orchestration/llm.py, graph.py, config.py, schemas.py, api/sources.py, db.py; frontend types.ts, client.ts, ChatPanel.tsx, pages/Sources.tsx, styles.css
@@ -53,7 +53,7 @@ Files: frontend/src/** (except api/types.ts)
 Files: frontend/src/api/client.ts (demoAssets, addDemoAsset, importFile, imports), App.tsx (nav "Add data"),
 pages/Documents.tsx (rebuilt as Add data: demo assets w/ Add / Add again / Add all remaining + inline ImportResult,
 upload w/ "I wrote this" + dynamic course select, import history, graded-doc question tables), pages/Dashboard.tsx
-("What NOVA knows" bar with growth highlight, empty hero, per-card empty states, goal insight icon), pages/Knowledge.tsx
+("What MentorIA knows" bar with growth highlight, empty hero, per-card empty states, goal insight icon), pages/Knowledge.tsx
 (no-courses empty state, proposition source chips + "stated in N sources"), components/Common.tsx (mode "import" → "from files"),
 components/ChatPanel.tsx (new chips + helper text), pages/Sources.tsx (reset/verified copy), styles.css (imported dot/badge, new blocks).
 Tests: npm run build passes (tsc strict, 0 errors). Not verified against v1.2 backend (routes not live yet).

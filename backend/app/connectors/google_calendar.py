@@ -44,8 +44,8 @@ class GoogleCalendarConnector(Connector):
                 source_url=ev.get("htmlLink"), occurred_at=s.get("dateTime") or s.get("date"), fetched_at=fetched,
                 course_id=catalog.course_for_text(title), concept_ids=[],
                 metadata={"end": e.get("dateTime") or e.get("date"), "all_day": all_day,
-                          "transparency": ev.get("transparency", "opaque"), "created_by_nova":
-                          (ev.get("extendedProperties", {}).get("private", {}).get("nova_recommendation_id"))},
+                          "transparency": ev.get("transparency", "opaque"), "created_by_mentoria":
+                          (ev.get("extendedProperties", {}).get("private", {}).get("mentoria_recommendation_id"))},
                 is_fixture=False))
         return out
 
@@ -59,7 +59,7 @@ def create_event(recommendation_id: str, title: str, start_iso: str, duration_mi
     """Create once: searches for an existing event tagged with this recommendation id first."""
     hdrs = google_auth.headers()
     found = requests.get(API, headers=hdrs, timeout=10, params={
-        "privateExtendedProperty": f"nova_recommendation_id={recommendation_id}", "maxResults": 1})
+        "privateExtendedProperty": f"mentoria_recommendation_id={recommendation_id}", "maxResults": 1})
     found.raise_for_status()
     if found.json().get("items"):
         ev = found.json()["items"][0]
@@ -68,7 +68,7 @@ def create_event(recommendation_id: str, title: str, start_iso: str, duration_mi
     body = {"summary": title, "description": description,
             "start": {"dateTime": iso(start), "timeZone": settings.timezone},
             "end": {"dateTime": iso(start + timedelta(minutes=duration_minutes)), "timeZone": settings.timezone},
-            "extendedProperties": {"private": {"nova_recommendation_id": recommendation_id}}}
+            "extendedProperties": {"private": {"mentoria_recommendation_id": recommendation_id}}}
     r = requests.post(API, headers=hdrs, json=body, timeout=10)
     r.raise_for_status()
     ev = r.json()

@@ -128,7 +128,7 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
         }
       >
         <p className="muted small">
-          NOVA starts empty. Add these prepared files one at a time and watch the dashboard, student model and chat change.
+          MentorIA starts empty. Add these prepared files one at a time and watch the dashboard, student model and chat change.
           They are sample files (labeled “Demo data”), not your real accounts.
         </p>
         {error && <p className="error-text">{error}</p>}

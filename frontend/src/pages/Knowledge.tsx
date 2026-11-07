@@ -83,7 +83,7 @@ export function Knowledge({ tz }: { tz: string }) {
         {!model ? (
           <Empty>—</Empty>
         ) : model.propositions.length === 0 ? (
-          <Empty>No goals yet. Tell NOVA your goals in chat, or add something you wrote on the Add data page.</Empty>
+          <Empty>No goals yet. Tell MentorIA your goals in chat, or add something you wrote on the Add data page.</Empty>
         ) : (
           <ul className="props">
             {model.propositions.map((p) => {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start NOVA API (:8000) and web UI (:5173). Ctrl-C stops both.
+# Start MentorIA API (:8000) and web UI (:5173). Ctrl-C stops both.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

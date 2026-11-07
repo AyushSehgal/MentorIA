@@ -1,11 +1,11 @@
-# NOVA synthetic world
+# MentorIA synthetic world
 
 All data in this file is **synthetic** (a fictional student, fictional courses, fictional messages).
-NOVA reads it in place of Canvas, Google Calendar, Gmail and Piazza until a real connector is configured.
+MentorIA reads it in place of Canvas, Google Calendar, Gmail and Piazza until a real connector is configured.
 Every record it produces is labeled "Demo data" in the UI.
 
 **How to edit**
-- Change anything below, save, then press **Sync all** in NOVA (or `POST /api/connectors/sync`). No restart needed.
+- Change anything below, save, then press **Sync all** in MentorIA (or `POST /api/connectors/sync`). No restart needed.
 - Times: `d+3 16:00` means 3 days from today at 16:00 in the student's timezone (`d-1`, `d+0` also work).
   Absolute ISO times such as `2026-11-12T16:00:00-05:00` work too.
 - Inside an email or post body, `{when:d+3 16:00}` is replaced by that time written out

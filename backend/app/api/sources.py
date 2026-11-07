@@ -97,7 +97,7 @@ def document_file(doc_id: str):
                         headers={"Content-Disposition": f'inline; filename="{d.filename}"'})
 
 
-SENT_TO_LLM = ("Only your question and NOVA's drafted answer (concept names, estimates, deadlines, and email/assignment "
+SENT_TO_LLM = ("Only your question and MentorIA's drafted answer (concept names, estimates, deadlines, and email/assignment "
                "titles it cites). Raw emails, PDFs and the database are never sent.")
 
 

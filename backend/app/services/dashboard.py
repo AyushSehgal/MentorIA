@@ -65,7 +65,7 @@ def insights(student_id: str) -> list[Insight]:
         if missing:
             out.append(Insight(id=f"ins_missing_{a.id}", kind="missing_evidence",
                                title=f"No graded evidence for {', '.join(catalog.concept_label(c) for c in missing)}",
-                               detail=f"“{a.title}” covers this, but NOVA has no graded quiz evidence to judge readiness.",
+                               detail=f"“{a.title}” covers this, but MentorIA has no graded quiz evidence to judge readiness.",
                                course_id=a.course_id, evidence=[record_evidence(a)],
                                confidence_note="Upload graded work to get an estimate."))
     return out

@@ -45,7 +45,7 @@ function KnowledgeBar({ k }: { k: KnowledgeCounts }) {
     prev.current = k;
   }, [k]);
   return (
-    <div className="knowledge-bar" aria-label="What NOVA knows">
+    <div className="knowledge-bar" aria-label="What MentorIA knows">
       {KSTATS.map((s) => {
         const v = k[s.key] ?? 0;
         return (
@@ -91,8 +91,8 @@ export function Dashboard({
             {data.knowledge && <KnowledgeBar k={data.knowledge} />}
             {isEmpty(data.knowledge) && (
               <div className="card empty-hero">
-                <h2>NOVA is empty</h2>
-                <p className="muted">Add a course overview on the Add data page to begin. Everything NOVA knows will come from what you add.</p>
+                <h2>MentorIA is empty</h2>
+                <p className="muted">Add a course overview on the Add data page to begin. Everything MentorIA knows will come from what you add.</p>
                 <button className="btn primary" onClick={() => navigate("/documents")}>
                   Go to Add data
                 </button>
@@ -118,7 +118,7 @@ export function Dashboard({
 
 function InsightsCard({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   return (
-    <Card title="NOVA Insights & Priorities" className="insights">
+    <Card title="MentorIA Insights & Priorities" className="insights">
       {data.insights.length === 0 && data.recommendations.length === 0 && (
         <Empty>No insights yet — they appear as you add courses, deadlines, graded work and goals.</Empty>
       )}
@@ -233,7 +233,7 @@ function CalendarCard({ data, tz }: { data: DashboardResponse; tz: string }) {
                       {typeof e.metadata?.end === "string" ? `–${fmtTime(e.metadata.end as string, tz)}` : ""}
                     </span>{" "}
                     {e.title}
-                    {e.metadata?.created_by_nova ? <span className="pill pill-good">NOVA</span> : null}
+                    {e.metadata?.created_by_mentoria ? <span className="pill pill-good">MentorIA</span> : null}
                   </li>
                 ))}
               </ul>

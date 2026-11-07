@@ -80,7 +80,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand" onClick={() => navigate("/")}>
-          <span className="logo">✦</span> NOVA
+          <span className="logo">✦</span> MentorIA
           <span className="tagline">academic intelligence</span>
         </div>
         <nav className="nav">

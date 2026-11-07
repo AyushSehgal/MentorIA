@@ -51,7 +51,7 @@ def header(c, title, sub, page, total):
     c.drawString(54, 726, sub)
     c.drawString(470, 726, f"Page {page} of {total}")
     c.setFillColorRGB(0.75, 0.1, 0.1)
-    c.drawString(54, 712, "DEMO DATA - fictional student and course, generated for the NOVA demo.")
+    c.drawString(54, 712, "DEMO DATA - fictional student and course, generated for the MentorIA demo.")
     c.setFillColorRGB(0, 0, 0)
 
 

@@ -1,4 +1,4 @@
-# NOVA Task Board
+# MentorIA Task Board
 
 Statuses: TODO, CLAIMED, IN_PROGRESS, BLOCKED, READY_FOR_REVIEW, DONE, MOCK_ONLY. One owner per task.
 

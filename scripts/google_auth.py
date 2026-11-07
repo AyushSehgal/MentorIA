@@ -40,7 +40,7 @@ def main():
             result.update({k: v[0] for k, v in q.items()})
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"NOVA: authorization received. You can close this tab.")
+            self.wfile.write(b"MentorIA: authorization received. You can close this tab.")
 
         def log_message(self, *a):
             pass

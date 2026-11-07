@@ -64,13 +64,13 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
   return (
     <section className="card chat">
       <header className="card-head">
-        <h2>Ask NOVA</h2>
+        <h2>Ask MentorIA</h2>
         <span className="muted small">Cross-source, evidence-backed</span>
       </header>
       <div className="chat-log">
         {turns.length === 0 && (
           <p className="empty">
-            Ask about your courses, deadlines, knowledge gaps, or opportunities. You can also tell NOVA things like
+            Ask about your courses, deadlines, knowledge gaps, or opportunities. You can also tell MentorIA things like
             “I’m confident with backpropagation” or “I want a job at a startup that makes robots understand language” to update your student model.
           </p>
         )}
@@ -85,7 +85,7 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
             )}
           </div>
         ))}
-        {busy && <div className="bubble assistant thinking">NOVA is gathering evidence…</div>}
+        {busy && <div className="bubble assistant thinking">MentorIA is gathering evidence…</div>}
         <div ref={endRef} />
       </div>
       <div className="suggestions">
@@ -99,7 +99,7 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask NOVA anything about your semester…"
+          placeholder="Ask MentorIA anything about your semester…"
           disabled={busy}
           aria-label="Chat message"
         />

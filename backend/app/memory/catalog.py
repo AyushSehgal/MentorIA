@@ -1,6 +1,6 @@
 """Course/concept catalog, stored in SQLite and grown by imports (course overview PDFs or source packs).
 
-NOVA starts with an empty catalog. Relations come from imported documents and are labeled with their provenance;
+MentorIA starts with an empty catalog. Relations come from imported documents and are labeled with their provenance;
 they are never invented by an LLM.
 """
 from __future__ import annotations

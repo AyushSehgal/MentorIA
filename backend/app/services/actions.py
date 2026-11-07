@@ -37,7 +37,7 @@ def approve(rec_id: str, req: ApproveRequest) -> ApproveResponse:
         store.put_recommendation(rec)
         return ApproveResponse(recommendation=rec, executed=False, simulated=False, result_detail=rec.result_detail)
 
-    description = f"{rec.reason}\n\nCreated by NOVA after your approval (recommendation {rec.id})."
+    description = f"{rec.reason}\n\nCreated by MentorIA after your approval (recommendation {rec.id})."
     if google_calendar.write_enabled():
         try:
             res = google_calendar.create_event(rec.id, rec.title, rec.suggested_start, rec.duration_minutes, description)

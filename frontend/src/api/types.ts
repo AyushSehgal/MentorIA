@@ -248,7 +248,7 @@ export interface DashboardResponse {
   insights: Insight[];
   recommendations: Recommendation[]; // pending only
   connectors: ConnectorStatus[];
-  knowledge: KnowledgeCounts; // v1.2: what NOVA knows so far (drives the "context growing" bar)
+  knowledge: KnowledgeCounts; // v1.2: what MentorIA knows so far (drives the "context growing" bar)
 }
 
 export interface ChatMessage {
@@ -344,7 +344,7 @@ export interface ImportResult {
   kind: ImportKind;
   title: string;
   summary: string; // one line, e.g. "Added course 10-601 with 15 concepts"
-  changes: string[]; // human-readable list of what changed in NOVA's model
+  changes: string[]; // human-readable list of what changed in MentorIA's model
   records_added: number;
   observations_added: number;
   concepts_added: number;

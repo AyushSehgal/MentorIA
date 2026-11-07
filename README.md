@@ -1,11 +1,11 @@
-# NOVA — academic aggregation dashboard + student model
+# MentorIA — academic aggregation dashboard + student model
 
-NOVA consolidates Canvas, Google Calendar, Gmail, Piazza and uploaded PDFs into one React dashboard, keeps a
+MentorIA consolidates Canvas, Google Calendar, Gmail, Piazza and uploaded PDFs into one React dashboard, keeps a
 persistent, evidence-backed student model (BKT mastery, separate self-confidence, goals/preferences, workload),
 and answers cross-source questions through a LangGraph orchestrator. External writes (calendar events) happen only
 after explicit student approval.
 
-Spec: `NOVA_CLAUDE_IMPLEMENTATION.md` · Contracts: `coordination/CONTRACTS.md` · Decisions: `coordination/DECISIONS.md`
+Spec: `MentorIA_CLAUDE_IMPLEMENTATION.md` · Contracts: `coordination/CONTRACTS.md` · Decisions: `coordination/DECISIONS.md`
 
 ## Run it
 
@@ -37,7 +37,7 @@ Gmail messages and Piazza posts — as markdown tables and `###` blocks.
 - Times are relative (`d+3 16:00` = 3 days from today at 4 pm) so the demo stays current; ISO timestamps also work.
 - A typo or unknown concept id never breaks the app: the previous valid version keeps showing and the source cards
   explain what's wrong ("Latest edit NOT loaded: …").
-- Everything from this file is labeled **Demo data** in the UI. Point `NOVA_SYNTHETIC_FILE` at another file to swap scenarios.
+- Everything from this file is labeled **Demo data** in the UI. Point `MENTORIA_SYNTHETIC_FILE` at another file to swap scenarios.
 - Graded quizzes stay PDFs (Documents page), because the PDF → page reference → evidence path is part of the product.
 
 When a real connector is configured, that provider switches to live data and the others keep using the file.
@@ -52,7 +52,7 @@ on **Sources → Privacy & AI** (default: **Local**; override the initial mode w
 |---|---|---|
 | **Off** | Nothing — deterministic grounded answers | No |
 | **Local** (default) | Any OpenAI-compatible server on `localhost` (Ollama, LM Studio, llama.cpp) | No |
-| **Cloud** | OpenRouter (or Anthropic direct) | Yes: the question + NOVA's draft answer |
+| **Cloud** | OpenRouter (or Anthropic direct) | Yes: the question + MentorIA's draft answer |
 
 What an LLM receives in local/cloud mode: only the question and the drafted answer (concept names, estimates, deadlines,
 and the email/assignment titles it cites). Raw emails, PDFs and the database are never sent. OpenRouter requests ask it to
@@ -140,7 +140,7 @@ To connect real services: copy `.env.example` to `.env`, fill in credentials, ru
 
 ### 3. Smarter, still grounded (weeks)
 - [ ] **LLM-assisted intent routing** with the keyword router as a fallback, so free-form questions land in the right place; log misroutes to improve the rules.
-- [ ] **Stronger rewrite guardrail:** also require kept caveats and disclaimers, or have the model output structured fields that NOVA renders itself.
+- [ ] **Stronger rewrite guardrail:** also require kept caveats and disclaimers, or have the model output structured fields that MentorIA renders itself.
 - [ ] **Conversation memory:** use chat history for follow-ups ("what about the second one?").
 - [ ] **Forgetting / spaced review:** add decay (e.g. an FSRS-style recall estimate) as a separate signal next to BKT, plus "review again" suggestions.
 - [ ] **Calibrate BKT** per course once enough real graded answers exist; show confidence intervals rather than single numbers.

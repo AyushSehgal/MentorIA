@@ -1,4 +1,4 @@
-# NOVA — Manual Testing Guide
+# MentorIA — Manual Testing Guide
 
 Work through the sections **in order**: later sections assume the state left by earlier ones.
 Tick each box as you go. Every check lists **Do** (what to do) and **Expect** (what should happen). If what you see
@@ -7,7 +7,7 @@ doesn't match, note the check ID (e.g. `D3`) and what you saw.
 **About dates:** demo data uses times relative to *today*, so you'll see real dates near today's date. "d+3" below
 means "3 days from today".
 
-**About the language model:** NOVA defaults to the **Local** model. Local answers are reworded differently each time and
+**About the language model:** MentorIA defaults to the **Local** model. Local answers are reworded differently each time and
 take 5–25 s. To make the expected text below match exactly, section **0** switches to **Off** first; section **L** tests the
 model modes.
 
@@ -54,7 +54,7 @@ model modes.
 
 ## C1. Chat before any evidence (honesty checks)
 
-Use the **Ask NOVA** panel on the right of the dashboard. It sits below the cards on narrow screens.
+Use the **Ask MentorIA** panel on the right of the dashboard. It sits below the cards on narrow screens.
 
 - [ ] **C1.1 Struggling, no evidence.** Do: click the chip **"What systems topics am I struggling with?"** Expect: "I don't have any graded assessment evidence for Computer Systems… yet". Then your *self-reported* confidence ratings, labeled "self-report, not evidence of mastery", and a pointer to upload a graded quiz.
 - [ ] **C1.2 Footer.** Expect the footer to read `intent: struggling · trace: route:struggling → struggling → compose · grounded draft (no LLM)`.
@@ -214,7 +214,7 @@ Section S4 set the mode to Off. Now:
 
 - [ ] **L1. Privacy panel.** Do: **Sources → Privacy & AI**. Expect three cards: Off, Local and Cloud. Local shows "✓ qwen2.5 via http://localhost:11434/v1" (if Ollama is running). Cloud is greyed out with "Not available: OPENROUTER_API_KEY not set".
 - [ ] **L2. Off mode.** Do: with Off selected, ask any question. Expect: the footer says **"grounded draft (no LLM)"**, and the answer is instant.
-- [ ] **L3. Local mode.** Do: select **Local model**, then ask "What should I focus on this week?". Expect: a 5–25 s wait ("NOVA is gathering evidence…"). Then either:
+- [ ] **L3. Local mode.** Do: select **Local model**, then ask "What should I focus on this week?". Expect: a 5–25 s wait ("MentorIA is gathering evidence…"). Then either:
   - the footer says **"worded by local:qwen2.5"** and the wording differs from C2.2, with all numbers and deadlines matching; **or**
   - the footer says "grounded draft (no LLM)", with a note like "LLM rewrite dropped grounded items (Q2…); showing the grounded draft instead". That's the guardrail working.
 

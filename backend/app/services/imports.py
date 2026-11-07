@@ -1,13 +1,13 @@
-"""Manual data import: the only way data enters NOVA until a live connector is configured.
+"""Manual data import: the only way data enters MentorIA until a live connector is configured.
 
 Accepted files:
   .pdf  course overview (defines a course + concepts), graded assessment, study material, or the student's own writing
   .eml  an email; if the student sent it, explicit goals/interests in it are learned; otherwise it's an inbox item
   .ics  calendar events
-  .md   a NOVA source pack (Canvas assignments, Piazza posts, calendar, emails, courses/concepts, self-reports)
+  .md   a MentorIA source pack (Canvas assignments, Piazza posts, calendar, emails, courses/concepts, self-reports)
 
 Every import is idempotent (re-adding a file changes nothing) and returns a human-readable list of what changed.
-Files containing the marker NOVA-DEMO-ASSET are labeled demo data (is_fixture=True).
+Files containing the marker MENTORIA-DEMO-ASSET are labeled demo data (is_fixture=True).
 """
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ from ..schemas import DocumentSummary, ImportResult, Observation, SourceRecord
 from ..timeutil import human, iso, now_iso, parse, resolve_rel
 from .document_ingest import ingest_pdf, parse_pdf
 
-DEMO_MARKER = "NOVA-DEMO-ASSET"
+DEMO_MARKER = "MENTORIA-DEMO-ASSET"
 _WHEN = re.compile(r"\{when:([^}]+)\}")
 
 
 class Tracker:
-    """Collects human-readable changes so the UI can show what each file taught NOVA."""
+    """Collects human-readable changes so the UI can show what each file taught MentorIA."""
 
     def __init__(self, student_id: str):
         self.student_id = student_id
@@ -218,7 +218,7 @@ def _import_eml(t: Tracker, data: bytes, filename: str) -> tuple[str, str]:
         is_fixture=is_fixture)
     _add_records(t, [rec], "Emails")
     if from_student:
-        t.changes.append("You sent this email, so NOVA read it for your stated goals and interests")
+        t.changes.append("You sent this email, so MentorIA read it for your stated goals and interests")
         _learn_from_text(t, body, "email", f"eml_{_sha(ext_id, 10)}", {"subject": subject}, sent, rec.id, is_fixture)
     else:
         t.changes.append(f"Added to Gmail opportunities (from {sender or 'unknown sender'})")
@@ -330,7 +330,7 @@ def import_file(data: bytes, filename: str, student_id: str, authored_by_me: boo
     elif ext in ("md", "markdown"):
         kind, title = _import_pack(t, data, filename)
     else:
-        raise HTTPException(400, "Unsupported file type. Add a .pdf, .eml, .ics or NOVA .md source pack.")
+        raise HTTPException(400, "Unsupported file type. Add a .pdf, .eml, .ics or MentorIA .md source pack.")
     t.finish_goals()
     if t.fingerprint() == t._fingerprint:
         t.changes = ["Already added — nothing new was learned from this file."]

@@ -41,11 +41,11 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
   }
 
   async function reset() {
-    if (!window.confirm("Reset NOVA to empty? This removes all added data (your AI privacy setting is kept).")) return;
+    if (!window.confirm("Reset MentorIA to empty? This removes all added data (your AI privacy setting is kept).")) return;
     setBusy("reset");
     try {
       await api.resetDemo();
-      setMsg("NOVA reset — empty. Add data to begin.");
+      setMsg("MentorIA reset — empty. Add data to begin.");
       load();
       onChanged?.();
     } catch (e) {
@@ -118,7 +118,7 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
 const MODES: { mode: LLMMode; title: string; blurb: string }[] = [
   { mode: "off", title: "Off — most private", blurb: "No language model. Answers are assembled directly from your stored evidence." },
   { mode: "local", title: "Local model", blurb: "A model running on this computer (e.g. Ollama) rewords answers. Nothing leaves your device." },
-  { mode: "cloud", title: "Cloud model", blurb: "A hosted model (OpenRouter) rewords answers. Your question and NOVA's draft answer are sent to that provider." },
+  { mode: "cloud", title: "Cloud model", blurb: "A hosted model (OpenRouter) rewords answers. Your question and MentorIA's draft answer are sent to that provider." },
 ];
 
 function PrivacyCard() {
@@ -131,7 +131,7 @@ function PrivacyCard() {
   }, []);
 
   async function choose(mode: LLMMode) {
-    if (mode === "cloud" && !window.confirm("Cloud mode sends your questions and NOVA's drafted answers (which can include concept names, estimates, deadlines and email/assignment titles) to OpenRouter and the model provider it routes to. Continue?")) return;
+    if (mode === "cloud" && !window.confirm("Cloud mode sends your questions and MentorIA's drafted answers (which can include concept names, estimates, deadlines and email/assignment titles) to OpenRouter and the model provider it routes to. Continue?")) return;
     setBusy(true);
     try {
       setP(await api.setPrivacy(mode));

@@ -1,10 +1,10 @@
-"""Generate the NOVA demo assets (demo_assets/): the files a presenter adds one by one, starting from an empty NOVA.
+"""Generate the MentorIA demo assets (demo_assets/): the files a presenter adds one by one, starting from an empty MentorIA.
 
 Courses: 10-601 Introduction to Machine Learning (CMU) and 16-831 Introduction to Robot Learning (CMU).
 Concept lists follow the lecture topics on the public course pages:
   https://www.cs.cmu.edu/~mgormley/courses/10601/   and   https://16-831-s24.github.io/
 Everything else — the student, grades, emails, events, speakers and dates — is fictional demo content, marked with
-NOVA-DEMO-ASSET so NOVA labels it "Demo data". Dates are relative to the day the assets are generated.
+MENTORIA-DEMO-ASSET so MentorIA labels it "Demo data". Dates are relative to the day the assets are generated.
 """
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ from reportlab.pdfgen import canvas
 from .config import REPO_ROOT, settings
 
 OUT = REPO_ROOT / "demo_assets"
-MARK = "NOVA-DEMO-ASSET"
-DEMO_NOTE = f"DEMO ASSET ({MARK}) - fictional content prepared for the NOVA demo; not an official course document."
+MARK = "MENTORIA-DEMO-ASSET"
+DEMO_NOTE = f"DEMO ASSET ({MARK}) - fictional content prepared for the MentorIA demo; not an official course document."
 
 ML = {
     "id": "10601", "code": "10-601", "title": "Introduction to Machine Learning", "domain": "ml",
@@ -161,18 +161,18 @@ class _Pdf:
 # ---- assets -----------------------------------------------------------------------------
 def course_overview(course: dict, path: Path):
     p = _Pdf(path, f"{course['code']} {course['title']} - Course overview",
-             f"Prepared for NOVA from the public course page: {course['source']}")
+             f"Prepared for MentorIA from the public course page: {course['source']}")
     p.line(f"Course: {course['code']} {course['title']}", fit=True)
     p.line(f"Course ID: {course['id']}", fit=True)
     p.line(f"Domain: {course['domain']}", fit=True)
     p.line(f"Also known as: {course['aka']}", fit=True)
     p.line(f"Source: {course['source']}", fit=True)
     p.space()
-    p.line("Concepts (lecture topics from the public schedule; aliases help NOVA recognize them in your files):", bold=True)
+    p.line("Concepts (lecture topics from the public schedule; aliases help MentorIA recognize them in your files):", bold=True)
     for label, cid, aliases in course["concepts"]:
         p.line(f"Concept: {label} | id: {cid} | aliases: {aliases}", size=8.5, gap=3, fit=True)
     p.space()
-    p.line("How topics build on each other (NOVA demo annotation, not official prerequisites):", bold=True)
+    p.line("How topics build on each other (MentorIA demo annotation, not official prerequisites):", bold=True)
     for a, b, rel in course["relations"]:
         p.line(f"Relation: {a} -> {b} | {rel}", size=8.5, gap=3, fit=True)
     p.save()
@@ -237,8 +237,8 @@ def write_email(path: Path, sender: str, to: str, subject: str, body: str, sent:
     m = EmailMessage()
     m["From"], m["To"], m["Subject"] = sender, to, subject
     m["Date"] = format_datetime(sent)
-    m["Message-ID"] = make_msgid(idstring=path.stem, domain="nova-demo.example")
-    m["X-NOVA"] = MARK
+    m["Message-ID"] = make_msgid(idstring=path.stem, domain="mentoria-demo.example")
+    m["X-MENTORIA"] = MARK
     m.set_content(body)
     path.write_bytes(bytes(m))
 
@@ -265,10 +265,10 @@ def ics(path: Path, today: date):
             events.append(("10-601 recitation", d, 14, 0, 15, 0, "Recitation room (demo)"))
         if wd == 5:
             events.append(("Robotics club build session", d, 13, 0, 16, 0, "Makerspace (demo)"))
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NOVA demo//EN", f"X-NOVA:{MARK}"]
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MentorIA demo//EN", f"X-MENTORIA:{MARK}"]
     for i, (title, d, h1, m1, h2, m2, loc) in enumerate(events):
         s, e = _at(today, d, h1, m1), _at(today, d, h2, m2)
-        lines += ["BEGIN:VEVENT", f"UID:nova-demo-{i}-{s.strftime('%Y%m%d%H%M')}@nova-demo.example",
+        lines += ["BEGIN:VEVENT", f"UID:mentoria-demo-{i}-{s.strftime('%Y%m%d%H%M')}@mentoria-demo.example",
                   f"DTSTART;TZID={settings.timezone}:{stamp(s)}", f"DTEND;TZID={settings.timezone}:{stamp(e)}",
                   f"SUMMARY:{title}", f"LOCATION:{loc}", "END:VEVENT"]
     lines.append("END:VCALENDAR")
@@ -336,7 +336,7 @@ def manifest_entries() -> list[dict]:
         {"step": 1, "name": "01_10601_course_overview.pdf", "kind": "course_overview",
          "title": "10-601 Intro to ML — course overview",
          "description": "Course code plus 19 lecture-topic concepts from the public 10-601 schedule.",
-         "what_to_notice": "NOVA learns its first course: the knowledge bar counts concepts, and Student Model lists them (no estimates yet)."},
+         "what_to_notice": "MentorIA learns its first course: the knowledge bar counts concepts, and Student Model lists them (no estimates yet)."},
         {"step": 2, "name": "02_16831_course_overview.pdf", "kind": "course_overview",
          "title": "16-831 Intro to Robot Learning — course overview",
          "description": "16 concepts from the public 16-831 lecture list, incl. Foundation Models in Robotics.",
@@ -370,7 +370,7 @@ def manifest_entries() -> list[dict]:
          "what_to_notice": "Relevant because of a knowledge gap, not your goal — the reasons say so."},
         {"step": 12, "name": "12_email_quant_club.eml", "kind": "email", "title": "Quant finance club kickoff",
          "description": "An unrelated announcement.",
-         "what_to_notice": "Ranked low and skipped in chat — NOVA filters noise."},
+         "what_to_notice": "Ranked low and skipped in chat — MentorIA filters noise."},
         {"step": 13, "name": "13_piazza_posts.md", "kind": "source_pack", "title": "Piazza posts export",
          "description": "Instructor clarifications for 10-601 HW5 and 16-831 HW3, plus a student question.",
          "what_to_notice": "Piazza card fills; instructor posts are badged. Questions never lower your mastery."},

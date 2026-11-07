@@ -42,7 +42,7 @@ def empty_client(tmp_path, monkeypatch):
 
 @pytest.fixture()
 def client(empty_client):
-    """NOVA with the synthetic 'systems + robot learning' pack imported (the pre-v1.2 scenario)."""
+    """MentorIA with the synthetic 'systems + robot learning' pack imported (the pre-v1.2 scenario)."""
     r = upload(empty_client, PACK)
     assert r.status_code == 200, r.text
     return empty_client

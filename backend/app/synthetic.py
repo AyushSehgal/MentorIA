@@ -1,4 +1,4 @@
-"""Parse NOVA "source pack" markdown files (e.g. fixtures/synthetic_world.md, demo_assets/*.md).
+"""Parse MentorIA "source pack" markdown files (e.g. fixtures/synthetic_world.md, demo_assets/*.md).
 
 A pack can contain any subset of these sections:
   ## Courses / ## Concepts / ## Concept relations     -> markdown tables

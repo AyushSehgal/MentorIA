@@ -23,11 +23,11 @@ import requests
 from .. import db
 from ..config import settings
 
-log = logging.getLogger("nova.llm")
+log = logging.getLogger("mentoria.llm")
 MODES = ("off", "local", "cloud")
 
 SYSTEM = (
-    "You are NOVA, an academic assistant. Rewrite the DRAFT answer so it reads naturally and concisely for the student. "
+    "You are MentorIA, an academic assistant. Rewrite the DRAFT answer so it reads naturally and concisely for the student. "
     "Rules: use ONLY facts present in the DRAFT; do not add dates, times, scores, course names, prerequisites, events or "
     "recommendations that are not in the DRAFT; keep every number, date and citation (quiz/page/question) exactly; keep "
     "uncertainty and 'demo data' caveats; keep '- ' bullets and **bold** formatting; never claim to have done anything "
@@ -154,7 +154,7 @@ def polish(question: str, draft: str) -> LLMResult:
                 provider = f"openrouter:{settings.openrouter_model}"
                 extra = {} if settings.openrouter_allow_data_collection else {"provider": {"data_collection": "deny"}}
                 out = _openai_compatible("https://openrouter.ai/api/v1", settings.openrouter_model, question, draft,
-                                         {"Authorization": f"Bearer {settings.openrouter_api_key}", "X-Title": "NOVA"}, extra)
+                                         {"Authorization": f"Bearer {settings.openrouter_api_key}", "X-Title": "MentorIA"}, extra)
             else:
                 provider = f"anthropic:{settings.anthropic_model}"
                 out = _anthropic(question, draft)

@@ -1,4 +1,4 @@
-"""Reset: NOVA starts empty. Data enters only through the Add data page (imports) or live connectors."""
+"""Reset: MentorIA starts empty. Data enters only through the Add data page (imports) or live connectors."""
 from __future__ import annotations
 
 from .. import db

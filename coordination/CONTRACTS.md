@@ -1,4 +1,4 @@
-# NOVA API Contracts — v1 (FROZEN 2026-11-07)
+# MentorIA API Contracts — v1 (FROZEN 2026-11-07)
 
 Authoritative types: `frontend/src/api/types.ts` (TS) ⇄ `backend/app/schemas.py` (Pydantic). Field names are identical.
 Changes require a blocking proposal in `SCRATCHPAD.md` + an ADR in `DECISIONS.md` before code changes.

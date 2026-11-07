@@ -1,4 +1,4 @@
-"""NOVA FastAPI app. Run: uvicorn app.main:app --reload --port 8000 (from backend/)."""
+"""MentorIA FastAPI app. Run: uvicorn app.main:app --reload --port 8000 (from backend/)."""
 from __future__ import annotations
 
 import logging
@@ -18,11 +18,11 @@ async def lifespan(_app: FastAPI):
     try:
         ensure_generated()  # fresh demo assets for today's dates
     except Exception as e:  # never block startup on demo content
-        logging.getLogger("nova").warning("Demo assets not generated: %s", e)
+        logging.getLogger("mentoria").warning("Demo assets not generated: %s", e)
     yield
 
 
-app = FastAPI(title="NOVA", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="MentorIA", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 app.include_router(sources.router)

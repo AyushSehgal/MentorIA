@@ -1,4 +1,4 @@
-# NOVA — Claude Code Master Implementation Specification
+# MentorIA — Claude Code Master Implementation Specification
 
 **Status:** Working single source of truth | **Date:** 2026-11-07 | **Target:** local, live hackathon demo | **Time budget:** 2–4 remaining development hours | **Team:** multiple coding agents may work concurrently
 
@@ -6,9 +6,9 @@
 
 ## 0. One-paragraph mission
 
-NOVA is an **intelligent academic aggregation dashboard** that consolidates a student's data from **Canvas, Google Calendar, Gmail, Piazza, and uploaded documents** into a single React interface. A persistent **student memory / mental-model intelligence layer** ingests evidence from these sources and conversations, maintains structured and qualitative beliefs (knowledge, goals, motivation, engagement, preferences, workload), and exposes a course/concept knowledge graph. A conversational interface answers cross-source questions such as **“What systems topics am I struggling with?”**, **“What should I focus on this week?”**, and **“What classes should I take next?”** with source-backed explanations. NOVA proactively highlights relevant opportunities (e.g., research talks found in Gmail) and suggests study activities; **external actions require explicit student approval**. The central orchestration is built with **LangGraph**, backed by **FastAPI**, and presented in **React + TypeScript**, locally for a live demo.
+MentorIA is an **intelligent academic aggregation dashboard** that consolidates a student's data from **Canvas, Google Calendar, Gmail, Piazza, and uploaded documents** into a single React interface. A persistent **student memory / mental-model intelligence layer** ingests evidence from these sources and conversations, maintains structured and qualitative beliefs (knowledge, goals, motivation, engagement, preferences, workload), and exposes a course/concept knowledge graph. A conversational interface answers cross-source questions such as **“What systems topics am I struggling with?”**, **“What should I focus on this week?”**, and **“What classes should I take next?”** with source-backed explanations. MentorIA proactively highlights relevant opportunities (e.g., research talks found in Gmail) and suggests study activities; **external actions require explicit student approval**. The central orchestration is built with **LangGraph**, backed by **FastAPI**, and presented in **React + TypeScript**, locally for a live demo.
 
-**Crucial correction from earlier brainstorming:** NOVA is **not primarily a tutoring app or a BKT demo**. The dashboard + connector aggregation + conversational intelligence are the primary product. The mental model is one important differentiating feature. Existing historical quiz PDFs are valid learning evidence; NOVA does **not** require its own quiz generator to operate.
+**Crucial correction from earlier brainstorming:** MentorIA is **not primarily a tutoring app or a BKT demo**. The dashboard + connector aggregation + conversational intelligence are the primary product. The mental model is one important differentiating feature. Existing historical quiz PDFs are valid learning evidence; MentorIA does **not** require its own quiz generator to operate.
 
 ## 1. Product invariants / confirmed decisions
 
@@ -28,7 +28,7 @@ NOVA is an **intelligent academic aggregation dashboard** that consolidates a st
 
 ### Primary route `/` — consolidated dashboard
 
-Header: NOVA, active student, connector sync/status indicators, refresh control.
+Header: MentorIA, active student, connector sync/status indicators, refresh control.
 
 **Priority panels / cards:**
 - **Canvas — Tasks / Due Soon:** name, course, due date, completion state, source link where available; sortable by urgency.
@@ -36,8 +36,8 @@ Header: NOVA, active student, connector sync/status indicators, refresh control.
 - **Gmail — Relevant Academic Opportunities:** research talks, seminars, recruiter/academic announcements; relevance rationale against student interests/goals; source/message date; do not misrepresent an undated announcement as an upcoming event.
 - **Piazza — Course Discussions:** instructor announcements, relevant course questions, updates, links when permitted.
 - **Documents — Academic Sources:** uploaded PDFs, extraction status, course association, evidence/source references.
-- **NOVA Insights / Priorities:** focus areas, possible knowledge blind spots, recommended action(s), evidence links and confidence caveats.
-- **Persistent Ask NOVA chatbot:** prominently visible within dashboard; accepts cross-source questions and displays source-backed responses and approval-required action proposals.
+- **MentorIA Insights / Priorities:** focus areas, possible knowledge blind spots, recommended action(s), evidence links and confidence caveats.
+- **Persistent Ask MentorIA chatbot:** prominently visible within dashboard; accepts cross-source questions and displays source-backed responses and approval-required action proposals.
 - **My Student Model:** accessible panel/tab; concept mastery, student self-confidence, evidence counts, goals and preferences; expandable **knowledge graph** of course→concept→prerequisite and concept→evidence relationships. A structured list is a suitable graph fallback if visualization is not ready.
 
 Suggested routes/tabs: `/` Dashboard; `/knowledge` Student Model & Graph; `/documents` Uploads; `/sources` Connector statuses. Chat remains accessible from home; do not push it behind a secondary page.
@@ -344,10 +344,10 @@ Implement these in FastAPI. Return typed JSON and meaningful errors. Prefer a un
 ## 8. Recommended repository layout
 
 ```text
-nova/
+mentoria/
 ├── README.md
 ├── AGENTS.md
-├── NOVA_CLAUDE_IMPLEMENTATION.md
+├── MentorIA_CLAUDE_IMPLEMENTATION.md
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml                  # optional; don't block local launch
@@ -520,7 +520,7 @@ Short ADR-style entries: `ADR-001`, status, decision, rationale, consequences; l
 
 ### Live demo sequence (3–4 minutes, depending on event limit)
 
-1. Open NOVA; show consolidated Canvas tasks, Calendar, Gmail opportunities, Piazza, and uploaded docs.
+1. Open MentorIA; show consolidated Canvas tasks, Calendar, Gmail opportunities, Piazza, and uploaded docs.
 2. Open a graded historical quiz PDF; point to specific incorrect question/related systems concept.
 3. Show concept belief/provenance updated. Ask “What systems topics am I struggling with?”
 4. Ask “What should I focus on this week?” Show priority from both knowledge gap and upcoming deadline.
@@ -550,7 +550,7 @@ Short ADR-style entries: `ADR-001`, status, decision, rationale, consequences; l
 
 ## 15. Definition of done
 
-**NOVA is “working” when a real human can open one dashboard, see consolidated academic source cards, upload or access a historic graded quiz, ask grounded questions of their accumulated student model, receive a cross-source weekly focus recommendation, and explicitly approve/reject a proposed calendar action — all without the system making up evidence or hiding mock-data status.**
+**MentorIA is “working” when a real human can open one dashboard, see consolidated academic source cards, upload or access a historic graded quiz, ask grounded questions of their accumulated student model, receive a cross-source weekly focus recommendation, and explicitly approve/reject a proposed calendar action — all without the system making up evidence or hiding mock-data status.**
 
 A locally functioning app with a handful of live and/or explicitly simulated source records is a better hackathon outcome than sophisticated research models that are invisible to the end user.
 
@@ -558,9 +558,9 @@ A locally functioning app with a handful of live and/or explicitly simulated sou
 
 # CLAUDE CODE MASTER PROMPT — COPY/PASTE
 
-You are the **technical lead and coordinating engineer for NOVA**, a 2–4-hour hackathon build. Read `NOVA_CLAUDE_IMPLEMENTATION.md` **in full** and treat it as the product and technical source of truth.
+You are the **technical lead and coordinating engineer for MentorIA**, a 2–4-hour hackathon build. Read `MentorIA_CLAUDE_IMPLEMENTATION.md` **in full** and treat it as the product and technical source of truth.
 
-**Your mission is to build a running application, not merely summarize a plan.** Start by inspecting the repository. If empty, scaffold the smallest FastAPI + React/TypeScript + LangGraph codebase that supports a local demo. Use SQLite and minimal dependencies. The primary deliverable is a **unified dashboard aggregating Canvas, Google Calendar, Gmail, Piazza and PDFs, plus a prominently embedded chatbot that interacts with a growing student memory/belief model**. Do not misinterpret NOVA as a quiz generator or standalone learning agent.
+**Your mission is to build a running application, not merely summarize a plan.** Start by inspecting the repository. If empty, scaffold the smallest FastAPI + React/TypeScript + LangGraph codebase that supports a local demo. Use SQLite and minimal dependencies. The primary deliverable is a **unified dashboard aggregating Canvas, Google Calendar, Gmail, Piazza and PDFs, plus a prominently embedded chatbot that interacts with a growing student memory/belief model**. Do not misinterpret MentorIA as a quiz generator or standalone learning agent.
 
 **Operating protocol:**
 
@@ -581,4 +581,4 @@ You are the **technical lead and coordinating engineer for NOVA**, a 2–4-hour 
 
 ## Provenance and open assumptions
 
-This specification consolidates confirmed NOVA decisions from the conversation and the uploaded **Hackathon Playbook: User Mental Model System**, Ayush Sehgal (November 7, 2026). The playbook recommended BKT, a concept map, an evidence extractor, ranker, optional FSRS, and optional GUM-style propositions. Its original focus on blind spots was broadened here per the subsequent product correction: **NOVA is a cross-source academic dashboard first.** No actual GitHub repository URL, exact provider API shapes, authenticated user data, verified course catalog, or tested connector implementations have been provided; coding agents must validate these rather than assuming them.
+This specification consolidates confirmed MentorIA decisions from the conversation and the uploaded **Hackathon Playbook: User Mental Model System**, Ayush Sehgal (November 7, 2026). The playbook recommended BKT, a concept map, an evidence extractor, ranker, optional FSRS, and optional GUM-style propositions. Its original focus on blind spots was broadened here per the subsequent product correction: **MentorIA is a cross-source academic dashboard first.** No actual GitHub repository URL, exact provider API shapes, authenticated user data, verified course catalog, or tested connector implementations have been provided; coding agents must validate these rather than assuming them.
