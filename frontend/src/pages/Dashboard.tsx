@@ -320,10 +320,30 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
   const courseName = (id: string | null) => names.get(id ?? "") ?? "";
   const groups = new Map<string, SourceRecord[]>();
   items.forEach((r) => groups.set(courseShort(r), [...(groups.get(courseShort(r)) ?? []), r]));
+  const [open, setOpen] = useState(false);
   return (
-    <Block icon="💬" title="Relevant discussions from course forums">
+    <Block
+      icon="💬"
+      title="Relevant Discussion"
+      actions={
+        items.length > 0 && (
+          <button className="btn small-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+            {open ? "Hide ▴" : `Show ${items.length} ▾`}
+          </button>
+        )
+      }
+    >
       {items.length === 0 ? (
         <Empty>No course discussions yet</Empty>
+      ) : !open ? (
+        <button className="disc-summary" onClick={() => setOpen(true)} title="Show discussions">
+          {[...groups.entries()].map(([code, list]) => (
+            <span key={code} className="disc-count">
+              <CourseTag code={code} courseId={list[0].course_id} /> {list.length}
+            </span>
+          ))}
+          <span className="muted small">from Piazza, Ed and course email</span>
+        </button>
       ) : (
         [...groups.entries()].map(([code, list]) => (
           <div key={code} className="group">

@@ -14,6 +14,9 @@
   --demo-bg: #fff7e6;
   --radius: 12px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --card: var(--surface);
+  --line: #f0f2f7;
+  color-scheme: light;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -472,3 +475,103 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .seg button.on { background: var(--accent, #4f46e5); color: #fff; }
 .group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .group-head { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+
+
+/* ---- Relevant Discussion (collapsed summary) ---- */
+.disc-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; cursor: pointer;
+  border: 1px dashed var(--border); border-radius: 8px; background: none; font: inherit; color: var(--text); text-align: left; }
+.disc-summary:hover { border-color: var(--accent); }
+.disc-count { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 13px; }
+.theme-toggle { min-width: 34px; font-size: 15px; line-height: 1; }
+
+/* =====================================================================================
+   Dark theme — html[data-theme="dark"]. Palette first, then every hard-coded light colour.
+   ===================================================================================== */
+:root[data-theme="dark"] {
+  --bg: #0e131d;
+  --surface: #161c29;
+  --card: #161c29;
+  --border: #2a3345;
+  --line: #222a3a;
+  --text: #e5e9f2;
+  --muted: #9aa5ba;
+  --muted-2: #5e6a80;
+  --accent: #8b85ff;
+  --accent-soft: #24264a;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --demo: #fbbf24;
+  --demo-bg: rgba(251, 191, 36, 0.12);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] body { background: var(--bg); color: var(--text); }
+:root[data-theme="dark"] input, :root[data-theme="dark"] textarea, :root[data-theme="dark"] select {
+  background: var(--surface); color: var(--text); border-color: var(--border); }
+:root[data-theme="dark"] .btn { background: var(--surface); color: var(--text); border-color: var(--border); }
+:root[data-theme="dark"] .btn.primary { background: var(--accent); color: #0e131d; border-color: var(--accent); }
+:root[data-theme="dark"] .btn.primary:hover:not(:disabled) { background: #a5a0ff; color: #0e131d; }
+:root[data-theme="dark"] .seg button.on { color: #0e131d; }
+
+/* reds */
+:root[data-theme="dark"] :is(.banner, .card-error.failed, .badge-failed, .pill-bad, .status-disputed, .status-rejected,
+  .rec-rejected, .rec-failed, .wcal-deadline, .strip-due, .tag-due.urgent, .sm-badge-flag) {
+  background: rgba(248, 113, 113, 0.14); color: #fca5a5; border-color: rgba(248, 113, 113, 0.3); }
+/* greens */
+:root[data-theme="dark"] :is(.badge-connected, .pill-good, .status-accepted, .status-confirmed, .rec-executed, .rec-approved,
+  .rec-executed_simulated, .memory-note, .import-result, .tag-due.done, .window-bar) {
+  background: rgba(52, 211, 153, 0.13); color: #86efac; border-color: rgba(52, 211, 153, 0.3); }
+:root[data-theme="dark"] :is(.approval.status-executed, .approval.status-executed_simulated, .approval.status-approved) {
+  background: rgba(52, 211, 153, 0.08); border-color: rgba(52, 211, 153, 0.3); }
+:root[data-theme="dark"] .sugg-done { color: #86efac; }
+/* ambers */
+:root[data-theme="dark"] :is(.pill-warn, .status-pending_review, .rec-pending, .import-result.warn) {
+  background: rgba(251, 191, 36, 0.14); color: #fcd34d; border-color: rgba(251, 191, 36, 0.3); }
+/* indigo / violet */
+:root[data-theme="dark"] :is(.card-error.needs_auth, .badge-needs_auth, .badge-imported, .kind-badge, .xitem-badge, .pill-accent, .pill-shared) {
+  background: rgba(139, 133, 255, 0.16); color: #c7c4ff; border-color: rgba(139, 133, 255, 0.35); }
+/* sky */
+:root[data-theme="dark"] :is(.prop-sources, .suggestion.example, .tile.insight-goal) {
+  background: rgba(56, 189, 248, 0.12); color: #7dd3fc; border-color: rgba(56, 189, 248, 0.3); }
+/* neutral chips & tracks */
+:root[data-theme="dark"] :is(.pill, .rec-status, .tag, .tag-staff, .chip) {
+  background: rgba(255, 255, 255, 0.06); color: var(--text); border-color: var(--border); }
+:root[data-theme="dark"] :is(.bar, .sm-scale-track) { background: #263044; }
+:root[data-theme="dark"] .sm-spark-mid { stroke: #263044; }
+/* source tags */
+:root[data-theme="dark"] .tag-src.src-piazza { background: rgba(96, 165, 250, 0.15); color: #93c5fd; border-color: rgba(96, 165, 250, 0.35); }
+:root[data-theme="dark"] .tag-src.src-edstem { background: rgba(167, 139, 250, 0.15); color: #c4b5fd; border-color: rgba(167, 139, 250, 0.35); }
+:root[data-theme="dark"] .tag-src.src-gmail { background: rgba(251, 146, 60, 0.15); color: #fdba74; border-color: rgba(251, 146, 60, 0.35); }
+:root[data-theme="dark"] .tag-course { filter: brightness(1.7) saturate(0.85); }
+/* surfaces that were hard-coded white/grey */
+:root[data-theme="dark"] :is(.approval, .bubble.assistant, .kg-scroll, .asset.added, .suggestion.prefill, .strip-day, .xitem,
+  .recap-box, .wcal-detail) { background: var(--surface); border-color: var(--border); }
+:root[data-theme="dark"] :is(.sm-tl-row:hover, .sm-row-link:hover, .xitem-row:hover) { background: rgba(255, 255, 255, 0.04); }
+:root[data-theme="dark"] .item { border-top-color: var(--line); }
+:root[data-theme="dark"] .strip-day.today { background: rgba(139, 133, 255, 0.1); }
+/* recap tones */
+:root[data-theme="dark"] .tone-goal { --tone: #a5a0ff; }
+:root[data-theme="dark"] .tone-focus { --tone: #22d3ee; }
+:root[data-theme="dark"] .tone-due { --tone: #fb923c; }
+:root[data-theme="dark"] .tone-warn { --tone: #f87171; }
+:root[data-theme="dark"] .sugg-event { --tone: #c4b5fd; }
+:root[data-theme="dark"] .sugg-reading { --tone: #5eead4; }
+:root[data-theme="dark"] .sugg-resource { --tone: #93c5fd; }
+:root[data-theme="dark"] .sugg-study { --tone: #67e8f9; }
+/* calendar */
+:root[data-theme="dark"] .wcal-line { border-top-color: var(--line); }
+:root[data-theme="dark"] .wcal-scroll, :root[data-theme="dark"] .wcal-col { border-color: var(--border); }
+:root[data-theme="dark"] .wcal-col.today { background: rgba(139, 133, 255, 0.06); }
+:root[data-theme="dark"] .wcal-ev { color: var(--text); }
+:root[data-theme="dark"] .wcal-free { background: repeating-linear-gradient(135deg, rgba(52, 211, 153, 0.12) 0 6px, rgba(52, 211, 153, 0.04) 6px 12px); }
+:root[data-theme="dark"] .wcal-rec.proposed { background: rgba(167, 139, 250, 0.12); color: #ddd6fe; border-color: #a78bfa; }
+:root[data-theme="dark"] .wcal-dayhead.today .wcal-date { color: #0e131d; }
+/* concept map */
+:root[data-theme="dark"] .sm-goal rect { fill: #251f45; stroke: #6d5bd0; }
+:root[data-theme="dark"] .sm-goal text { fill: #c4b5fd; }
+:root[data-theme="dark"] :is(.sm-dot, .sm-flag) { stroke: var(--surface); }
+:root[data-theme="dark"] .sm-hub rect { stroke: #4b4a8a; }
+:root[data-theme="dark"] .sm-chip.is-on { border-color: #4b4a8a; }
+:root[data-theme="dark"] .sm-node.band-none .sm-dot { stroke: #8391ab; }
+:root[data-theme="dark"] .sm-edge-hub { stroke: #2f3a50; }

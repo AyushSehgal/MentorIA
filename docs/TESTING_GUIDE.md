@@ -17,7 +17,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 ## E. Prepopulated start
 
-- [ ] **E1. Dashboard.** Expect a **Quick Recap** button (with "3 suggestions"), then three blocks only: Calendar, Assignments, and Relevant discussions from course forums.
+- [ ] **E1. Dashboard.** Expect a **Quick Recap** button (with "3 suggestions"), then three blocks only: Calendar, Assignments, and Relevant Discussion.
 - [ ] **E1b. Quick Recap.** Do: click **Quick Recap**. Expect up to four boxes: Your goal ("Stated in 2 places"), Focus this week (Backpropagation · Policy Gradients), Due next (HW5) and, only when there's a blind spot, Watch out. **Hide recap** closes them.
 - [ ] **E1c. Suggested for you.** Expect three boxes under **Suggested for you**:
   - **From your Gmail:** the robotics seminar, with **Add to calendar** / **Not now**;
@@ -41,7 +41,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 - [ ] **D1. Assignments tags.** Expect each row to show a coloured course tag (10-601 / 10-605 / 16-831) and a deadline tag (e.g. "Tue, Nov 10"; the time appears only when it isn't 11:59 PM, e.g. Exam 2 "· 7:00 PM"). Submitted work shows "submitted".
 - [ ] **D2. Sort.** Do: click **Course**. Expect: groups per course with the full course name, each sorted by deadline. Click **Deadline** to get one list again.
 - [ ] **D3. Assignment details.** Do: click HW5. Expect: course, due date and time, points, description.
-- [ ] **D4. Course forums.** Expect the block **Relevant discussions from course forums**, grouped by course. Each post is tagged **Piazza**, **Ed** or **Email**, and instructor/staff posts are marked and listed first. The [10-601] Exam 2 email appears here, tagged Email · Staff.
+- [ ] **D4. Relevant Discussion.** Expect it collapsed by default: one line of course tags with post counts and a **Show N ▾** button. Click it. Expect posts grouped by course. Each post is tagged **Piazza**, **Ed** or **Email**, and instructor/staff posts are marked and listed first. The [10-601] Exam 2 email appears here, tagged Email · Staff.
 - [ ] **D5. Gone.** Expect: no Opportunities block and no Documents block. Gmail events still appear in Quick Recap → Suggested for you.
 
 ## W. Interactive calendar
@@ -108,6 +108,12 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 - [ ] **L2. Local.** Do: select Local and Ask "Focus this week?". Expect: a 5–25 s wait, then either "worded by local:qwen2.5" or a note that the rewrite was discarded (the guardrail).
 - [ ] **L3. Ollama off.** Do: quit Ollama and Ask something. Expect: an answer within ~2 s, with "No local model server reachable".
 - [ ] **L4. Kept on reset.** Do: Reset. Expect: the privacy choice is unchanged.
+
+## T. Dark mode
+
+- [ ] **T1. Follows the system.** Expect: with no saved choice, MentorIA matches your OS light/dark setting on load, with no white flash.
+- [ ] **T2. Toggle.** Do: click ☾ / ☀︎ next to your name. Expect: the whole app switches, including Quick Recap boxes, tags, the calendar grid and the Student Model map. Text stays readable everywhere.
+- [ ] **T3. Remembered.** Do: reload. Expect: your choice is kept.
 
 ## R. Resilience & layout
 

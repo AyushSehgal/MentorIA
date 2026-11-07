@@ -96,6 +96,7 @@ export default function App() {
           ))}
         </nav>
         <div className="topbar-right">
+          <ThemeToggle />
           <span className="student">{dash?.student.name ?? "—"}</span>
           <button className="btn small-btn" onClick={() => void syncAll()} disabled={syncing}>
             {syncing ? "Syncing…" : "↻ Sync all"}
@@ -114,5 +115,36 @@ export default function App() {
         {route === "/sources" && <Sources tz={tz} onChanged={() => void refresh()} />}
       </main>
     </div>
+  );
+}
+
+
+type Theme = "light" | "dark";
+
+/** Light/dark switch. Starts from the theme index.html applied (saved choice, else the OS setting) and remembers changes. */
+function ThemeToggle() {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light",
+  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+  const next: Theme = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      className="btn small-btn theme-toggle"
+      aria-label={`Switch to ${next} mode`}
+      title={`Switch to ${next} mode`}
+      onClick={() => {
+        setTheme(next);
+        try {
+          localStorage.setItem("mentoria-theme", next);
+        } catch {
+          /* storage unavailable: the choice lasts for this visit */
+        }
+      }}
+    >
+      {theme === "dark" ? "☀︎" : "☾"}
+    </button>
   );
 }

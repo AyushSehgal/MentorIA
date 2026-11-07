@@ -117,3 +117,8 @@ Tests: pytest 54/54 (incl. test_student_model.py); npm run build passes.
 Contract v1.6 (edstem provider, course_message emails, DashboardResponse.discussions). Sample Ed posts (10-605) and a
 [10-601] staff email added (18 sample files). pytest 55/55; browser-verified.
 Note: which forum each real course uses (Piazza vs Ed) is not verified — the Ed posts are sample data.
+
+[2026-11-07 21:50 EST] coordinator | Relevant Discussion dropdown + dark mode | DONE
+Discussions block renamed "Relevant Discussion", collapsed by default (course counts summary). Dark theme via
+html[data-theme] (index.html applies saved/OS theme before paint; header toggle saves to localStorage); dark palette +
+overrides for every hard-coded light colour (styles.css). Verified in browser in both themes.
