@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 from fastapi import APIRouter, HTTPException
 
 from ..memory import catalog, context, store, updates
@@ -49,7 +51,9 @@ def self_confidence(req: SelfConfidenceRequest):
     if not c:
         raise HTTPException(404, "Unknown concept")
     ts = now_iso()
-    o = Observation(event_id=f"obs_ui_conf_{req.concept_id}_{ts}", student_id=req.student_id, source="self_report",
+    # Unique per request: now_iso() has 1 s resolution, and a repeated event_id would be dropped as a duplicate,
+    # silently losing a quick second adjustment of the slider.
+    o = Observation(event_id=f"obs_ui_conf_{req.concept_id}_{ts}_{uuid4().hex[:8]}", student_id=req.student_id, source="self_report",
                     event_type="self_confidence", course_id=c["course_id"], concept_id=req.concept_id, occurred_at=ts,
                     payload={"value": req.value, "statement": f"Set confidence to {req.value:.2f} in the Student Model view"})
     _, _, _, ups = updates.ingest_observations([o])

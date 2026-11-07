@@ -84,3 +84,31 @@ Note: backend-provided strings (connector details, venues, chat caveats) must al
 [2026-11-07 20:00 EST] coordinator | 10-605 + prepopulate + no-demo-labels | DONE
 16 sample files (10-605 overview + lecture quizzes added); shared concepts via also_in; prepopulate on startup/reset;
 backend "demo" wording removed. pytest 52/52; browser: prepopulated dashboard, no "demo" text, 12 shared pills.
+[2026-11-07 15:33 EST] student-model-agent | T18 | START
+Branch: student-model (from main @ dff9485)
+Files: frontend/src/pages/Knowledge.tsx, frontend/src/components/KnowledgeGraph.tsx, frontend/src/pages/knowledge.css (new),
+backend/app/memory/context.py (student_model/graph/narrative only), backend/app/api/memory.py
+Contract assumptions: CONTRACTS.md v1.2. Shared files are additive-only (see TASKS.md "Shared files during T18/T19").
+Coordination: dashboard-agent owns T19 (Dashboard). concept_states() behavior stays fixed because dashboard insights and planning use it.
+Baseline: pytest 36/36 pass; frontend `npm run build` passes.
+Blockers: none
+
+[2026-11-07 15:55 EST] student-model-agent | T18 | READY_FOR_REVIEW (graph-first Student Model page, v1)
+Branch: student-model
+Files: frontend/src/pages/Knowledge.tsx (rewritten: Map / Timeline / Details tabs + inspector), frontend/src/pages/knowledge.css (new, sm- prefix),
+frontend/src/components/student-model/{replay.ts, ConceptMap.tsx (moved from components/KnowledgeGraph.tsx), Inspector.tsx, Timeline.tsx, Details.tsx},
+backend/app/api/memory.py (self_confidence event_id now unique per request), backend/tests/test_student_model.py (new).
+Tests: pytest 37/37 (new: rapid confidence updates all apply; fails without the fix). `npm run build` passes.
+Manual (isolated API on a scratch DB + demo assets 01,02,03,05,06,07,08): frontend BKT replay matches backend mastery for all 8 graded
+concepts and the blind-spot flag; replay slider, timeline, details, goal confirm, keyboard confidence edits, 375px width. No console errors on load.
+Interfaces changed: none (types.ts / schemas.py untouched; no API shape change). Shared files untouched.
+Notes: replay recomputes BKT in the browser from /api/memory/history using the same params/order as backend (replay.ts mirrors bkt.py,
+ADR-005, ADR-007). If bkt.py params change, update replay.ts too. Running :8000 servers need a restart to pick up the memory.py fix.
+
+[2026-11-07 21:00 EST] coordinator | merge origin/student-model (T18) into main | DONE
+Decisions (confirmed by the user): Juan's graph-first Student Model page replaces main's list page; main's decisions ported into it:
+MentorIA naming, no visible "Demo" chips/labels (ADR-013), no "Add data" mention, shared concepts (also_in) linked to every
+course hub on the map, shown under each course in Details ("shared" pill + both codes) and in the inspector.
+T19 marked DONE on main (no pending dashboard branch). Shared-file rules kept; main's App.tsx / concept_states changes logged as exceptions in TASKS.md.
+Conflicts resolved: Knowledge.tsx (took student-model, then ported), SCRATCHPAD.md (kept both logs).
+Tests: pytest 54/54 (incl. test_student_model.py); npm run build passes.
