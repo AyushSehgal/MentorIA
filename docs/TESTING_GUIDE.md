@@ -29,7 +29,7 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **A1. Step 1, 10-601 course overview.** Expect changes: "Added course Introduction to Machine Learning (10-601)", "19 new concepts", "6 concept relations". The dashboard now shows blocks and tiles: Courses 1, Concepts 19. Student Model lists the concepts with no estimates.
 - [ ] **A2. Step 2, 16-831 course overview.** Expect: 16 new concepts and 8 relations. Tiles: Courses 2, Concepts 35.
 - [ ] **A3. Step 3, Canvas assignments.** Expect: "Canvas assignments: 7 new". The **Assignments** block shows HW5 (due d+3), HW3 (d+5) and more, with "+N more".
-- [ ] **A4. Step 4, my calendar.** Expect: "Calendar events: N new". The **Calendar** block becomes a week grid (today highlighted, red "now" line), with lectures as course-coloured blocks at their times, free time shaded green, and ⏰ deadline chips in day headers (HW5, HW3).
+- [ ] **A4. Step 4, my calendar.** Expect: "Calendar events: N new". The **Calendar** block shows a 7-day strip (events per day, ⏰ due counts).
 - [ ] **A5. Step 5, 10-601 Quiz 2 (graded).** Expect: "6 graded answers became evidence (3 incorrect: Q2, Q4, Q5)", "Backpropagation: 0.12", "Logistic Regression: 0.30", and "Q7 held for review". Tile: Graded 6.
 - [ ] **A6. Ask again.** Do: Ask "ML topics I'm struggling with?". Expect: Backpropagation 0.12 citing p.2 Q4 and Q5, and Logistic Regression 0.30 citing p.1 Q2. The untested-concepts list ends "…and N more", and "1 answer needs review" is noted.
 - [ ] **A7. Step 6, 16-831 HW2 (graded).** Expect: Policy Gradients 0.12 and Imitation Learning 0.92. Ask "What robot learning topics am I struggling with?" → Policy Gradients.
@@ -47,8 +47,18 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **A14. Order matters, then recovers.** Do: Reset, add step 5 first. Expect a warning: "…couldn't be matched to a known concept… Add the course overview first". Then add step 1, then step 5 again. Expect: the estimates now appear.
 - [ ] **A15. Add all remaining.** Do: Reset, then **Add all remaining**. Expect: all 14 added in order, and tiles Courses 2, Concepts 35, Graded 12.
 
+## D. Dashboard: titles first, details on click (after A15)
+
+- [ ] **D1. Calm by default.** Expect: every block lists one-line titles only, with at most one small badge ("soon", "★ match", "2 sources", a date) and ≤4 items plus "+N more".
+- [ ] **D2. Expand.** Do: click "Focus: Backpropagation". Expect: it opens to show the reason, a confidence note and quiz evidence chips. Click again to close it.
+- [ ] **D3. Approvals.** Do: click the seminar under **Needs approval**. Expect: Approve and Reject appear inside.
+- [ ] **D4. Assignment details.** Do: click HW5. Expect: the course, due date, points and description.
+- [ ] **D5. Opportunity details.** Do: click the robotics seminar. Expect: When, Speaker, Where, a match bar, reasons and the event link.
+- [ ] **D6. Document details.** Do: click the 10-601 quiz. Expect: the type, pages, "6 answers, 1 to review" and Open PDF.
+
 ## W. Interactive calendar (after A4–A10)
 
+- [ ] **W0. Open it.** Do: click **Open calendar**, or any day in the strip. Expect: the full week grid; **Close** returns to the strip.
 - [ ] **W1. Navigate.** Do: click **›** then **Today**. Expect: the range moves by a week and back. Days after the imported week are empty.
 - [ ] **W2. Event details.** Do: click a lecture block. Expect: a detail panel with its time range, location and Demo label; **×** closes it.
 - [ ] **W3. Deadline chip.** Do: click ⏰ HW5. Expect: the due time and course.

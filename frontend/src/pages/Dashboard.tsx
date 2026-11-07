@@ -3,8 +3,8 @@ import type { DashboardResponse, Insight, KnowledgeCounts, SourceRecord } from "
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
 import { WeekCalendar } from "../components/WeekCalendar";
-import { Bar, Block, Empty, Item, MoreList, Why } from "../components/Common";
-import { fmtDay, fmtShort, fmtTime, pct } from "../lib/format";
+import { Bar, Block, Empty, EvidenceChips, ExpandItem, Facts, MoreList } from "../components/Common";
+import { fmtDay, fmtShort, pct } from "../lib/format";
 
 const anyFixture = (items: { is_fixture: boolean }[]) => items.some((i) => i.is_fixture);
 
@@ -118,20 +118,22 @@ function InsightsBlock({ data }: { data: DashboardResponse }) {
         <Empty>No insights yet</Empty>
       ) : (
         <MoreList
-          className="insight-tiles"
+          className="xitems"
           items={data.insights}
-          limit={6}
+          limit={5}
           render={(ins) => {
             const sources = ins.kind === "goal" ? ins.evidence.length : 0;
-            const tip = [ins.detail, ins.confidence_note, ...ins.evidence.map((e) => `• ${e.label}`)].filter(Boolean).join("\n");
             return (
-              <li key={ins.id} className={`tile insight-${ins.kind}`} title={tip}>
-                <div className="tile-title">
-                  <span aria-hidden>{insightIcon[ins.kind] ?? "•"}</span> {ins.kind === "goal" ? "Your goal" : ins.title}
-                  {sources > 1 && <span className="pill pill-accent">{sources} sources</span>}
-                </div>
-                <div className="tile-detail">{ins.detail}</div>
-              </li>
+              <ExpandItem
+                key={ins.id}
+                icon={insightIcon[ins.kind] ?? "•"}
+                title={ins.kind === "goal" ? ins.detail : ins.title.replace(/^Focus #\d+: /, "Focus: ")}
+                badge={sources > 1 ? `${sources} sources` : undefined}
+              >
+                {ins.kind !== "goal" && <p>{ins.detail}</p>}
+                {ins.confidence_note && <p className="muted small">{ins.confidence_note}</p>}
+                <EvidenceChips evidence={ins.evidence} />
+              </ExpandItem>
             );
           }}
         />
@@ -145,13 +147,18 @@ function ApprovalsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: 
   return (
     <Block icon="✅" title="Needs approval" demo={anyFixture(data.recommendations)}>
       <MoreList
-        className="approvals"
+        className="xitems"
         items={data.recommendations}
         limit={3}
         render={(r) => (
-          <li key={r.id}>
+          <ExpandItem
+            key={r.id}
+            icon={r.type === "attend_event" ? "🎤" : "📖"}
+            title={r.title.replace(/^Study: /, "").replace(/^Attend: /, "")}
+            badge={r.suggested_start ? fmtDay(r.suggested_start, tz) : undefined}
+          >
             <ApprovalCard rec={r} tz={tz} onChanged={onRefresh} compact />
-          </li>
+          </ExpandItem>
         )}
       />
     </Block>
@@ -172,20 +179,28 @@ function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string })
         <Empty>No assignments yet</Empty>
       ) : (
         <MoreList
+          className="xitems"
           items={items}
           render={(r) => {
             const done = !!r.metadata?.completed;
             const dueMs = r.occurred_at ? new Date(r.occurred_at).getTime() - Date.now() : null;
             const urgent = !done && dueMs !== null && dueMs >= 0 && dueMs < 3 * 864e5;
             return (
-              <Item
-                key={r.id}
-                done={done}
-                tip={r.body || undefined}
-                title={r.source_url ? <a href={r.source_url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}
-                meta={`${courseShort(r)} · ${done ? "done" : `due ${fmtShort(r.occurred_at, tz)}`}`}
-                side={urgent ? <span className="pill pill-warn">soon</span> : done ? <span className="pill pill-good">✓</span> : null}
-              />
+              <ExpandItem key={r.id} title={r.title} done={done} badge={urgent ? "soon" : done ? "✓" : undefined}>
+                <Facts
+                  rows={[
+                    ["Course", courseShort(r)],
+                    ["Due", done ? "Submitted" : fmtShort(r.occurred_at, tz)],
+                    ["Points", r.metadata?.points_possible ? String(r.metadata.points_possible) : null],
+                  ]}
+                />
+                {r.body && <p className="small">{r.body}</p>}
+                {r.source_url && (
+                  <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
+                    Open in Canvas ↗
+                  </a>
+                )}
+              </ExpandItem>
             );
           }}
         />
@@ -203,18 +218,54 @@ function courseShort(r: SourceRecord): string {
 function CalendarBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   const card = data.cards.google_calendar;
   const deadlines = data.cards.canvas.items.filter((a) => a.kind === "assignment" && !a.metadata?.completed);
+  const [open, setOpen] = useState(false);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const iso = new Date(Date.now() + i * 864e5).toISOString();
+    const key = fmtDay(iso, tz);
+    return {
+      key,
+      label: key,
+      events: card.items.filter((e) => fmtDay(e.occurred_at, tz) === key).length,
+      due: deadlines.filter((d) => fmtDay(d.occurred_at, tz) === key).length,
+    };
+  });
+  const empty = card.items.length === 0 && deadlines.length === 0;
   return (
-    <Block icon="📅" title="Calendar" status={card.status} demo={anyFixture(card.items)} className="block-wide">
-      {card.items.length === 0 && deadlines.length === 0 ? (
+    <Block
+      icon="📅"
+      title="Calendar"
+      status={card.status}
+      demo={anyFixture(card.items)}
+      className="block-wide"
+      actions={
+        !empty && (
+          <button className="btn small-btn" onClick={() => setOpen((o) => !o)}>
+            {open ? "Close" : "Open calendar"}
+          </button>
+        )
+      }
+    >
+      {empty ? (
         <Empty>No events yet</Empty>
-      ) : (
+      ) : open ? (
         <WeekCalendar events={card.items} deadlines={deadlines} freeWindows={card.free_windows} tz={tz} onChanged={onRefresh} />
+      ) : (
+        <div className="week-strip">
+          {days.map((d, i) => (
+            <button key={d.key} className={`strip-day ${i === 0 ? "today" : ""}`} onClick={() => setOpen(true)} title="Open calendar">
+              <span className="strip-label">{i === 0 ? "Today" : d.label.split(",")[0]}</span>
+              <span className="strip-count">{d.events || "–"}</span>
+              <span className="strip-sub">{d.events === 1 ? "event" : "events"}</span>
+              {d.due > 0 && <span className="strip-due">⏰ {d.due} due</span>}
+            </button>
+          ))}
+        </div>
       )}
     </Block>
   );
 }
 
-function OpportunitiesBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+function OpportunitiesBlock({ data }: { data: DashboardResponse; tz?: string }) {
   const card = data.cards.gmail;
   const opps = [...card.opportunities].sort((a, b) => b.relevance_score - a.relevance_score);
   return (
@@ -223,20 +274,29 @@ function OpportunitiesBlock({ data, tz }: { data: DashboardResponse; tz: string 
         <Empty>No emails yet</Empty>
       ) : (
         <MoreList
+          className="xitems"
           items={opps}
           render={(o) => (
-            <Item
-              key={o.record.id}
-              title={o.record.title}
-              tip={[o.timing_label, o.speaker, o.venue].filter(Boolean).join(" · ")}
-              meta={
-                <>
-                  {o.event_start ? fmtDay(o.event_start, tz) + " " + fmtTime(o.event_start, tz) : "no date"} ·{" "}
-                  <Bar value={o.relevance_score} /> {pct(o.relevance_score)}{" "}
-                  <Why reasons={o.relevance_reasons} />
-                </>
-              }
-            />
+            <ExpandItem key={o.record.id} title={o.record.title} badge={o.relevance_score >= 0.5 ? "★ match" : undefined}>
+              <Facts
+                rows={[
+                  ["When", o.timing_label],
+                  ["Speaker", o.speaker],
+                  ["Where", o.venue],
+                  ["Match", <><Bar value={o.relevance_score} /> {pct(o.relevance_score)}</>],
+                ]}
+              />
+              <ul className="why-list">
+                {o.relevance_reasons.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+              {o.url && (
+                <a className="small" href={o.url} target="_blank" rel="noreferrer">
+                  Event link ↗
+                </a>
+              )}
+            </ExpandItem>
           )}
         />
       )}
@@ -258,15 +318,18 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
         <Empty>No discussions yet</Empty>
       ) : (
         <MoreList
+          className="xitems"
           items={items}
           render={(r) => (
-            <Item
-              key={r.id}
-              tip={r.body}
-              title={r.source_url ? <a href={r.source_url} target="_blank" rel="noreferrer">{r.title}</a> : r.title}
-              meta={`${courseShort(r)} · ${fmtDay(r.occurred_at, tz)}`}
-              side={r.metadata?.is_instructor ? <span className="pill pill-accent">Instructor</span> : null}
-            />
+            <ExpandItem key={r.id} title={r.title} badge={r.metadata?.is_instructor ? "Instructor" : undefined}>
+              <Facts rows={[["Course", courseShort(r)], ["Posted", fmtDay(r.occurred_at, tz)]]} />
+              {r.body && <p className="small">{r.body}</p>}
+              {r.source_url && (
+                <a className="small" href={r.source_url} target="_blank" rel="noreferrer">
+                  Open in Piazza ↗
+                </a>
+              )}
+            </ExpandItem>
           )}
         />
       )}
@@ -292,25 +355,27 @@ function DocumentsBlock({ data, tz, navigate }: { data: DashboardResponse; tz: s
         <Empty>No documents yet</Empty>
       ) : (
         <MoreList
+          className="xitems"
           items={card.documents}
           render={(d) => (
-            <Item
+            <ExpandItem
               key={d.id}
-              title={
-                <a href={d.file_url} target="_blank" rel="noreferrer">
-                  {d.title || d.filename}
-                </a>
-              }
-              tip={d.error ?? undefined}
-              meta={`${d.kind === "graded_assessment" ? "Graded" : "Material"} · ${d.page_count} p · ${fmtDay(d.uploaded_at, tz)}`}
-              side={
-                d.status === "failed" ? (
-                  <span className="pill pill-bad">failed</span>
-                ) : d.kind === "graded_assessment" ? (
-                  <span className="pill pill-good">{d.observations_created} answers</span>
-                ) : null
-              }
-            />
+              title={d.title || d.filename}
+              badge={d.status === "failed" ? "failed" : d.kind === "graded_assessment" ? "graded" : undefined}
+            >
+              <Facts
+                rows={[
+                  ["Type", d.kind === "graded_assessment" ? "Graded work" : "Study material"],
+                  ["Pages", String(d.page_count)],
+                  ["Evidence", d.kind === "graded_assessment" ? `${d.observations_created} answers${d.pending_review ? `, ${d.pending_review} to review` : ""}` : null],
+                  ["Added", fmtDay(d.uploaded_at, tz)],
+                ]}
+              />
+              {d.error && <p className="error-text small">{d.error}</p>}
+              <a className="small" href={d.file_url} target="_blank" rel="noreferrer">
+                Open PDF ↗
+              </a>
+            </ExpandItem>
           )}
         />
       )}

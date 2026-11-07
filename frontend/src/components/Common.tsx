@@ -246,6 +246,54 @@ export function Item({
   );
 }
 
+/** A row that shows only a title (and at most one tiny badge). Clicking it reveals the details. */
+export function ExpandItem({
+  icon,
+  title,
+  badge,
+  done,
+  accent,
+  defaultOpen,
+  children,
+}: {
+  icon?: ReactNode;
+  title: ReactNode;
+  badge?: ReactNode;
+  done?: boolean;
+  accent?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <li className={`xitem ${open ? "open" : ""} ${done ? "done" : ""}`} style={accent ? { borderLeftColor: accent } : undefined}>
+      <button className="xitem-row" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        {icon && <span className="xitem-icon" aria-hidden>{icon}</span>}
+        <span className="xitem-title">{title}</span>
+        {badge && <span className="xitem-badge">{badge}</span>}
+        <span className="xitem-chev" aria-hidden>{open ? "▾" : "▸"}</span>
+      </button>
+      {open && <div className="xitem-body">{children}</div>}
+    </li>
+  );
+}
+
+/** Label/value rows for an expanded item. */
+export function Facts({ rows }: { rows: [string, ReactNode][] }) {
+  const shown = rows.filter(([, v]) => v !== null && v !== undefined && v !== "" && v !== false);
+  if (!shown.length) return null;
+  return (
+    <dl className="facts">
+      {shown.map(([k, v]) => (
+        <div key={k} className="fact">
+          <dt>{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** Small "why?" toggle that reveals a short list of reasons. */
 export function Why({ reasons, label = "why?" }: { reasons: string[]; label?: string }) {
   const [open, setOpen] = useState(false);
