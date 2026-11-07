@@ -58,3 +58,12 @@ upload w/ "I wrote this" + dynamic course select, import history, graded-doc que
 components/ChatPanel.tsx (new chips + helper text), pages/Sources.tsx (reset/verified copy), styles.css (imported dot/badge, new blocks).
 Tests: npm run build passes (tsc strict, 0 errors). Not verified against v1.2 backend (routes not live yet).
 Interfaces changed: none (types.ts untouched).
+
+[2026-11-07 15:33 EST] student-model-agent | T18 | START
+Branch: student-model (from main @ dff9485)
+Files: frontend/src/pages/Knowledge.tsx, frontend/src/components/KnowledgeGraph.tsx, frontend/src/pages/knowledge.css (new),
+backend/app/memory/context.py (student_model/graph/narrative only), backend/app/api/memory.py
+Contract assumptions: CONTRACTS.md v1.2. Shared files are additive-only (see TASKS.md "Shared files during T18/T19").
+Coordination: dashboard-agent owns T19 (Dashboard). concept_states() behavior stays fixed because dashboard insights and planning use it.
+Baseline: pytest 36/36 pass; frontend `npm run build` passes.
+Blockers: none

@@ -20,3 +20,11 @@ Statuses: TODO, CLAIMED, IN_PROGRESS, BLOCKED, READY_FOR_REVIEW, DONE, MOCK_ONLY
 | T13 | P1 | Propositions + derived narrative | T05 | coordinator | DONE | memory/propositions.py | Goal reflected in chat context | |
 | T14 | P1 | Graph view / relation list | T05 | frontend-agent | DONE | frontend/src/pages/Knowledge.tsx | Inspect concept/evidence links | |
 | T15–T17 | P2 | Advanced grading extraction, FSRS, tutoring | – | – | TODO | – | Only after demo stable | |
+| T18 | P1 | Student Model section (page, graph, model/graph API) | T05,T14 | student-model-agent | CLAIMED | frontend/src/pages/Knowledge.tsx, frontend/src/components/KnowledgeGraph.tsx, frontend/src/pages/knowledge.css (new), backend/app/memory/context.py (`student_model`, `graph`, `narrative` only), backend/app/api/memory.py | Student Model page works on branch `student-model`; dashboard cards unchanged; pytest + `npm run build` pass | |
+| T19 | P1 | Main Dashboard section (cards, insights, chat panel, approvals UI) | T02,T07 | dashboard-agent | CLAIMED | frontend/src/pages/Dashboard.tsx, frontend/src/components/{ChatPanel,ApprovalCard}.tsx, frontend/src/pages/dashboard.css (new), backend/app/services/dashboard.py | Dashboard works; Student Model page unchanged; pytest + `npm run build` pass | |
+
+### Shared files during T18/T19 (additive changes only; announce in SCRATCHPAD before editing)
+- `frontend/src/api/types.ts` + `backend/app/schemas.py`: new optional fields/types only; no renames or removals (AGENTS.md rule 3 still applies).
+- `frontend/src/styles.css`, `components/Common.tsx`, `lib/format.ts`, `api/client.ts`: add new exports/classes only. Put section styles in the new per-page CSS files.
+- `frontend/src/App.tsx` (nav/routing): ask before editing.
+- `backend/app/memory/context.py` `concept_states()` / `concept_state()`: used by dashboard insights and weekly planning. Keep their output and behavior unchanged; add a new function or optional parameter instead.
