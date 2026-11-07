@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { DashboardResponse, KnowledgeCounts, SourceRecord } from "../api/types";
 import { ApprovalCard } from "../components/ApprovalCard";
 import { ChatPanel } from "../components/ChatPanel";
@@ -7,44 +7,8 @@ import { Bar, Block, Empty, EvidenceChips, ExpandItem, Facts, MoreList } from ".
 import { fmtDay, fmtShort, pct } from "../lib/format";
 
 
-const KSTATS: { key: keyof KnowledgeCounts; label: string }[] = [
-  { key: "courses", label: "Courses" },
-  { key: "concepts", label: "Concepts" },
-  { key: "documents", label: "Docs" },
-  { key: "graded_answers", label: "Graded" },
-  { key: "goals", label: "Goals" },
-  { key: "source_items", label: "Items" },
-];
-
 function isEmpty(k: KnowledgeCounts | undefined) {
   return !k || Object.values(k).every((v) => !v);
-}
-
-function KnowledgeBar({ k }: { k: KnowledgeCounts }) {
-  const prev = useRef<KnowledgeCounts | null>(null);
-  const [grew, setGrew] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    const p = prev.current;
-    prev.current = k;
-    if (!p) return;
-    setGrew(new Set(KSTATS.filter((s) => (k[s.key] ?? 0) > (p[s.key] ?? 0)).map((s) => s.key as string)));
-    const t = setTimeout(() => setGrew(new Set()), 2500);
-    return () => clearTimeout(t);
-  }, [k]);
-  return (
-    <div className="knowledge-bar" aria-label="What MentorIA knows">
-      {KSTATS.map((s) => {
-        const v = k[s.key] ?? 0;
-        const tip = s.key === "goals" && k.goal_sources ? `${k.goal_sources} sources back these goals` : undefined;
-        return (
-          <div key={s.key} className={`kstat ${v ? "" : "zero"} ${grew.has(s.key) ? "grew" : ""}`} title={tip}>
-            <div className="kval">{v}</div>
-            <div className="klabel">{s.label}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 export function Dashboard({
@@ -68,7 +32,6 @@ export function Dashboard({
         {!data && error && <div className="card"><p className="error-text">Dashboard unavailable: {error}</p></div>}
         {data && (
           <>
-            {data.knowledge && <KnowledgeBar k={data.knowledge} />}
             {empty ? (
               <div className="card empty-hero">
                 <h2>No data yet</h2>

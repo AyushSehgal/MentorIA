@@ -17,7 +17,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 ## E. Prepopulated start
 
-- [ ] **E1. Dashboard.** Expect tiles of Courses 3, Concepts 48, Docs 8, Graded 18, Goals 4, plus the Insights, Needs approval, Calendar, Assignments, Opportunities, Discussions and Documents blocks.
+- [ ] **E1. Dashboard.** Expect the Insights, Needs approval, Calendar, Assignments, Opportunities, Discussions and Documents blocks (no stats row).
 - [ ] **E2. Clean UI.** Expect: no "Add data" tab, and no text anywhere saying "demo".
 - [ ] **E3. Your goal.** Expect: the first insight is your goal "…startup that builds robots that understand natural language" with a **2 sources** badge (career statement + advisor email).
 - [ ] **E4. Three courses.** Do: open **Student Model**. Expect: 10-601, 16-831 and 10-605.
