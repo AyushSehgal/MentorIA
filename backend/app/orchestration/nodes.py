@@ -1,6 +1,7 @@
 """Capability nodes. Each reads real stored evidence and returns a grounded draft + provenance."""
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 from typing import Any
 
@@ -377,3 +378,87 @@ def tell(state: State) -> State:
         lines.append("Saved. You can review or correct it on the Student Model page.")
     return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [], "uncertainties": [],
             "trace": state["trace"] + ["tell"]}
+
+
+# ---- About me: questions about what MentorIA believes ----------------------------------------------------------
+ABOUT_TOPICS: dict[str, re.Pattern] = {
+    "goals": re.compile(r"goal|career|job|future|plan|aim|interest|after graduation|want", re.I),
+    "weak": re.compile(r"weak|struggl|gap|bad at|worst|improve|behind|hard for me", re.I),
+    "strong": re.compile(r"strong|good at|best at|know well|master|solid", re.I),
+    "check": re.compile(r"confiden|blind|overestimat|overconfident|think i know|believe i know", re.I),
+    "prefs": re.compile(r"prefer|how i study|learn best|habit|style", re.I),
+    "mood": re.compile(r"\bfeel|mood|motivat|stress", re.I),
+}
+
+
+def _sources_label(p) -> str:
+    bits = [f"stated in {len(p.evidence_ids)} sources"] if len(p.evidence_ids) > 1 else []
+    bits += ["you confirmed it"] if p.status == "confirmed" else []
+    return f" ({', '.join(bits)})" if bits else ""
+
+
+def about_me(state: State) -> State:
+    """Answers "what do you believe about me?" from stored beliefs only. Saves nothing (graph routes questions here)."""
+    sid, msg = state["student_id"], state["message"]
+    asked = [k for k, rx in ABOUT_TOPICS.items() if rx.search(msg)]
+    overview = not asked
+    asked = asked or list(ABOUT_TOPICS)
+    props = active_propositions(sid)
+    states = concept_states(sid)
+    graded = [s for s in states if s.mastery is not None]
+    lines: list[str] = []
+    refs: list[EvidenceRef] = []
+
+    def section(title: str, items: list[str], empty: str) -> None:
+        if items:
+            lines.append(f"**{title}**")
+            lines.extend(items)
+        elif not overview:
+            lines.append(empty)
+
+    if overview:
+        lines.append("Here's what I currently believe about you, and where each belief comes from:")
+    if "goals" in asked:
+        goals = sorted([p for p in props if p.category in ("goal", "interest")], key=lambda p: -len(p.evidence_ids))[:4]
+        section("Goals and interests", [f"- {p.statement}{_sources_label(p)}" for p in goals],
+                "You haven't told me any goals yet. Try “My career goal is …”.")
+        refs += [obs_evidence(o) for p in goals for eid in p.evidence_ids[:2] if (o := store.get_observation(eid))]
+    if "weak" in asked:
+        weak = sorted([s for s in graded if s.mastery < 0.5], key=lambda s: s.mastery)[:3]
+        section("Where graded work shows gaps",
+                [f"- **{s.label}**: estimate {s.mastery:.2f} from {s.correct + s.incorrect} graded answer(s), {s.correct} right"
+                 for s in weak], "No graded work points to a gap right now.")
+        refs += [e for s in weak for e in s.evidence if e.provider == "documents"][:4]
+    if "strong" in asked:
+        strong = sorted([s for s in graded if s.mastery >= 0.7], key=lambda s: -s.mastery)[:3]
+        section("Where graded work looks solid",
+                [f"- **{s.label}**: estimate {s.mastery:.2f} from {s.correct + s.incorrect} graded answer(s)" for s in strong],
+                "Not enough graded work yet to call anything a strength.")
+    if "check" in asked:
+        flagged = [s for s in graded if s.blind_spot]
+        rated = [s for s in states if s.self_confidence is not None]
+        section("Worth checking (your confidence is well above the evidence)",
+                [f"- **{s.label}**: you rated yourself {s.self_confidence:.2f}, graded work says {s.mastery:.2f}" for s in flagged],
+                "Your confidence ratings line up with the graded evidence so far." if rated
+                else "You haven't rated your confidence on any topic yet. Try “I'm confident about …”.")
+    if "prefs" in asked:
+        prefs = [p for p in props if p.category == "preference"][:3]
+        section("How you like to study", [f"- {p.statement}" for p in prefs],
+                "No study preferences yet. Try “I prefer studying …”.")
+    if "mood" in asked:
+        b = store.get_belief(f"belief_{sid}_motivation_selfreport")
+        live = b and b.value and not (b.expires_at and (e := parse(b.expires_at)) and e < now())
+        section("How you said you're feeling", [f"- “{b.value}” (short-lived; expires 24 h after you said it)"] if live else [],
+                "You haven't told me how you're feeling today.")
+    if overview:
+        ungraded = len(states) - len(graded)
+        if not props and not graded:
+            lines = ["I don't know much about you yet. Tell me your goals, interests or how you like to study, "
+                     "and I'll build on it."]
+        elif ungraded:
+            lines.append(f"{ungraded} of {len(states)} topics have no graded work yet, so I don't estimate them.")
+    seen: set[str] = set()
+    refs = [r for r in _dedupe(refs) if not (r.label in seen or seen.add(r.label))][:5]  # one chip per source, max 5
+    return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [f"belief_{sid}_{s.concept_id}_mastery" for s in graded],
+            "uncertainties": [BKT_CAVEAT, "Goals and preferences are what you told me; I don't infer them from your activity."],
+            "trace": state["trace"] + ["about_me"]}

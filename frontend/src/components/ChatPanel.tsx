@@ -4,7 +4,8 @@ import type { ChatMessage, ChatResponse } from "../api/types";
 import { ApprovalCard } from "./ApprovalCard";
 import { EvidenceChips, MarkdownLite } from "./Common";
 
-type Mode = "ask" | "tell";
+export type ChatMode = "ask" | "tell";
+type Mode = ChatMode;
 
 /** Ask chips send immediately. */
 const ASK_CHIPS: { label: string; send: string }[] = [
@@ -14,16 +15,15 @@ const ASK_CHIPS: { label: string; send: string }[] = [
   { label: "Events to attend?", send: "Any events I should attend?" },
 ];
 
-/** About-me chips prefill the input so the student finishes the sentence. */
-const TELL_PREFILLS = [
-  "My career goal is to ",
-  "I'm interested in ",
-  "I prefer studying ",
-  "I'm confident about ",
-  "I'm not confident about ",
-  "I'm feeling ",
+/** About-me questions send immediately; they are answered from the student model and never saved. */
+const TELL_QUESTIONS: { label: string; send: string }[] = [
+  { label: "What do you know about me?", send: "What do you know about me?" },
+  { label: "Where am I weakest?", send: "Where am I weakest?" },
+  { label: "Am I overconfident anywhere?", send: "Am I overconfident anywhere?" },
 ];
-const TELL_EXAMPLE = "I want a job at a startup that makes robots understand language";
+
+/** About-me chips prefill the input so the student finishes the sentence. */
+const TELL_PREFILLS = ["My career goal is to ", "I'm interested in ", "I prefer studying ", "I'm confident about "];
 
 interface Turn {
   role: "user" | "assistant";
@@ -36,8 +36,22 @@ interface Turn {
 const saved: Record<Mode, Turn[]> = { ask: [], tell: [] };
 let savedMode: Mode = "ask";
 
-export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged?: () => void }) {
-  const [mode, setMode] = useState<Mode>(savedMode);
+const MODE_LABEL: Record<Mode, string> = { ask: "Ask", tell: "About me" };
+
+/**
+ * `modes` picks which conversations this panel offers (default: both, as tabs). The Dashboard shows Ask only;
+ * the Student Model page shows About me only.
+ */
+export function ChatPanel({
+  tz,
+  onMemoryChanged,
+  modes = ["ask", "tell"],
+}: {
+  tz: string;
+  onMemoryChanged?: () => void;
+  modes?: Mode[];
+}) {
+  const [mode, setMode] = useState<Mode>(modes.includes(savedMode) ? savedMode : modes[0]);
   const [turns, setTurns] = useState<Record<Mode, Turn[]>>({ ...saved });
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -94,17 +108,22 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
 
   return (
     <section className="card chat">
-      <div className="chat-tabs" role="tablist">
-        <button role="tab" aria-selected={mode === "ask"} className={`chat-tab ${mode === "ask" ? "active" : ""}`} onClick={() => setMode("ask")}>
-          Ask
-        </button>
-        <button role="tab" aria-selected={mode === "tell"} className={`chat-tab ${mode === "tell" ? "active" : ""}`} onClick={() => setMode("tell")}>
-          About me
-        </button>
-      </div>
+      {modes.length > 1 ? (
+        <div className="chat-tabs" role="tablist">
+          {modes.map((m) => (
+            <button key={m} role="tab" aria-selected={mode === m} className={`chat-tab ${mode === m ? "active" : ""}`} onClick={() => setMode(m)}>
+              {MODE_LABEL[m]}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="chat-tabs">
+          <h2 className="chat-tab active" style={{ cursor: "default" }}>{mode === "ask" ? "Ask MentorIA" : "About me"}</h2>
+        </div>
+      )}
       <div className="chat-log">
         {current.length === 0 && (
-          <p className="empty">{mode === "ask" ? "Ask about your courses, deadlines or opportunities." : "Tell MentorIA your goals, interests and how you study."}</p>
+          <p className="empty">{mode === "ask" ? "Ask about your courses, deadlines or opportunities." : "Tell MentorIA your goals, interests and how you study, or ask what it believes about you."}</p>
         )}
         {current.map((t, i) => (
           <div key={i} className={`msg msg-${t.role}`}>
@@ -131,14 +150,16 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
           ))
         ) : (
           <>
+            {TELL_QUESTIONS.map((c) => (
+              <button key={c.label} className="suggestion" disabled={busy} onClick={() => void send(c.send)}>
+                {c.label}
+              </button>
+            ))}
             {TELL_PREFILLS.map((p) => (
               <button key={p} className="suggestion prefill" disabled={busy} onClick={() => prefill(p)}>
                 {p.trim()}…
               </button>
             ))}
-            <button className="suggestion example" disabled={busy} onClick={() => void send(TELL_EXAMPLE)} title="Sends this example">
-              “{TELL_EXAMPLE}”
-            </button>
           </>
         )}
       </div>
@@ -147,9 +168,9 @@ export function ChatPanel({ tz, onMemoryChanged }: { tz: string; onMemoryChanged
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={mode === "ask" ? "Ask MentorIA…" : "Tell MentorIA about your goals, interests, how you study…"}
+          placeholder={mode === "ask" ? "Ask MentorIA…" : "Tell MentorIA about you, or ask what it thinks…"}
           disabled={busy}
-          aria-label={mode === "ask" ? "Ask MentorIA" : "Tell MentorIA about yourself"}
+          aria-label={mode === "ask" ? "Ask MentorIA" : "Tell MentorIA about yourself, or ask what it believes"}
         />
         <button className="btn primary" type="submit" disabled={busy || !input.trim()}>
           Send

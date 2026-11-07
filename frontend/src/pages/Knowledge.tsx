@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { GraphResponse, HistoryResponse, StudentModel } from "../api/types";
 import { Empty } from "../components/Common";
+import { AboutMe } from "../components/student-model/AboutMe";
 import { ConceptMap, MapLegend, type Selection } from "../components/student-model/ConceptMap";
 import { Details } from "../components/student-model/Details";
 import { ConceptInspector, GoalInspector } from "../components/student-model/Inspector";
@@ -44,6 +45,7 @@ export function Knowledge({ tz }: { tz: string }) {
   const [idx, setIdx] = useState<number | null>(null); // null = now
   const [playing, setPlaying] = useState(false);
   const [draft, setDraft] = useState<{ id: string; value: number } | null>(null);
+  const [allTopics, setAllTopics] = useState(false);
 
   const load = useCallback(async () => {
     const errs: Record<string, string> = {};
@@ -78,6 +80,22 @@ export function Knowledge({ tz }: { tz: string }) {
   }, [model, events, observations, upTo, draft]);
 
   const courses = useMemo(() => (model?.courses ?? []).map((c) => ({ id: c.course_id, label: c.label })), [model]);
+
+  // Calm map: only topics MentorIA has something on (graded work at any point, or a confidence you gave), plus the
+  // selection. Based on "now" so places stay put while replaying. Empty set -> show everything.
+  const selId = sel?.kind === "concept" ? sel.id : null;
+  const focusIds = useMemo(() => {
+    if (allTopics || !model) return null;
+    const ids = new Set<string>(events.map((e) => e.conceptId));
+    model.concepts.forEach((c) => c.self_confidence !== null && ids.add(c.concept_id));
+    if (draft) ids.add(draft.id);
+    if (selId) ids.add(selId);
+    return ids.size ? ids : null;
+  }, [allTopics, model, events, draft, selId]);
+  const goalIds = useMemo(
+    () => new Set((graph?.nodes ?? []).filter((n) => n.type === "goal").map((n) => n.id.slice(n.id.indexOf(":") + 1))),
+    [graph],
+  );
 
   // Keep a valid selection: the current one if it still exists, otherwise the most telling concept.
   useEffect(() => {
@@ -155,7 +173,8 @@ export function Knowledge({ tz }: { tz: string }) {
     ) : null;
 
   return (
-    <div className="page">
+    <div className="sm-layout">
+    <div className="page sm-main">
       <section className="card sm-card">
         <div className="sm-toolbar">
           <div className="sm-tabs" role="tablist" aria-label="Student model views">
@@ -183,6 +202,14 @@ export function Knowledge({ tz }: { tz: string }) {
                   {c.id === "all" ? "All" : courseShort(c.label)}
                 </button>
               ))}
+            <button
+              className={`sm-chip ${allTopics ? "is-on" : ""}`}
+              aria-pressed={allTopics}
+              onClick={() => setAllTopics((v) => !v)}
+              title="Also show topics with no graded work, and every prerequisite and goal line"
+            >
+              All topics
+            </button>
             <span className="sm-info" title={INFO} aria-label={INFO} tabIndex={0}>
               ⓘ
             </span>
@@ -237,9 +264,10 @@ export function Knowledge({ tz }: { tz: string }) {
                   graph={graph}
                   selected={sel}
                   courseFilter={course}
+                  focusIds={focusIds}
                   onSelect={setSel}
                 />
-                <MapLegend />
+                <MapLegend allTopics={focusIds === null} replaying={!isNow} />
               </>
             )}
             {tab === "timeline" &&
@@ -266,6 +294,21 @@ export function Knowledge({ tz }: { tz: string }) {
       </section>
 
       {model && tab !== "details" && inspector}
+    </div>
+    {model && (
+      <aside className="sm-side">
+        <AboutMe
+          model={model}
+          goalIds={goalIds}
+          tz={tz}
+          onSelect={(s) => {
+            setSel(s);
+            setTab("map");
+          }}
+          onChanged={() => void load()}
+        />
+      </aside>
+    )}
     </div>
   );
 }

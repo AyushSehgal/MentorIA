@@ -65,3 +65,14 @@ tab is hidden. 10-605 is added; its overview's `Shared concept:` lines add the c
 shared topics keep one estimate with evidence from both courses. The UI never shows "demo"; `is_fixture` stays in the
 API and assets carry a hidden marker (PDF metadata / email header / .ics property / .md comment).
 Consequence: presenters must state that the data is fictional sample data.
+
+## ADR-014 About me lives on the Student Model page and answers questions about the student
+Status: accepted (user request; Dashboard owner approved). Amends ADR-012's "every message is saved".
+Decision: the Dashboard chat is Ask only. The Student Model page has a side panel: a belief summary (goals, check this,
+gaps, solid, preferences, feeling — all from stored beliefs) plus the About me chat. In tell mode a question about the
+student is answered from the model (orchestration node `about_me`) and saves nothing; statements are saved as before.
+The concept map defaults to a calm view (only topics with graded work or a confidence rating; relation and goal lines
+only around the selection) with an "All topics" toggle.
+Rationale: one place shows what the model believes and lets the student correct or extend it; questions must never
+pollute the profile (e.g. "Am I confident in X?" would otherwise save a confidence of 0.8).
+Consequence: tell-mode question detection is a heuristic; a statement phrased as a question is answered, not saved.

@@ -133,3 +133,23 @@ weekly_focus rewritten as a short story (graded evidence -> next lecture + deadl
 item -> study block), built from records, not hardcoded. Sample data: lecture topics on calendar events (10-601/16-831 in
 public-schedule order; 10-605 real Nov 9/11 lectures), concept tags on calendar events, 10-601 suggested readings
 (Goodfellow §6.5, Bishop §5.3) explicitly labeled as not course-assigned. pytest 56/56; browser-verified.
+
+[2026-11-07 16:38 EST] student-model-agent | T20 | START
+Branch: student-model (from main @ 73f491b). Approved by the Dashboard owner (Ayush) for the shared/owned files below.
+Files: components/student-model/** + pages/{Knowledge.tsx,knowledge.css} (mine); ChatPanel.tsx (+optional `modes` prop, About me chips),
+Dashboard.tsx (passes modes={["ask"]}); orchestration/{graph.py,tools.py,nodes.py}: in tell mode, a question about the student is
+answered from the model (new about_me node) and never saved; statements are saved exactly as before.
+Contract: no schema change (about_me answers use the existing intent "general"; ChatRequest.mode unchanged). Behavior note goes in CONTRACTS v1.8.
+
+[2026-11-07 16:43 EST] student-model-agent | T20 | READY_FOR_REVIEW
+Files: backend/app/orchestration/{tools.py (is_self_question), graph.py (route tell questions -> about_me), nodes.py (about_me)},
+backend/tests/test_student_model.py (+4), frontend/src/components/ChatPanel.tsx (modes prop; About me question chips; dropped the
+"not confident"/"feeling" prefills and the long example chip), frontend/src/pages/Dashboard.tsx (modes={["ask"]}),
+frontend/src/components/student-model/{AboutMe.tsx (new), ConceptMap.tsx (focusIds calm view, legend), replay.ts (mastery rounded
+to 3 dp like the backend)}, frontend/src/pages/{Knowledge.tsx, knowledge.css}, coordination/{CONTRACTS v1.8, DECISIONS ADR-014}.
+Tests: pytest 61/61 (new: question answered not saved; self-report-looking questions not saved; "What I…" statements saved;
+honest empty overview). `npm run build` passes.
+Browser (isolated API :8001 on a scratch DB, prepopulated): calm map 13 topics vs 48 with All topics; About me "What do you know
+about me?" answered with 0 new observations; "I'm confident about backpropagation" -> blue ring + red dot + "Check this" row live;
+chat and inspector agree (0.12); Dashboard chat shows "Ask MentorIA" only; dark mode; 900px stacks. No console errors.
+Interfaces: no schema change (intent "general" reused). Running :8000 API needs a restart for the backend part.

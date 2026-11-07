@@ -109,7 +109,8 @@ export function replay(
   const pastConf = isNow ? {} : upTo === 0 ? {} : confidenceAt(observations, Date.parse(events[upTo - 1].at));
   return concepts.map((c) => {
     const s = steps[c.concept_id] ?? [];
-    const mastery = s.length ? s[s.length - 1].after : null;
+    // Stored like the backend (round(p, 3)) so "0.115" shows as 0.12 everywhere, not 0.11 here and 0.12 in chat.
+    const mastery = s.length ? Math.round(s[s.length - 1].after * 1000) / 1000 : null;
     const confidence = isNow ? c.self_confidence : (pastConf[c.concept_id] ?? null);
     const blindSpot =
       mastery !== null && confidence !== null && s.length >= BLIND_SPOT_MIN_EVIDENCE && confidence - mastery >= BLIND_SPOT_GAP;

@@ -50,7 +50,7 @@ export function Dashboard({
         )}
       </div>
       <aside className="dash-side">
-        <ChatPanel tz={tz} onMemoryChanged={onRefresh} />
+        <ChatPanel tz={tz} onMemoryChanged={onRefresh} modes={["ask"]} />
       </aside>
     </div>
   );

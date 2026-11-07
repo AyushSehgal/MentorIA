@@ -26,6 +26,18 @@ PREFER = re.compile(r"\bi prefer\s+([^.;!?]+)", re.I)
 MOOD = re.compile(r"\b(?:i(?:'m| am)|feeling|i feel)\s+(?:really |so |a bit |kind of )?(unmotivated|burn(?:ed|t) out|exhausted|stressed|overwhelmed|tired)\b", re.I)
 QUESTIONISH = re.compile(r"\b(know|what|which|how|should)\b|\?", re.I)
 
+# About me: a question about what MentorIA believes is answered from the model and never saved; anything else is saved.
+_ASKS = re.compile(r"^\s*(?:what|which|who|where|why|how|when|do|does|did|am|are|is|can|could|would|should|"
+                   r"tell me|show me|summari[sz]e|list|give me|describe)\b", re.I)
+_STATEMENT_LEAD = re.compile(r"^\s*(?:what|how|why|where|when)\s+i\b", re.I)  # "What I really want is …"
+
+
+def is_self_question(message: str) -> bool:
+    m = message.strip()
+    if m.endswith("?"):
+        return True
+    return bool(_ASKS.match(m)) and not _STATEMENT_LEAD.match(m)
+
 
 TELL_RULES: list[tuple[str, re.Pattern]] = [
     ("mood", re.compile(r"\b(feel|feeling|tired|stressed|overwhelmed|anxious|burn(?:ed|t) out|exhausted|motivated|excited|sad|happy)\b", re.I)),

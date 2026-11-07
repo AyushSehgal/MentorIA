@@ -80,3 +80,9 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
 - `POST /api/assignments/{record_id}/complete` `{student_id, completed: boolean}` → `SourceRecord`.
   Sets `metadata.completed` (+ `metadata.completed_by_student`); the student's choice is persisted and wins over later
   syncs/re-imports. Workload beliefs are recomputed; Quick Recap, calendar due markers and planning skip completed work.
+
+## v1.8 (2026-11-07) — About me answers questions (no schema change)
+- `ChatRequest.mode: "tell"` now distinguishes a **question about the student** (ends with "?" or starts with what/how/am/do/…,
+  except "What I …"-style statements) from a statement. Questions are answered from stored beliefs and **never saved**:
+  `intent: "general"`, `memory_updates: []`, trace contains `about_me`. Statements are saved exactly as in v1.3.
+- UI: the Dashboard chat is Ask only; About me lives on the Student Model page (`ChatPanel` `modes` prop).

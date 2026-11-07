@@ -123,3 +123,29 @@ a.sm-src:hover, .sm-src-btn:hover { border-color: var(--accent); color: var(--ac
 /* shared concepts (taught in more than one course) */
 .sm-edge-hub.is-shared { stroke-dasharray: 4 3; }
 .pill-shared { margin-left: 6px; }
+
+/* ---- T20: two-column page with the About me panel ---- */
+.sm-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 1rem; align-items: start; }
+.sm-main { min-width: 0; }
+.sm-side { position: sticky; top: 4rem; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.sm-about { display: flex; flex-direction: column; gap: 1rem; }
+.sm-side .chat { max-height: none; }
+.sm-side .chat-log { min-height: 160px; max-height: 38vh; }
+@media (max-width: 1100px) {
+  .sm-layout { grid-template-columns: minmax(0, 1fr); }
+  .sm-side { position: static; }
+}
+
+/* belief summary */
+.sm-beliefs h2 { margin: 0; }
+.sm-beliefs > p { margin: 0.15rem 0 0.6rem; }
+.sm-belief-rows { margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.sm-belief-row { display: grid; grid-template-columns: 5.8rem minmax(0, 1fr); gap: 0.5rem; align-items: baseline; }
+.sm-belief-row dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 650; }
+.sm-belief-row.is-flag dt { color: var(--bad); }
+.sm-belief-row dd { margin: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; min-width: 0; }
+.sm-belief-text { font-size: 0.84rem; color: var(--text); }
+.sm-goal-chip { color: #5b21b6; border-color: #ddd6fe; background: #f5f3ff; }
+.sm-count { font-size: 0.68rem; color: #7c3aed; margin-left: 0.3rem; }
+:root[data-theme="dark"] .sm-goal-chip { color: #c4b5fd; border-color: #4b3f8a; background: #251f45; }
+:root[data-theme="dark"] .sm-count { color: #a78bfa; }

@@ -9,13 +9,14 @@ from langgraph.graph import END, START, StateGraph
 from ..schemas import ChatRequest, ChatResponse
 from . import nodes
 from .llm import polish
-from .tools import extract_contributions, route
+from .tools import extract_contributions, is_self_question, route
 
 
 class ChatState(TypedDict, total=False):
     student_id: str
     message: str
     mode: str
+    about_me: bool  # About me question: answered from the student model, never saved
     history: list[dict]
     intent: str
     has_contributions: bool
@@ -48,6 +49,9 @@ def _node_for(intent: str) -> str:
 
 def route_node(state: ChatState) -> ChatState:
     if state.get("mode") == "tell":
+        if is_self_question(state["message"]):
+            return {"intent": "general", "about_me": True, "has_contributions": False,
+                    "trace": state.get("trace", []) + ["route:tell:question"]}
         return {"intent": "memory_update", "has_contributions": True, "trace": state.get("trace", []) + ["route:tell"]}
     intent = route(state["message"])
     has = bool(extract_contributions(state["student_id"], state["message"]))
@@ -57,7 +61,9 @@ def route_node(state: ChatState) -> ChatState:
 
 
 def after_route(state: ChatState) -> str:
-    return "memory_update" if state["has_contributions"] else _node_for(state["intent"])
+    if state["has_contributions"]:
+        return "memory_update"
+    return "about_me" if state.get("about_me") else _node_for(state["intent"])
 
 
 def after_memory(state: ChatState) -> str:
@@ -85,9 +91,11 @@ def build_graph():
         g.add_edge(name, "compose")
     g.add_node("tell", nodes.tell)
     g.add_edge("tell", "compose")
+    g.add_node("about_me", nodes.about_me)
+    g.add_edge("about_me", "compose")
     g.add_node("compose", compose)
     g.add_edge(START, "route")
-    g.add_conditional_edges("route", after_route, ["memory_update", *CAPABILITIES])
+    g.add_conditional_edges("route", after_route, ["memory_update", "about_me", *CAPABILITIES])
     g.add_conditional_edges("memory_update", after_memory, [*CAPABILITIES, "tell"])
     g.add_edge("compose", END)
     return g.compile()

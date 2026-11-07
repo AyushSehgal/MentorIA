@@ -16,6 +16,9 @@ interface Props {
   graph: GraphResponse | null;
   selected: Selection;
   courseFilter: string; // "all" | course id
+  /** Calm view: only these concepts get a place on the map, and relation lines appear only around the selection.
+   *  null = everything (the "All topics" view). */
+  focusIds: Set<string> | null;
   onSelect: (s: Selection) => void;
 }
 
@@ -25,7 +28,7 @@ const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + "
 /** "After graduation I want to work at a robotics startup." -> "Work at a robotics startup" (full text stays in the tooltip). */
 const LEAD_IN =
   /^(?:(?:after graduation|over the next (?:year|semester)|this (?:year|semester)|long[- ]term|eventually|ultimately)[,\s]+)?(?:i(?:'m| am)?\s+)?(?:really\s+|especially\s+|also\s+|very\s+)*(?:want to|plan to|would like to|'d like to|hope to|interested in|aim to|intend to)\s+/i;
-function goalShort(statement: string): string {
+export function goalShort(statement: string): string {
   const s = statement.trim().replace(LEAD_IN, "").replace(/[.!]+$/, "");
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -39,7 +42,7 @@ function activate(fn: () => void) {
   };
 }
 
-export function ConceptMap({ concepts, courses, graph, selected, courseFilter, onSelect }: Props) {
+export function ConceptMap({ concepts, courses, graph, selected, courseFilter, focusIds, onSelect }: Props) {
   const layout = useMemo(() => {
     // Picking a course zooms the map to that course's cluster.
     const clusters = courses
@@ -48,7 +51,11 @@ export function ConceptMap({ concepts, courses, graph, selected, courseFilter, o
       // course's ring also includes the concepts it shares with other courses.
       .map((c) => ({
         ...c,
-        items: concepts.filter((k) => k.courseId === c.id || (courseFilter !== "all" && k.alsoIn.includes(c.id))),
+        items: concepts.filter(
+          (k) =>
+            (!focusIds || focusIds.has(k.id)) &&
+            (k.courseId === c.id || (courseFilter !== "all" && k.alsoIn.includes(c.id))),
+        ),
       }))
       .filter((c) => c.items.length > 0);
     const radius = (n: number) => Math.max(95, (n * 50) / (2 * Math.PI));
@@ -88,13 +95,14 @@ export function ConceptMap({ concepts, courses, graph, selected, courseFilter, o
     });
     const height = goals.length ? goalY + 30 : cy + maxR + 55;
     return { pos, hubs, goals, goalLinks, goalPos, relations, width, height };
-  }, [concepts, courses, graph, courseFilter]);
+  }, [concepts, courses, graph, courseFilter, focusIds]);
 
   const dimmed = (courseId: string) => courseFilter !== "all" && courseId !== courseFilter;
   const hiddenK = (k: ConceptView) =>
     courseFilter !== "all" && k.courseId !== courseFilter && !k.alsoIn.includes(courseFilter);
   const byId = new Map(concepts.map((k) => [k.id, k]));
   const isSel = (kind: "concept" | "goal", id: string) => selected?.kind === kind && selected.id === id;
+  const calm = focusIds !== null;
 
   return (
     <div className="sm-map-scroll">
@@ -124,6 +132,7 @@ export function ConceptMap({ concepts, courses, graph, selected, courseFilter, o
           const ka = byId.get(l.a);
           const kb = byId.get(l.b);
           if ((ka && hiddenK(ka)) || (kb && hiddenK(kb))) return null;
+          if (calm && !isSel("concept", l.a) && !isSel("concept", l.b)) return null; // calm: only around the selection
           return <line key={`r-${i}`} className="sm-edge-rel" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
         })}
         {layout.goalLinks.map((l, i) => {
@@ -132,6 +141,7 @@ export function ConceptMap({ concepts, courses, graph, selected, courseFilter, o
           const k = byId.get(l.concept);
           if (!a || !g || (k && hiddenK(k))) return null;
           const active = isSel("goal", l.goal) || isSel("concept", l.concept);
+          if (calm && !active) return null; // calm: goal lines only for the selected goal or concept
           return <line key={`g-${i}`} className={`sm-edge-goal ${active ? "is-active" : ""}`} x1={a.x} y1={a.y} x2={g.x} y2={g.y - 14} />;
         })}
 
@@ -210,16 +220,17 @@ export function ConceptMap({ concepts, courses, graph, selected, courseFilter, o
   );
 }
 
-export function MapLegend() {
+/** Calm view keeps only the five signals; "not graded yet" shows while replaying or with all topics, prerequisites with all topics. */
+export function MapLegend({ allTopics, replaying }: { allTopics: boolean; replaying: boolean }) {
   return (
     <div className="sm-legend">
       <span><i className="sm-sw band-gap" /> gap</span>
       <span><i className="sm-sw band-building" /> building</span>
       <span><i className="sm-sw band-solid" /> solid</span>
-      <span><i className="sm-sw band-none" /> no graded work</span>
       <span><i className="sm-sw sm-sw-ring" /> your confidence</span>
       <span><i className="sm-sw sm-sw-flag" /> check this</span>
-      <span><i className="sm-sw-line" /> prerequisite</span>
+      {(allTopics || replaying) && <span><i className="sm-sw band-none" /> not graded yet</span>}
+      {allTopics && <span><i className="sm-sw-line" /> prerequisite</span>}
     </div>
   );
 }
