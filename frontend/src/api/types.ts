@@ -99,7 +99,8 @@ export interface GraphEdge {
 
 export interface ConceptState {
   concept_id: string;
-  course_id: string;
+  course_id: string; // primary course
+  also_in: string[]; // v1.4: other courses that teach this same concept (shared evidence)
   label: string;
   mastery: number | null; // BKT estimate; null when no accepted assessment evidence
   evidence_strength: "none" | "weak" | "moderate" | "strong";

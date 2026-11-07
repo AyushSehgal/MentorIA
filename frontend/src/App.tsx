@@ -11,7 +11,6 @@ import { Sources } from "./pages/Sources";
 const ROUTES = [
   { path: "/", label: "Dashboard" },
   { path: "/knowledge", label: "Student Model" },
-  { path: "/documents", label: "Add data" },
   { path: "/sources", label: "Sources" },
 ];
 
@@ -107,7 +106,6 @@ export default function App() {
               </span>
             ))}
           </div>
-          {dash?.demo_mode && <span className="demo-label">Demo mode</span>}
           <span className="student">{dash?.student.name ?? "—"}</span>
           <button className="btn small-btn" onClick={() => void syncAll()} disabled={syncing}>
             {syncing ? "Syncing…" : "↻ Sync all"}

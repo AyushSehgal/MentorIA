@@ -41,11 +41,11 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
   }
 
   async function reset() {
-    if (!window.confirm("Reset MentorIA to empty? This removes all added data (your AI privacy setting is kept).")) return;
+    if (!window.confirm("Reset MentorIA to its starting data? Your AI privacy setting is kept.")) return;
     setBusy("reset");
     try {
       await api.resetDemo();
-      setMsg("MentorIA reset — empty. Add data to begin.");
+      setMsg("Reset — starting data restored.");
       load();
       onChanged?.();
     } catch (e) {
@@ -62,7 +62,7 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
         title="Connected sources"
         actions={
           <button className="btn danger small-btn" disabled={busy !== null} onClick={() => void reset()}>
-            Reset demo
+            Reset
           </button>
         }
       >

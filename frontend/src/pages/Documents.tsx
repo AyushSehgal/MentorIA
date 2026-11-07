@@ -3,7 +3,7 @@ import { api } from "../api/client";
 import type { DemoAsset, DocumentSummary, ImportKind, ImportResult, StudentModel } from "../api/types";
 
 type CourseSummary = StudentModel["courses"][number];
-import { Card, DemoLabel, Empty } from "../components/Common";
+import { Card, Empty } from "../components/Common";
 import { fmtDateTime } from "../lib/format";
 
 const KIND_LABEL: Record<ImportKind, string> = {
@@ -120,17 +120,17 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
   return (
     <div className="page">
       <Card
-        title="Demo assets"
+        title="Sample files"
         actions={
           <button className="btn small-btn" disabled={busy !== null || remaining === 0} onClick={() => void addAllRemaining()}>
             Add all remaining
           </button>
         }
       >
-        <p className="muted small">Add in order and watch MentorIA learn. Sample files, labeled Demo.</p>
+        <p className="muted small">Add in order and watch MentorIA learn.</p>
         {error && <p className="error-text">{error}</p>}
         {sortedAssets === null && !error && <Empty>Loading…</Empty>}
-        {sortedAssets && sortedAssets.length === 0 && <Empty>No demo assets found on the server.</Empty>}
+        {sortedAssets && sortedAssets.length === 0 && <Empty>No sample files found on the server.</Empty>}
         {sortedAssets && sortedAssets.length > 0 && (
           <ol className="asset-list">
             {sortedAssets.map((a) => (
@@ -205,7 +205,6 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
                   <span className="muted small">{h.summary}</span>
                 </div>
                 <div className="row-side">
-                  {h.is_fixture && <DemoLabel />}
                   <span className="muted small">{fmtDateTime(h.imported_at, tz)}</span>
                 </div>
               </li>
@@ -218,7 +217,6 @@ export function Documents({ tz, onChanged }: { tz: string; onChanged?: () => voi
         <Card
           key={d.id}
           title={d.title || d.filename}
-          demo={d.is_fixture}
           actions={
             <a className="btn small-btn" href={d.file_url} target="_blank" rel="noreferrer">
               Open PDF

@@ -6,7 +6,6 @@ import { WeekCalendar } from "../components/WeekCalendar";
 import { Bar, Block, Empty, EvidenceChips, ExpandItem, Facts, MoreList } from "../components/Common";
 import { fmtDay, fmtShort, pct } from "../lib/format";
 
-const anyFixture = (items: { is_fixture: boolean }[]) => items.some((i) => i.is_fixture);
 
 const insightIcon: Record<Insight["kind"], string> = {
   focus_area: "🎯",
@@ -63,7 +62,6 @@ export function Dashboard({
   error,
   loading,
   onRefresh,
-  navigate,
 }: {
   data: DashboardResponse | null;
   error: string | null;
@@ -83,10 +81,7 @@ export function Dashboard({
             {data.knowledge && <KnowledgeBar k={data.knowledge} />}
             {empty ? (
               <div className="card empty-hero">
-                <h2>MentorIA is empty</h2>
-                <button className="btn primary" onClick={() => navigate("/documents")}>
-                  Add data
-                </button>
+                <h2>No data yet</h2>
               </div>
             ) : (
               <>
@@ -98,7 +93,7 @@ export function Dashboard({
                   <OpportunitiesBlock data={data} tz={tz} />
                   <DiscussionsBlock data={data} tz={tz} />
                 </div>
-                <DocumentsBlock data={data} tz={tz} navigate={navigate} />
+                <DocumentsBlock data={data} tz={tz} />
               </>
             )}
           </>
@@ -145,7 +140,7 @@ function InsightsBlock({ data }: { data: DashboardResponse }) {
 function ApprovalsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   if (data.recommendations.length === 0) return null;
   return (
-    <Block icon="✅" title="Needs approval" demo={anyFixture(data.recommendations)}>
+    <Block icon="✅" title="Needs approval">
       <MoreList
         className="xitems"
         items={data.recommendations}
@@ -174,7 +169,7 @@ function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string })
     return (a.occurred_at ?? "9999").localeCompare(b.occurred_at ?? "9999");
   });
   return (
-    <Block icon="📚" title="Assignments" status={card.status} demo={anyFixture(items)}>
+    <Block icon="📚" title="Assignments" status={card.status}>
       {items.length === 0 ? (
         <Empty>No assignments yet</Empty>
       ) : (
@@ -235,7 +230,6 @@ function CalendarBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: s
       icon="📅"
       title="Calendar"
       status={card.status}
-      demo={anyFixture(card.items)}
       className="block-wide"
       actions={
         !empty && (
@@ -269,7 +263,7 @@ function OpportunitiesBlock({ data }: { data: DashboardResponse; tz?: string }) 
   const card = data.cards.gmail;
   const opps = [...card.opportunities].sort((a, b) => b.relevance_score - a.relevance_score);
   return (
-    <Block icon="✉️" title="Opportunities" status={card.status} demo={anyFixture(card.items)}>
+    <Block icon="✉️" title="Opportunities" status={card.status}>
       {opps.length === 0 ? (
         <Empty>No emails yet</Empty>
       ) : (
@@ -313,7 +307,7 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
     return (b.occurred_at ?? "").localeCompare(a.occurred_at ?? "");
   });
   return (
-    <Block icon="💬" title="Discussions" status={card.status} demo={anyFixture(items)}>
+    <Block icon="💬" title="Discussions" status={card.status}>
       {items.length === 0 ? (
         <Empty>No discussions yet</Empty>
       ) : (
@@ -337,19 +331,13 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
   );
 }
 
-function DocumentsBlock({ data, tz, navigate }: { data: DashboardResponse; tz: string; navigate: (p: string) => void }) {
+function DocumentsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
   const card = data.cards.documents;
   return (
     <Block
       icon="📄"
       title="Documents"
       status={card.status}
-      demo={anyFixture(card.documents)}
-      actions={
-        <button className="btn small-btn" onClick={() => navigate("/documents")}>
-          Add data
-        </button>
-      }
     >
       {card.documents.length === 0 ? (
         <Empty>No documents yet</Empty>

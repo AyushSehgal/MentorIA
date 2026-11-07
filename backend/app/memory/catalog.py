@@ -110,12 +110,30 @@ def _terms(c: dict) -> list[str]:
     return [c["label"].lower(), c["id"].replace("_", " ")] + [a.lower() for a in c.get("aliases", [])]
 
 
+def concept_courses(c: dict) -> list[str]:
+    """Primary course first, then every other course that teaches the same concept."""
+    return [c["course_id"]] + [x for x in c.get("also_in", []) if x != c["course_id"]]
+
+
+def in_course(c: dict, course_id: Optional[str]) -> bool:
+    return course_id is None or course_id in concept_courses(c)
+
+
+def share_concept(concept_id: str, course_id: str) -> bool:
+    """Mark an existing concept as also taught in course_id. Returns True if newly shared."""
+    c = concept(concept_id)
+    if not c or course_id in concept_courses(c):
+        return False
+    upsert_concept(c | {"also_in": [*c.get("also_in", []), course_id]})
+    return True
+
+
 def match_concepts(text: str, course_id: Optional[str] = None) -> list[str]:
     """Concept ids whose label/aliases occur as whole words in text (longest match first)."""
     t = _norm(text)
     hits: list[tuple[int, str]] = []
     for c in concepts():
-        if course_id and c["course_id"] != course_id:
+        if not in_course(c, course_id):
             continue
         for term in sorted(_terms(c), key=len, reverse=True):
             norm = _norm(term)

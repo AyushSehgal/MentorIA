@@ -423,3 +423,6 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .strip-sub { font-size: 10.5px; color: var(--muted, #9ca3af); }
 .strip-due { margin-top: 3px; font-size: 10.5px; color: #991b1b; background: #fee2e2; border-radius: 4px; padding: 0 4px; white-space: nowrap; }
 @media (max-width: 560px) { .week-strip { grid-template-columns: repeat(4, 1fr); } }
+
+/* v1.4 shared concepts */
+.pill-shared { display: inline-block; margin-left: 6px; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; vertical-align: 1px; }

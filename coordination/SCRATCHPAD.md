@@ -72,3 +72,15 @@ Interfaces changed: none (types.ts untouched). Dashboard hides source blocks ent
 [2026-11-07 19:10 EST] coordinator | rename + about-me + compact UI | DONE
 Verified in browser (API :8001 + UI :5180): empty state, Add all remaining (14 assets), compact blocks, About me example →
 goal pill "3 sources". Course ids now "10-601"/"16-831". pytest 50/50, frontend build passes. Testing guide rewritten (61 checks).
+
+[2026-11-07 19:40 EST] frontend-agent | v1.4 hide add-data, no demo labels, shared concepts | START
+Files: frontend/src/** (not types.ts)
+
+[2026-11-07 19:55 EST] frontend-agent | v1.4 hide add-data, no demo labels, shared concepts | DONE
+Files: frontend/src/{App.tsx,components/Common.tsx,components/ApprovalCard.tsx,components/WeekCalendar.tsx,pages/Dashboard.tsx,pages/Documents.tsx,pages/Knowledge.tsx,pages/Sources.tsx,styles.css}
+Build: npm run build passes. No user-visible "demo" text remains in frontend/src (only identifiers/routes).
+Note: backend-provided strings (connector details, venues, chat caveats) must also avoid "demo" — backend scope.
+
+[2026-11-07 20:00 EST] coordinator | 10-605 + prepopulate + no-demo-labels | DONE
+16 sample files (10-605 overview + lecture quizzes added); shared concepts via also_in; prepopulate on startup/reset;
+backend "demo" wording removed. pytest 52/52; browser: prepopulated dashboard, no "demo" text, 12 shared pills.

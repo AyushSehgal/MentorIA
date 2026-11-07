@@ -111,6 +111,7 @@ class GraphEdge(BaseModel):
 class ConceptState(BaseModel):
     concept_id: str
     course_id: str
+    also_in: list[str] = Field(default_factory=list)
     label: str
     mastery: Optional[float] = None
     evidence_strength: Strength = "none"

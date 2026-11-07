@@ -1,10 +1,13 @@
-"""Generate the MentorIA demo assets (demo_assets/): the files a presenter adds one by one, starting from an empty MentorIA.
+"""Generate MentorIA's sample data files (demo_assets/), imported automatically on first start and on reset.
 
-Courses: 10-601 Introduction to Machine Learning (CMU) and 16-831 Introduction to Robot Learning (CMU).
-Concept lists follow the lecture topics on the public course pages:
-  https://www.cs.cmu.edu/~mgormley/courses/10601/   and   https://16-831-s24.github.io/
-Everything else — the student, grades, emails, events, speakers and dates — is fictional demo content, marked with
-MENTORIA-DEMO-ASSET so MentorIA labels it "Demo data". Dates are relative to the day the assets are generated.
+Courses: 10-601 Introduction to Machine Learning, 16-831 Introduction to Robot Learning and 10-605 ML with Large
+Datasets (CMU). Concept lists follow the lecture topics on the public course pages:
+  https://www.cs.cmu.edu/~mgormley/courses/10601/   https://16-831-s24.github.io/   https://10605.github.io/
+10-605 shares several concepts with 10-601 (optimization, linear regression, backprop/autodiff, neural nets,
+transformers, matrix factorization): they are ONE concept taught in both courses, so evidence from either applies.
+Everything else — the student, grades, emails, events, speakers and dates — is fictional sample content. Files carry
+the hidden marker MENTORIA-DEMO-ASSET (PDF metadata, email header, .ics property, .md comment) so the API keeps
+is_fixture=True; nothing visible says "demo". Dates are relative to the day the assets are generated.
 """
 from __future__ import annotations
 
@@ -22,7 +25,7 @@ from .config import REPO_ROOT, settings
 
 OUT = REPO_ROOT / "demo_assets"
 MARK = "MENTORIA-DEMO-ASSET"
-DEMO_NOTE = f"DEMO ASSET ({MARK}) - fictional content prepared for the MentorIA demo; not an official course document."
+SAMPLE_NOTE = "Sample document prepared for MentorIA - not an official course document."
 
 ML = {
     "id": "10-601", "code": "10-601", "title": "Introduction to Machine Learning", "domain": "ml",
@@ -96,6 +99,47 @@ RL = {
 }
 
 
+LD = {
+    "id": "10-605", "code": "10-605", "title": "Machine Learning with Large Datasets", "domain": "ml",
+    "aka": "ml with large datasets, machine learning with large datasets, large datasets, mlld, 10-405, 10-805, 10605",
+    "source": "https://10605.github.io/",
+    "concepts": [
+        ("Map-Reduce & Spark", "mapreduce_spark", "map-reduce, mapreduce, spark, dataflow, workflows"),
+        ("Distributed Learning & All-Reduce", "distributed_learning", "parameter mixing, all-reduce, allreduce, data parallelism, distributed sgd"),
+        ("Sparsity & Hash Kernels", "hash_kernels", "hashing trick, feature hashing, hash kernel, hash kernels"),
+        ("Bloom Filters & Count-Min Sketch", "sketches", "bloom filter, bloom filters, count-min sketch, sketching"),
+        ("Locality-Sensitive Hashing", "lsh", "locality sensitive hashing, lsh, minhash, simhash"),
+        ("Parallel Optimization with GPUs", "gpu_optimization", "gpu, gpus, parallel optimization"),
+        ("LoRA & Hyperparameter Search", "lora", "low-rank adaptation, lora, bpe, hyperparameter search"),
+        ("Embarrassingly Parallel Training", "parallel_training", "embarrassingly parallel, parallel training"),
+        ("Model Compression & Pruning", "model_compression", "model compression, pruning, quantization, distillation"),
+        ("KV Caching for LLMs", "kv_caching", "kv cache, kv caching, kv-caching"),
+        ("Contrastive Learning & Retrieval", "contrastive_retrieval", "contrastive learning, dense retrieval, embedding retrieval"),
+        ("Retrieval-Augmented Generation", "rag", "retrieval-augmented generation, rag"),
+        ("Scalable Evaluation", "scalable_evaluation", "network effects, scalable evaluation"),
+    ],
+    # Concepts 10-605 teaches that 10-601 already defines: one concept, shared evidence.
+    "shared": [
+        ("optimization_sgd", "Learning as Optimization"),
+        ("linear_regression", "HW2 Parallel Linear Regression"),
+        ("backpropagation", "Autodiff"),
+        ("neural_networks", "Deep Learning: Background and Architectures"),
+        ("transformers_lms", "Deep Learning: Transformers"),
+        ("recommender_systems", "matrix factorization at scale"),
+    ],
+    "relations": [
+        ("mapreduce_spark", "distributed_learning", "prerequisite_of"),
+        ("optimization_sgd", "distributed_learning", "prerequisite_of"),
+        ("hash_kernels", "lsh", "related_to"),
+        ("transformers_lms", "lora", "prerequisite_of"),
+        ("transformers_lms", "kv_caching", "prerequisite_of"),
+        ("model_compression", "kv_caching", "related_to"),
+        ("contrastive_retrieval", "rag", "prerequisite_of"),
+        ("backpropagation", "gpu_optimization", "related_to"),
+    ],
+}
+
+
 # ---- helpers ----------------------------------------------------------------------------
 def _at(base: date, days: int, hh: int, mm: int = 0) -> datetime:
     d = base + timedelta(days=days)
@@ -109,6 +153,8 @@ def _human(dt: datetime) -> str:
 class _Pdf:
     def __init__(self, path: Path, title: str, subtitle: str):
         self.c = canvas.Canvas(str(path), pagesize=letter)
+        self.c.setSubject(MARK)  # hidden sample-data marker (is_fixture), never rendered
+        self.c.setAuthor(settings.student_name)
         self.title, self.subtitle, self.page = title, subtitle, 0
         self._new_page()
 
@@ -121,8 +167,8 @@ class _Pdf:
         c.drawString(54, 742, self.title)
         c.setFont("Helvetica", 9)
         c.drawString(54, 728, self.subtitle)
-        c.setFillColorRGB(0.7, 0.1, 0.1)
-        c.drawString(54, 715, DEMO_NOTE)
+        c.setFillColorRGB(0.45, 0.45, 0.45)
+        c.drawString(54, 715, SAMPLE_NOTE)
         c.setFillColorRGB(0, 0, 0)
         self.y = 692
 
@@ -171,8 +217,13 @@ def course_overview(course: dict, path: Path):
     p.line("Concepts (lecture topics from the public schedule; aliases help MentorIA recognize them in your files):", bold=True)
     for label, cid, aliases in course["concepts"]:
         p.line(f"Concept: {label} | id: {cid} | aliases: {aliases}", size=8.5, gap=3, fit=True)
+    if course.get("shared"):
+        p.space()
+        p.line("Topics shared with other courses (MentorIA links them to the same concept):", bold=True)
+        for cid, note in course["shared"]:
+            p.line(f"Shared concept: {cid} | taught here as: {note}", size=8.5, gap=3, fit=True)
     p.space()
-    p.line("How topics build on each other (MentorIA demo annotation, not official prerequisites):", bold=True)
+    p.line("How topics build on each other (MentorIA annotation, not official prerequisites):", bold=True)
     for a, b, rel in course["relations"]:
         p.line(f"Relation: {a} -> {b} | {rel}", size=8.5, gap=3, fit=True)
     p.save()
@@ -210,7 +261,7 @@ def personal_statement(path: Path):
         "I am especially interested in vision-language-action models and language-conditioned manipulation.",
         "I'm also interested in how transformers and language models can turn spoken instructions into robot plans.",
         "I prefer project-based learning and short, focused study blocks in the afternoon.",
-        "Over the next year I plan to build a small demo where a robot arm follows instructions like \"put the red cup "
+        "Over the next year I plan to build a small prototype where a robot arm follows instructions like \"put the red cup "
         "on the shelf\", and to meet founders working on this problem.",
     ]:
         p.line(para)
@@ -237,7 +288,7 @@ def write_email(path: Path, sender: str, to: str, subject: str, body: str, sent:
     m = EmailMessage()
     m["From"], m["To"], m["Subject"] = sender, to, subject
     m["Date"] = format_datetime(sent)
-    m["Message-ID"] = make_msgid(idstring=path.stem, domain="mentoria-demo.example")
+    m["Message-ID"] = make_msgid(idstring=path.stem, domain="mentoria.example")
     m["X-MENTORIA"] = MARK
     m.set_content(body)
     path.write_bytes(bytes(m))
@@ -252,23 +303,25 @@ def ics(path: Path, today: date):
         day = today + timedelta(days=d)
         wd = day.weekday()  # 0=Mon
         if wd in (0, 2, 4):
-            events.append(("10-601 Introduction to Machine Learning - lecture", d, 11, 0, 12, 20, "Lecture hall (demo)"))
+            events.append(("10-601 Introduction to Machine Learning - lecture", d, 11, 0, 12, 20, "Lecture hall"))
         if wd in (0, 2):
-            events.append(("16-831 Introduction to Robot Learning - lecture", d, 9, 30, 10, 50, "Lecture hall (demo)"))
+            events.append(("16-831 Introduction to Robot Learning - lecture", d, 9, 30, 10, 50, "Lecture hall"))
+            events.append(("10-605 ML with Large Datasets - lecture", d, 15, 30, 16, 50, "Lecture hall"))
         if wd == 1:
-            events.append(("16-831 office hours", d, 11, 0, 11, 45, "Office (demo)"))
+            events.append(("16-831 office hours", d, 11, 0, 11, 45, "Faculty office"))
             events.append(("Campus job shift", d, 17, 0, 20, 0, ""))
         if wd == 3:
             events.append(("Campus job shift", d, 17, 0, 20, 0, ""))
-            events.append(("Coffee chat with a robotics startup founder", d, 15, 0, 15, 45, "Cafe (demo)"))
+            events.append(("Coffee chat with a robotics startup founder", d, 15, 0, 15, 45, "Campus cafe"))
         if wd == 4:
-            events.append(("10-601 recitation", d, 14, 0, 15, 0, "Recitation room (demo)"))
+            events.append(("10-601 recitation", d, 14, 0, 15, 0, "Recitation room"))
+            events.append(("10-605 recitation", d, 15, 30, 16, 50, "Recitation room"))
         if wd == 5:
-            events.append(("Robotics club build session", d, 13, 0, 16, 0, "Makerspace (demo)"))
+            events.append(("Robotics club build session", d, 13, 0, 16, 0, "Makerspace"))
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MentorIA demo//EN", f"X-MENTORIA:{MARK}"]
     for i, (title, d, h1, m1, h2, m2, loc) in enumerate(events):
         s, e = _at(today, d, h1, m1), _at(today, d, h2, m2)
-        lines += ["BEGIN:VEVENT", f"UID:mentoria-demo-{i}-{s.strftime('%Y%m%d%H%M')}@mentoria-demo.example",
+        lines += ["BEGIN:VEVENT", f"UID:mentoria-{i}-{s.strftime('%Y%m%d%H%M')}@mentoria.example",
                   f"DTSTART;TZID={settings.timezone}:{stamp(s)}", f"DTEND;TZID={settings.timezone}:{stamp(e)}",
                   f"SUMMARY:{title}", f"LOCATION:{loc}", "END:VEVENT"]
     lines.append("END:VCALENDAR")
@@ -276,10 +329,10 @@ def ics(path: Path, today: date):
 
 
 CANVAS_PACK = f"""<!-- {MARK} -->
-# Canvas export (demo)
+# Canvas export
 
-Sample assignments for this week. Titles for 10-601 follow its public homework list; dates, points and 16-831 homework
-topics are demo content.
+Sample assignments for this week. 10-601 and 10-605 titles follow their public homework lists; dates, points and 16-831
+homework topics are sample content.
 
 ## Canvas assignments
 
@@ -289,13 +342,16 @@ topics are demo content.
 | c601_hw5 | 10-601 | Homework 5: Neural Networks | d+3 23:59 | neural_networks, backpropagation | 100 | no | Implement a 2-layer network with backpropagation. |
 | c601_hw6 | 10-601 | Homework 6: Learning Theory and Ethics | d+10 23:59 | pac_learning, societal_impacts | 60 | no | Written. |
 | c601_exam2 | 10-601 | Exam 2 (in person) | d+12 19:00 | optimization_sgd, logistic_regression, neural_networks, backpropagation, regularization | 0 | no | Covers lectures 8-17. |
+| c605_hw4 | 10-605 | HW 4: LoRA | d-3 23:59 | lora, transformers_lms | 100 | yes | Programming + written. |
+| c605_hw5 | 10-605 | HW 5: GPT-2 Training | d+11 23:59 | transformers_lms, parallel_training, gpu_optimization | 100 | no | Train a small GPT-2 efficiently. |
+| c605_mini | 10-605 | Miniproject | d+23 23:59 | distributed_learning, rag | 150 | no | Structured miniproject. |
 | c831_hw2 | 16-831 | HW2 | d-4 23:59 | imitation_learning, value_policy_iteration, q_learning | 100 | yes | Submitted. |
 | c831_hw3 | 16-831 | HW3: Policy gradients and actor-critic | d+5 23:59 | policy_gradients, actor_critic | 100 | no | Derive and implement REINFORCE with a baseline. |
 | c831_proposal | 16-831 | Project proposal: language-conditioned manipulation | d+11 23:59 | foundation_models_robotics, imitation_learning | 50 | no | One page: a robot arm that follows natural-language instructions. |
 """
 
 PIAZZA_PACK = f"""<!-- {MARK} -->
-# Piazza export (demo)
+# Piazza export
 
 ## Piazza posts
 
@@ -319,6 +375,16 @@ When computing gradients for HW5, combine softmax and cross-entropy: the gradien
 
 My loss becomes NaN after a few epochs. Is this an initialization problem?
 
+### HW 5: memory tips for GPT-2 training
+- id: p605_1
+- course: 10-605
+- posted: d-1 11:30
+- author: instructor
+- type: announcement
+- concepts: gpu_optimization, kv_caching
+
+If you run out of GPU memory in HW 5, try gradient accumulation and a smaller context length first.
+
 ### HW3 released: policy gradient written problems
 - id: p831_1
 - course: 16-831
@@ -341,40 +407,48 @@ def manifest_entries() -> list[dict]:
          "title": "16-831 Intro to Robot Learning — course overview",
          "description": "16 concepts from the public 16-831 lecture list, incl. Foundation Models in Robotics.",
          "what_to_notice": "A second course appears; the graph links 10-601 Transformers to 16-831 Foundation Models."},
-        {"step": 3, "name": "03_canvas_assignments.md", "kind": "source_pack", "title": "Canvas assignments export",
+        {"step": 3, "name": "03_10605_course_overview.pdf", "kind": "course_overview",
+         "title": "10-605 ML with Large Datasets — course overview",
+         "description": "13 concepts from the public 10-605 schedule plus 6 concepts it shares with 10-601.",
+         "what_to_notice": "Shared concepts (e.g. Backpropagation) now belong to both ML courses — one estimate, shared evidence."},
+        {"step": 4, "name": "04_canvas_assignments.md", "kind": "source_pack", "title": "Canvas assignments export",
          "description": "This week's homework, an exam and a project proposal across both courses.",
          "what_to_notice": "Canvas card fills; 'Due soon' and 'No graded evidence for…' insights appear."},
-        {"step": 4, "name": "04_my_calendar.ics", "kind": "calendar", "title": "My calendar (next 7 days)",
+        {"step": 5, "name": "05_my_calendar.ics", "kind": "calendar", "title": "My calendar (next 7 days)",
          "description": "Lectures, office hours, job shifts and a coffee chat with a startup founder.",
          "what_to_notice": "Calendar card and free study windows appear; weekly plans can now propose real times."},
-        {"step": 5, "name": "05_10601_quiz2_graded.pdf", "kind": "graded_assessment", "title": "10-601 Quiz 2 (graded)",
+        {"step": 6, "name": "06_10601_quiz2_graded.pdf", "kind": "graded_assessment", "title": "10-601 Quiz 2 (graded)",
          "description": "7 graded questions on logistic regression, neural nets and backprop; one has partial credit.",
          "what_to_notice": "Mastery estimates appear: Backpropagation drops to ~0.12; Q7 (partial credit) is held for review."},
-        {"step": 6, "name": "06_16831_hw2_graded.pdf", "kind": "graded_assessment", "title": "16-831 HW2 written problems (graded)",
+        {"step": 7, "name": "07_16831_hw2_graded.pdf", "kind": "graded_assessment", "title": "16-831 HW2 written problems (graded)",
          "description": "6 graded questions on imitation learning, value iteration, Q-learning and policy gradients.",
          "what_to_notice": "Policy Gradients shows as a gap; 'What should I focus on this week?' now cites both courses."},
-        {"step": 7, "name": "07_career_goals_statement.pdf", "kind": "personal_document", "title": "My career goals statement",
+        {"step": 8, "name": "08_10605_lecture_quizzes_graded.pdf", "kind": "graded_assessment",
+         "title": "10-605 lecture quizzes (graded)",
+         "description": "6 graded lecture-quiz questions incl. autodiff, LSH, sketches and all-reduce.",
+         "what_to_notice": "The autodiff miss lowers Backpropagation further — evidence from 10-601 and 10-605 combines."},
+        {"step": 9, "name": "09_career_goals_statement.pdf", "kind": "personal_document", "title": "My career goals statement",
          "description": "Your own writing: you want to work at a startup building robots that understand language.",
          "what_to_notice": "A goal card appears on the dashboard; the goal links to Foundation Models in Robotics in the graph."},
-        {"step": 8, "name": "08_email_to_advisor.eml", "kind": "email", "title": "Email you sent to your advisor",
+        {"step": 10, "name": "10_email_to_advisor.eml", "kind": "email", "title": "Email you sent to your advisor",
          "description": "You tell your advisor you'd like to join a startup that makes robots understand language.",
          "what_to_notice": "The same goal is reinforced — now 'stated in 2 sources' (not duplicated)."},
-        {"step": 9, "name": "09_email_vla_seminar.eml", "kind": "email", "title": "Seminar: robots that follow language instructions",
+        {"step": 11, "name": "11_email_vla_seminar.eml", "kind": "email", "title": "Seminar: robots that follow language instructions",
          "description": "A dated robotics seminar on vision-language-action models.",
          "what_to_notice": "Ranked as a top opportunity because it matches your goal; an approval-gated calendar proposal appears."},
-        {"step": 10, "name": "10_email_startup_mixer.eml", "kind": "email", "title": "Robotics & AI startup mixer",
+        {"step": 12, "name": "12_email_startup_mixer.eml", "kind": "email", "title": "Robotics & AI startup mixer",
          "description": "Founders hiring interns and new grads, incl. language-driven robots.",
          "what_to_notice": "Matches the 'startup' part of your goal."},
-        {"step": 11, "name": "11_email_rl_reading_group.eml", "kind": "email", "title": "RL reading group: policy gradients",
+        {"step": 13, "name": "13_email_rl_reading_group.eml", "kind": "email", "title": "RL reading group: policy gradients",
          "description": "A reading group on a topic where your graded work shows a gap.",
          "what_to_notice": "Relevant because of a knowledge gap, not your goal — the reasons say so."},
-        {"step": 12, "name": "12_email_quant_club.eml", "kind": "email", "title": "Quant finance club kickoff",
+        {"step": 14, "name": "14_email_quant_club.eml", "kind": "email", "title": "Quant finance club kickoff",
          "description": "An unrelated announcement.",
          "what_to_notice": "Ranked low and skipped in chat — MentorIA filters noise."},
-        {"step": 13, "name": "13_piazza_posts.md", "kind": "source_pack", "title": "Piazza posts export",
+        {"step": 15, "name": "15_piazza_posts.md", "kind": "source_pack", "title": "Piazza posts export",
          "description": "Instructor clarifications for 10-601 HW5 and 16-831 HW3, plus a student question.",
          "what_to_notice": "Piazza card fills; instructor posts are badged. Questions never lower your mastery."},
-        {"step": 14, "name": "14_10601_practice_ungraded.pdf", "kind": "study_material",
+        {"step": 16, "name": "16_10601_practice_ungraded.pdf", "kind": "study_material",
          "title": "10-601 practice problems (ungraded)",
          "description": "A question sheet without answers or grades.",
          "what_to_notice": "Indexed as study material only — no mastery numbers change."},
@@ -387,9 +461,10 @@ def generate(out: Path = OUT) -> Path:
     student = f"{settings.student_name} <{settings.student_email}>"
     course_overview(ML, out / "01_10601_course_overview.pdf")
     course_overview(RL, out / "02_16831_course_overview.pdf")
-    (out / "03_canvas_assignments.md").write_text(CANVAS_PACK)
-    ics(out / "04_my_calendar.ics", today)
-    graded(out / "05_10601_quiz2_graded.pdf", "10-601 Quiz 2 (graded)", ML, today - timedelta(days=2), "7/14", [
+    course_overview(LD, out / "03_10605_course_overview.pdf")
+    (out / "04_canvas_assignments.md").write_text(CANVAS_PACK)
+    ics(out / "05_my_calendar.ics", today)
+    graded(out / "06_10601_quiz2_graded.pdf", "10-601 Quiz 2 (graded)", ML, today - timedelta(days=2), "7/14", [
         [(1, "Logistic Regression", "What does the sigmoid output represent in binary logistic regression?",
           "P(y = 1 | x)", "Correct", "2/2", ""),
          (2, "Logistic Regression", "Give the gradient of the negative log-likelihood with respect to w.",
@@ -405,7 +480,7 @@ def generate(out: Path = OUT) -> Path:
          (7, "Optimization & SGD", "Why might SGD with a constant learning rate fail to converge exactly?",
           "Because the gradients are noisy", None, "1/2", "Partial credit: mention the need for a decaying step size.")],
     ])
-    graded(out / "06_16831_hw2_graded.pdf", "16-831 HW2 written problems (graded)", RL, today - timedelta(days=1), "8/12", [
+    graded(out / "07_16831_hw2_graded.pdf", "16-831 HW2 written problems (graded)", RL, today - timedelta(days=1), "8/12", [
         [(1, "Imitation Learning", "Why does behavior cloning suffer from compounding errors?",
           "Small mistakes lead to unseen states", "Correct", "2/2", ""),
          (2, "Imitation Learning", "How does DAgger address distribution shift?",
@@ -419,48 +494,64 @@ def generate(out: Path = OUT) -> Path:
          (6, "Q-Learning", "Why is Q-learning off-policy?",
           "Its target uses max over actions, not the behavior policy's action", "Correct", "2/2", "")],
     ])
-    personal_statement(out / "07_career_goals_statement.pdf")
+    graded(out / "08_10605_lecture_quizzes_graded.pdf", "10-605 lecture quizzes (graded)", LD, today - timedelta(days=1), "6/12", [
+        [(1, "Backpropagation", "In reverse-mode autodiff, why does one backward pass give the gradient for every parameter?",
+          "Because each parameter gets its own backward pass", "Incorrect", "0/2",
+          "Reverse mode propagates the adjoint of the single scalar loss through the graph once."),
+         (2, "Locality-Sensitive Hashing", "What does MinHash estimate between two sets?",
+          "Their Jaccard similarity", "Correct", "2/2", ""),
+         (3, "Bloom Filters & Count-Min Sketch", "Can a Bloom filter return a false negative?",
+          "Yes, if the filter is full", "Incorrect", "0/2", "No: only false positives are possible.")],
+        [(4, "Transformers", "Why does self-attention cost O(n^2) in sequence length?",
+          "Every token attends to every other token", "Correct", "2/2", ""),
+         (5, "Distributed Learning & All-Reduce", "What does all-reduce compute in data-parallel SGD?",
+          "It sends all gradients to one parameter server", "Incorrect", "0/2",
+          "All-reduce sums gradients across workers and leaves the result on every worker, with no central server."),
+         (6, "KV Caching for LLMs", "What does the KV cache avoid recomputing during generation?",
+          "Keys and values for previous tokens", "Correct", "2/2", "")],
+    ])
+    personal_statement(out / "09_career_goals_statement.pdf")
     now = datetime.now(settings.tz)
-    write_email(out / "08_email_to_advisor.eml", student, "Prof. Lee <advisor@example.edu>",
+    write_email(out / "10_email_to_advisor.eml", student, "Prof. Lee <advisor@example.edu>",
                 "Advice on projects for a robotics + language career",
                 "Hi Professor Lee,\n\nThanks for meeting last week. I've been thinking more about what I want after "
                 "graduation. I'd like to join a startup that makes robots understand language, ideally working on "
                 "vision-language-action models.\n\nCould we talk about which project in 16-831 would help most?\n\n"
                 f"Thanks,\n{settings.student_name}\n", now - timedelta(hours=20))
-    seminar = _at(today, 4, 16)
-    write_email(out / "09_email_vla_seminar.eml", "Robotics Seminar <robotics-seminar@example.edu>", settings.student_email,
+    seminar = _at(today, 4, 17)
+    write_email(out / "11_email_vla_seminar.eml", "Robotics Seminar <robotics-seminar@example.edu>", settings.student_email,
                 "Robotics Seminar: Teaching Robots to Follow Language Instructions with Vision-Language-Action Models",
                 "Robotics Seminar Series\n"
                 "Speaker: Dr. Maya Okafor (Example Robotics Lab)\n"
                 "Title: Teaching Robots to Follow Language Instructions with Vision-Language-Action Models\n"
                 f"When: {_human(seminar)}\n"
-                "Where: Robotics Seminar Room (demo venue)\n"
+                "Where: Robotics Seminar Room\n"
                 "Zoom: https://example.edu/robotics-seminar/vla\n\n"
                 "Abstract: How can a robot turn \"put the red cup on the shelf\" into actions? This talk covers "
                 "vision-language-action (VLA) models, language-conditioned manipulation, and lessons from deploying "
                 "them on real robot arms.\n", now - timedelta(hours=30))
     mixer = _at(today, 6, 18)
-    write_email(out / "10_email_startup_mixer.eml", "Entrepreneurship Center <startups@example.edu>", settings.student_email,
+    write_email(out / "12_email_startup_mixer.eml", "Entrepreneurship Center <startups@example.edu>", settings.student_email,
                 "Robotics & AI Startup Mixer: founders hiring interns and new grads",
                 "Meet founders of early-stage robotics and AI startups, including teams building home robots that "
                 "understand natural language instructions. Several are hiring interns and new grads.\n"
                 f"When: {_human(mixer)}\n"
-                "Where: Innovation Hub (demo venue)\n", now - timedelta(hours=26))
+                "Where: Innovation Hub\n", now - timedelta(hours=26))
     reading = _at(today, 2, 12)
-    write_email(out / "11_email_rl_reading_group.eml", "RL Reading Group <rl-reading@example.edu>", settings.student_email,
+    write_email(out / "13_email_rl_reading_group.eml", "RL Reading Group <rl-reading@example.edu>", settings.student_email,
                 "RL Reading Group: policy gradient methods, from REINFORCE to PPO",
                 "This week we read the REINFORCE paper and discuss variance reduction with baselines in policy gradient "
                 "methods.\n"
                 f"When: {_human(reading)}\n"
-                "Where: Robotics Lounge (demo venue)\n", now - timedelta(hours=40))
+                "Where: Robotics Lounge\n", now - timedelta(hours=40))
     quant = _at(today, 5, 19)
-    write_email(out / "12_email_quant_club.eml", "Quant Finance Club <quant@example.edu>", settings.student_email,
+    write_email(out / "14_email_quant_club.eml", "Quant Finance Club <quant@example.edu>", settings.student_email,
                 "Quant Finance Club: trading competition kickoff",
                 "Join our trading competition kickoff. Pizza provided.\n"
                 f"When: {_human(quant)}\n"
-                "Where: Business School Atrium (demo venue)\n", now - timedelta(hours=50))
-    (out / "13_piazza_posts.md").write_text(PIAZZA_PACK)
-    practice_sheet(out / "14_10601_practice_ungraded.pdf")
+                "Where: Business School Atrium\n", now - timedelta(hours=50))
+    (out / "15_piazza_posts.md").write_text(PIAZZA_PACK)
+    practice_sheet(out / "16_10601_practice_ungraded.pdf")
     manifest = {"generated_on": today.isoformat(), "student_name": settings.student_name,
                 "student_email": settings.student_email, "assets": manifest_entries()}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))

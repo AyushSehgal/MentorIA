@@ -30,6 +30,7 @@ def empty_client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "db_path", tmp_path / "test.db")
     monkeypatch.setattr(settings, "upload_dir", tmp_path / "uploads")
     monkeypatch.setattr(settings, "llm_mode", "off")
+    monkeypatch.setattr(settings, "prepopulate", False)
     db.close()
     catalog.invalidate()
     from app.main import app

@@ -27,28 +27,26 @@ Reset the demo (also available as a button on the Sources page): `backend/.venv/
 
 Tests: `cd backend && .venv/bin/python -m pytest -q` · Frontend typecheck/build: `npm --prefix frontend run build`
 
-## Adding data (MentorIA starts empty)
+## Starting data (prepopulated)
 
-MentorIA starts with **no data**. Everything enters through the **Add data** page (or, later, live connectors):
+MentorIA starts **prepopulated**: on first start (and on **Sources → Reset**) it imports the 16 sample files in
+`demo_assets/` through the normal import pipeline, so the dashboard is full from the first load:
 
-| File | What MentorIA learns |
-|---|---|
-| Course overview PDF (`Course ID:` + `Concept:` lines) | A course and its concepts (the knowledge map grows) |
-| Graded quiz / homework PDF (`Topic:` + `Result:`/`Score:` per question) | Evidence → mastery estimates, with page + question citations |
-| Your own writing (statement, notes) — tick **I wrote this** | Goals, interests, preferences |
-| `.eml` email | Inbox opportunities; if *you* sent it, your stated goals |
-| `.ics` calendar | Events and free study windows |
-| `.md` source pack (e.g. `fixtures/synthetic_world.md`) | Canvas assignments, Piazza posts, courses, self-reports |
+- **Three courses** with concepts from their public course pages: **10-601** Intro to ML, **16-831** Intro to Robot
+  Learning, **10-605** ML with Large Datasets.
+- **Overlap:** 10-605 shares 6 concepts with 10-601 (optimization/SGD, linear regression, backprop/autodiff, neural
+  nets, transformers, matrix factorization). A shared concept is *one* concept with one estimate, so a missed
+  autodiff question in 10-605 and two missed backprop questions in 10-601 form a single Backpropagation estimate.
+- Assignments, a week of calendar, graded 10-601 Quiz 2 / 16-831 HW2 / 10-605 lecture quizzes, your career statement,
+  an email to your advisor, inbox announcements and Piazza posts.
 
-Re-adding a file changes nothing. A goal stated in several files merges into **one** goal "stated in N sources".
-
-**Demo assets** — 14 ready-made files for **10-601 Intro to ML** and **16-831 Intro to Robot Learning** (concepts from the
-public course pages; student, grades, emails and events are fictional and labeled *Demo*). They're regenerated daily in
-`demo_assets/` so dates stay current (`backend/.venv/bin/python scripts/make_demo_assets.py` to force).
+The student, grades, emails and events are **fictional sample data**. The UI doesn't label them (presenter's choice,
+ADR-013); the API still flags them with `is_fixture: true`, and the files carry a hidden marker. Say so when presenting.
+`MENTORIA_PREPOPULATE=false` gives an empty start; the import page still exists at `/documents` (not in the nav) and
+accepts .pdf, .eml, .ics and .md files.
 
 **About me** — the chat panel has two tabs: **Ask** (questions) and **About me** (everything you type is saved to your
-profile: goals, interests, how you study, confidence, how you feel). Confidence is kept separate from quiz-based mastery;
-moods expire after 24 h.
+profile: goals, interests, how you study, confidence, how you feel).
 
 ## Language models & privacy
 
@@ -83,18 +81,14 @@ For the snappiest live demo, switch to **Off**; it answers instantly.
 
 **OpenRouter setup:** set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (any id from openrouter.ai/models) in `.env`, restart the API, then choose **Cloud model**.
 
-## Demo script (4–5 min)
-1. **Reset** (Sources → Reset demo). Dashboard is empty; Ask "What ML topics am I struggling with?" → "I don't know your courses yet".
-2. **Add data → 01, 02** (course overviews): Courses 2 · Concepts 35; Student Model lists them with no estimates.
-3. **03 Canvas, 04 Calendar**: Assignments and Calendar blocks fill; free study slots appear.
-4. **05 10-601 Quiz 2, 06 16-831 HW2**: Backpropagation and Policy Gradients drop to 0.12; Q7 (partial credit) held for review.
-   Ask again → gaps cited by quiz page + question.
-5. **07 Career goals statement**: goal card appears ("startup that builds robots that understand natural language").
-6. **08 Email you sent your advisor**: same goal, now **2 sources**.
-7. **About me** tab → "I want a job at a startup that makes robots understand language" → **3 sources**; reply lists matching concepts and opportunities.
-8. **09–12 emails**: language-robotics seminar and startup mixer rank top (goal match); RL reading group ranks for a knowledge gap; quant club filtered out.
-9. Ask **"What should I focus on this week?"** → Backprop (HW5), Policy Gradients (HW3), goal-linked project proposal; approve a block → *Simulated*.
-10. **Student Model**: mastery vs. confidence, goal with its 3 source chips, knowledge graph across both courses.
+## Demo script (4 min)
+1. **Dashboard** (prepopulated): 3 courses · 48 concepts; your goal (2 sources); Focus: Backpropagation, Policy Gradients.
+2. **Ask** "What ML topics am I struggling with?" → Backpropagation 0.12 citing 10-601 Quiz 2 **and** 10-605 lecture quizzes.
+3. **Student Model** → 10-605 concepts marked "shared with 10-601": one concept, evidence from both courses.
+4. **About me** → "I want a job at a startup that makes robots understand language" → goal now **3 sources**; matching concepts and opportunities listed.
+5. **Ask** "Events to attend?" → language-robotics seminar and startup mixer on top; quant club filtered out.
+6. **Calendar → Open calendar → ✨ Plan my week** → dashed study blocks in free time before HW deadlines; click one → Approve → *Simulated*, block turns solid.
+7. Click any dashboard item for its details (reasons, evidence, links).
 
 ## Integration status (truthful)
 
@@ -121,7 +115,7 @@ To connect real services: copy `.env.example` to `.env`, fill in credentials, ru
 - `frontend/`: Vite + React + TS; pages Dashboard, Student Model, Documents, Sources; persistent chat panel.
 
 ## Testing
-- Automated: `cd backend && .venv/bin/python -m pytest -q` (50 tests) and `npm --prefix frontend run build`.
+- Automated: `cd backend && .venv/bin/python -m pytest -q` (52 tests) and `npm --prefix frontend run build`.
 - Manual: [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md), a 90-step checklist covering every feature.
 
 ## Known gaps

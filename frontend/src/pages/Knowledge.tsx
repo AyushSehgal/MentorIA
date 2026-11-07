@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { ConceptState, GraphResponse, HistoryResponse, StudentModel } from "../api/types";
-import { Bar, Card, DemoLabel, EvidenceChips, Empty } from "../components/Common";
+import { Bar, Card, EvidenceChips, Empty } from "../components/Common";
 import { KnowledgeGraph } from "../components/KnowledgeGraph";
 import { fmtDateTime, masteryColor } from "../lib/format";
 
@@ -26,8 +26,13 @@ export function Knowledge({ tz }: { tz: string }) {
   }, [load]);
 
   const byCourse = new Map<string, ConceptState[]>();
-  model?.concepts.forEach((c) => byCourse.set(c.course_id, [...(byCourse.get(c.course_id) ?? []), c]));
+  // A shared concept (also_in) is listed under its primary course and under every course that shares it.
+  model?.courses.forEach((c) => byCourse.set(c.course_id, []));
+  model?.concepts.forEach((c) =>
+    [c.course_id, ...(c.also_in ?? [])].forEach((cid) => byCourse.set(cid, [...(byCourse.get(cid) ?? []), c])),
+  );
   const courseLabel = (id: string) => model?.courses.find((c) => c.course_id === id)?.label ?? id;
+  const courseCode = (id: string) => courseLabel(id).match(/\d{2}-\d{3}/)?.[0] ?? id;
 
   return (
     <div className="page">
@@ -45,7 +50,6 @@ export function Knowledge({ tz }: { tz: string }) {
               <div key={course} className="course-block">
                 <h3>
                   {courseLabel(course)}{" "}
-                  {model.courses.find((c) => c.course_id === course)?.is_fixture && <DemoLabel />}
                   <span className="muted small">
                     {" "}
                     · {model.courses.find((c) => c.course_id === course)?.upcoming_due ?? 0} due in next 7 days
@@ -66,7 +70,13 @@ export function Knowledge({ tz }: { tz: string }) {
                     </thead>
                     <tbody>
                       {concepts.map((c) => (
-                        <ConceptRow key={c.concept_id} c={c} tz={tz} onChanged={load} />
+                        <ConceptRow
+                          key={c.concept_id}
+                          c={c}
+                          tz={tz}
+                          onChanged={load}
+                          sharedWith={[c.course_id, ...(c.also_in ?? [])].filter((x) => x !== course).map(courseCode)}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -81,7 +91,7 @@ export function Knowledge({ tz }: { tz: string }) {
         {!model ? (
           <Empty>—</Empty>
         ) : model.propositions.length === 0 ? (
-          <Empty>No goals yet. Tell MentorIA your goals in chat, or add something you wrote on the Add data page.</Empty>
+          <Empty>No goals yet. Tell MentorIA your goals in the About me tab.</Empty>
         ) : (
           <ul className="props">
             {model.propositions.map((p) => {
@@ -189,7 +199,7 @@ export function Knowledge({ tz }: { tz: string }) {
                       </div>
                       <div className="row-side">
                         <span className={`pill status-${o.status}`}>{o.status.replace("_", " ")}</span>
-                        {o.is_fixture && <DemoLabel />}
+                        
                       </div>
                     </li>
                   ))}
@@ -209,7 +219,17 @@ function fmtVal(v: number | string | null) {
   return v;
 }
 
-function ConceptRow({ c, tz, onChanged }: { c: ConceptState; tz: string; onChanged: () => void }) {
+function ConceptRow({
+  c,
+  tz,
+  onChanged,
+  sharedWith = [],
+}: {
+  c: ConceptState;
+  tz: string;
+  onChanged: () => void;
+  sharedWith?: string[];
+}) {
   const [conf, setConf] = useState<number>(c.self_confidence ?? 0.5);
   const [saving, setSaving] = useState(false);
   useEffect(() => setConf(c.self_confidence ?? 0.5), [c.self_confidence]);
@@ -230,6 +250,11 @@ function ConceptRow({ c, tz, onChanged }: { c: ConceptState; tz: string; onChang
     <tr>
       <td>
         <strong>{c.label}</strong>
+        {sharedWith.length > 0 && (
+          <span className="pill pill-shared" title="Same concept, same evidence and estimate in both courses">
+            shared with {sharedWith.join(", ")}
+          </span>
+        )}
         {c.last_evidence_at && <div className="muted small">last evidence {fmtDateTime(c.last_evidence_at, tz)}</div>}
       </td>
       <td className="mastery-cell">

@@ -47,8 +47,7 @@ def statuses(student_id: str) -> list[ConnectorStatus]:
         if s and s.state == "connected":
             out.append(s)
         elif imported:
-            demo = all(r.is_fixture for r in imported)
-            detail = f"{len(imported)} item(s) added from files" + (" (sample demo data)" if demo else "") + " — not a live connection."
+            detail = f"{len(imported)} item(s) added from files — not a live connection."
             if s and s.state == "failed":
                 detail += f" Live sync failed: {s.detail}"
             out.append(ConnectorStatus(provider=p, state="imported", mode="import", detail=detail, record_count=len(imported),

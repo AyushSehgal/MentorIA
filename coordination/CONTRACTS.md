@@ -57,3 +57,9 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
 - `ChatRequest.mode?: "ask" | "tell"` (default "ask"). In "tell" mode every message is saved to the profile:
   goal / interest / preference / self-confidence / mood, or a general note when no category fits. Response intent is
   `memory_update`; `memory_updates` lists what was saved.
+
+## v1.4 (2026-11-07) — shared concepts, prepopulated start
+- `ConceptState.also_in: string[]` — other courses teaching the same concept. One concept, one mastery estimate, shared evidence.
+- MentorIA starts PREPOPULATED (all sample assets imported on first start and on `POST /api/demo/reset`).
+  `MENTORIA_PREPOPULATE=false` restores the empty start (tests use this).
+- UI shows no "demo" labels (user decision, ADR-013); `is_fixture` remains in the API.

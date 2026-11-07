@@ -2,11 +2,22 @@ import { Fragment, useState, type ReactNode } from "react";
 import type { ConnectorStatus, EvidenceRef } from "../api/types";
 import { fmtDateTime, providerLabel } from "../lib/format";
 
+const STATE_LABEL: Record<string, string> = {
+  connected: "connected",
+  needs_auth: "needs auth",
+  failed: "failed",
+  demo_data: "sample data",
+  not_available: "not connected",
+  imported: "from files",
+};
+
+export const stateLabel = (s: string) => STATE_LABEL[s] ?? s.replace("_", " ");
+
 export function StatusDot({ status }: { status: ConnectorStatus }) {
   return (
     <span
       className={`dot dot-${status.state}`}
-      title={`${providerLabel(status.provider)}: ${status.state} (${status.mode}) — ${status.detail}`}
+      title={`${providerLabel(status.provider)}: ${stateLabel(status.state)} — ${status.detail}`}
     />
   );
 }
@@ -16,22 +27,16 @@ export function StatusBadge({ status }: { status: ConnectorStatus | undefined })
   return (
     <span className={`badge badge-${status.state}`} title={status.detail}>
       <StatusDot status={status} />
-      {status.state.replace("_", " ")}
-      {status.mode !== "none" && <span className="badge-mode"> · {status.mode === "import" ? "from files" : status.mode}</span>}
+      {stateLabel(status.state)}
+      {status.mode === "live" && <span className="badge-mode"> · live</span>}
       {status.verified_live && <span className="badge-mode"> · verified</span>}
     </span>
   );
 }
 
-export function DemoLabel({ show = true }: { show?: boolean }) {
-  if (!show) return null;
-  return <span className="demo-label">Demo data</span>;
-}
-
 export function Card({
   title,
   status,
-  demo,
   actions,
   children,
   className,
@@ -48,7 +53,6 @@ export function Card({
       <header className="card-head">
         <h2>{title}</h2>
         <div className="card-head-right">
-          <DemoLabel show={!!demo} />
           <StatusBadge status={status} />
           {actions}
         </div>
@@ -73,7 +77,6 @@ export function EvidenceChips({ evidence }: { evidence: EvidenceRef[] }) {
         const inner = (
           <>
             <span className="chip-provider">{providerLabel(e.provider)}</span> {e.label}
-            {e.is_fixture && <span className="chip-demo">Demo</span>}
           </>
         );
         return e.url ? (
@@ -153,12 +156,11 @@ export function MarkdownLite({ text }: { text: string }) {
   return <div className="md">{blocks}</div>;
 }
 
-/** Compact dashboard block: icon + short title + status dot (details in tooltip) + one Demo pill. */
+/** Compact dashboard block: icon + short title + status dot (details in tooltip). */
 export function Block({
   icon,
   title,
   status,
-  demo,
   actions,
   children,
   className,
@@ -179,7 +181,6 @@ export function Block({
         </span>
         <h2>{title}</h2>
         {status && <StatusDot status={status} />}
-        {demo && <span className="pill pill-demo">Demo</span>}
         <span className="block-actions">{actions}</span>
       </header>
       {status?.state === "failed" && (

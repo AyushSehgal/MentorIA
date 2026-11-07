@@ -18,7 +18,8 @@ BKT_CAVEAT = "Mastery numbers are Bayesian Knowledge Tracing estimates with illu
 
 
 def _demo_caveat(refs: list[EvidenceRef]) -> list[str]:
-    return ["Some cited sources are labeled demo data, not live connector reads."] if any(r.is_fixture for r in refs) else []
+    """Sample-data status stays in the API (is_fixture); the UI no longer labels it (ADR-013)."""
+    return []
 
 
 def _dedupe(refs: list[EvidenceRef]) -> list[EvidenceRef]:
@@ -63,7 +64,7 @@ def struggling(state: State) -> State:
                          "Add data page, and I'll tell you where the evidence points.",
                 "sources": [], "beliefs_used": [], "uncertainties": ["No courses or graded evidence added yet."],
                 "trace": state["trace"] + ["struggling"]}
-    states = [s for s in concept_states(sid) if s.course_id in course_ids]
+    states = [s for s in concept_states(sid) if s.course_id in course_ids or set(s.also_in) & set(course_ids)]
     graded = [s for s in states if s.mastery is not None]
     scope = " / ".join(catalog.course_label(c) for c in course_ids)
     refs: list[EvidenceRef] = []
@@ -146,8 +147,11 @@ def weekly_focus(state: State) -> State:
     for a in soon:
         linked = [c for c in a.concept_ids if c in goal_ids and c not in listed]
         if linked:
+            st = next((x for x in concept_states(sid) if x.concept_id == linked[0]), None)
+            note = (f"Current estimate {st.mastery:.2f}." if st and st.mastery is not None
+                    else "There's no graded evidence on it yet, so plan an early start.")
             lines.append(f"Linked to your goal: **{catalog.concept_label(linked[0])}** — “{a.title}” is due "
-                         f"{human(parse(a.occurred_at))}. There's no graded evidence on it yet, so plan an early start.")
+                         f"{human(parse(a.occurred_at))}. {note}")
             refs.append(record_evidence(a))
             break
     windows = free_windows(sid)
@@ -186,7 +190,7 @@ def course_next(state: State) -> State:
     if current:
         lines.append("Courses I know you're taking: " + ", ".join(current) + ".")
     if gc:
-        lines.append("Subject areas that line up with those goals (from the demo concept map, not a catalog): "
+        lines.append("Subject areas that line up with those goals (from your course overviews, not a catalog): "
                      + ", ".join(catalog.concept_label(c) for c in sorted(gc)) + ".")
     weak = [s for s in concept_states(sid) if s.mastery is not None and s.mastery < 0.5]
     if weak:

@@ -91,14 +91,14 @@ def concept_state(student_id: str, c: dict) -> ConceptState:
     ev = [obs_evidence(o) for o in answers]
     if sc:
         ev += [obs_evidence(o) for eid in sc.evidence_ids if (o := store.get_observation(eid))]
-    return ConceptState(concept_id=c["id"], course_id=c["course_id"], label=c["label"], mastery=mastery,
+    return ConceptState(concept_id=c["id"], course_id=c["course_id"], also_in=c.get("also_in", []), label=c["label"], mastery=mastery,
                         evidence_strength=m.evidence_strength if m else "none", correct=correct,
                         incorrect=len(answers) - correct, self_confidence=conf, blind_spot=blind, stale=stale,
                         last_evidence_at=last, evidence=ev)
 
 
 def concept_states(student_id: str, course_id: Optional[str] = None) -> list[ConceptState]:
-    return [concept_state(student_id, c) for c in catalog.concepts() if not course_id or c["course_id"] == course_id]
+    return [concept_state(student_id, c) for c in catalog.concepts() if catalog.in_course(c, course_id)]
 
 
 def _global_beliefs(student_id: str) -> list[Belief]:
@@ -167,7 +167,8 @@ def graph(student_id: str) -> GraphResponse:
         nodes.append(GraphNode(id=f"concept:{s.concept_id}", type="concept", label=s.label, data={
             "mastery": s.mastery, "self_confidence": s.self_confidence, "evidence_count": s.correct + s.incorrect,
             "blind_spot": s.blind_spot, "course_id": s.course_id}))
-        edges.append(GraphEdge(source=f"course:{s.course_id}", target=f"concept:{s.concept_id}", relation="contains", provenance="fixture"))
+        for cid in [s.course_id, *s.also_in]:
+            edges.append(GraphEdge(source=f"course:{cid}", target=f"concept:{s.concept_id}", relation="contains", provenance="fixture"))
         for o in store.list_observations(student_id, concept_id=s.concept_id, event_type="assessment_answer"):
             if o.status != "accepted":
                 continue
@@ -200,7 +201,7 @@ def build_context(student_id: str, query: str = "", agent: str = "orchestrator")
     terms = query_terms(query)
     concept_hits = set(catalog.match_concepts(query))
     for cid in catalog.courses_in_text(query):
-        concept_hits |= {c["id"] for c in catalog.concepts() if c["course_id"] == cid}
+        concept_hits |= {c["id"] for c in catalog.concepts() if catalog.in_course(c, cid)}
     beliefs = [b for b in store.list_beliefs(student_id)
                if not concept_hits or b.scope.concept_id in concept_hits or b.scope.level != "concept"]
     records = store.list_records(student_id)
@@ -224,7 +225,5 @@ def build_context(student_id: str, query: str = "", agent: str = "orchestrator")
             facts.append(f"{s.label}: self-reported confidence {s.self_confidence:.2f} (self-report, not evidence of mastery).")
         refs += [e for e in s.evidence if e.provider == "documents"]
     uncertainties = ["BKT parameters are illustrative defaults, not calibrated to this student or course."]
-    if any(r.is_fixture for r in records):
-        uncertainties.append("Some source records are labeled demo data, not live connector reads.")
     return ContextResponse(narrative=narrative(student_id), facts=facts, relevant_beliefs=beliefs, source_records=rel_records,
                            evidence_refs=refs, uncertainties=uncertainties, state_version=db.get_state_version())

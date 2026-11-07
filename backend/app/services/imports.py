@@ -118,6 +118,14 @@ def _course_overview(t: Tracker, text: str, is_fixture: bool) -> Optional[str]:
             n_new += 1
     t.concepts_added += n_new
     t.changes.append(f"{n_new} new concepts in {code or label}" if n_new else f"Concepts in {code or label} already known")
+    shared = []
+    for line in re.findall(r"(?im)^\s*Shared concept\s*:\s*(\w+)", text):
+        if catalog.concept(line) is None:
+            t.warnings.append(f"Shared concept '{line}' skipped (add the course that teaches it first)")
+        elif catalog.share_concept(line, cid):
+            shared.append(catalog.concept_label(line))
+    if shared:
+        t.changes.append(f"{len(shared)} concepts shared with other courses (one estimate, shared evidence): " + ", ".join(shared))
     known = {c["id"] for c in catalog.concepts()}
     n_edges = 0
     for line in re.findall(r"(?im)^\s*Relation\s*:\s*(.+)$", text):
@@ -143,7 +151,7 @@ def _import_pdf(t: Tracker, data: bytes, filename: str, authored: bool, course_i
     except Exception as e:
         raise HTTPException(400, f"Could not read PDF: {e}")
     text = "\n".join(pages)
-    is_fixture = DEMO_MARKER in text
+    is_fixture = DEMO_MARKER.encode() in data  # marker lives in the PDF metadata, not the visible text
     overview = _course_overview(t, text, is_fixture)
     doc = ingest_pdf(data, filename, t.student_id, course_id, is_fixture=is_fixture)
     if overview:

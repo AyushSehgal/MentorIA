@@ -1,6 +1,6 @@
 # MentorIA — Manual Testing Guide
 
-Work through the sections **in order**: MentorIA starts empty and each section adds data the next one relies on.
+Work through the sections **in order**. MentorIA starts **prepopulated** with three courses (10-601, 16-831, 10-605) and a week of sample data.
 Each check has **Do** and **Expect**. If something doesn't match, note the check ID (e.g. `A5`) and what you saw.
 
 Demo assets live in `demo_assets/`, are regenerated daily, and use dates relative to today ("d+3" = 3 days from today).
@@ -12,42 +12,24 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 - [ ] **S1. Start the app.** Do: `./scripts/dev.sh` (stop any older copy first with Ctrl-C). Expect: the API on `:8000` and the UI at http://localhost:5173.
 - [ ] **S2. Local model (only for section L).** Do: keep the Ollama app open, or run `ollama serve`, and have `qwen2.5` pulled.
 - [ ] **S3. Fast, exact answers.** Do: **Sources → Privacy & AI → Off**. (Local mode rewords answers and is tested in section L.)
-- [ ] **S4. Start empty.** Do: **Sources → Reset demo** and confirm. Expect: "MentorIA reset — empty."
-- [ ] **S5. Automated checks.** Do: `cd backend && .venv/bin/python -m pytest -q`, then `npm --prefix frontend run build`. Expect: `50 passed`, then `✓ built`.
+- [ ] **S4. Starting data.** Do: **Sources → Reset** and confirm. Expect: "Reset — starting data restored."
+- [ ] **S5. Automated checks.** Do: `cd backend && .venv/bin/python -m pytest -q`, then `npm --prefix frontend run build`. Expect: `52 passed`, then `✓ built`.
 
-## E. Empty state
+## E. Prepopulated start
 
-- [ ] **E1. Dashboard.** Expect: only "MentorIA is empty" and an **Add data** button.
-- [ ] **E2. Header.** Expect: the title **MentorIA**, grey connector dots, and the student name.
-- [ ] **E3. Ask without data.** Do: in the chat **Ask** tab, click "ML topics I'm struggling with?". Expect: "I don't know about any of your courses yet…".
-- [ ] **E4. Student Model.** Expect: "No courses yet".
+- [ ] **E1. Dashboard.** Expect tiles of Courses 3, Concepts 48, Docs 8, Graded 18, Goals 4, plus the Insights, Needs approval, Calendar, Assignments, Opportunities, Discussions and Documents blocks.
+- [ ] **E2. Clean UI.** Expect: no "Add data" tab, and no text anywhere saying "demo".
+- [ ] **E3. Your goal.** Expect: the first insight is your goal "…startup that builds robots that understand natural language" with a **2 sources** badge (career statement + advisor email).
+- [ ] **E4. Three courses.** Do: open **Student Model**. Expect: 10-601, 16-831 and 10-605.
 
-## A. Add data, one asset at a time
+## O. Course overlap (10-601 ↔ 10-605)
 
-Go to **Add data**. After each **Add**, read the inline result (summary and ✓ changes), then glance at the Dashboard.
+- [ ] **O1. Shared concepts.** Expect: under 10-605, Linear Regression, Optimization & SGD, Neural Networks, Backpropagation, Transformers & Language Models and Recommender Systems each show **shared with 10-601**. Under 10-601 they show **shared with 10-605**.
+- [ ] **O2. Evidence combines.** Expect: Backpropagation = 0.12 from **3** graded answers, with chips 10-601 Quiz 2 p.2 Q4, Q5 and 10-605 lecture quizzes p.1 Q1.
+- [ ] **O3. Ask about 10-605.** Do: Ask "What 10-605 topics am I struggling with?". Expect: Backpropagation (citing both courses), Distributed Learning & All-Reduce 0.15, and Bloom Filters & Count-Min Sketch 0.15.
+- [ ] **O4. Graph.** Expect: the Backpropagation node is linked from both the 10-601 and 10-605 course nodes.
 
-- [ ] **A1. Step 1, 10-601 course overview.** Expect changes: "Added course Introduction to Machine Learning (10-601)", "19 new concepts", "6 concept relations". The dashboard now shows blocks and tiles: Courses 1, Concepts 19. Student Model lists the concepts with no estimates.
-- [ ] **A2. Step 2, 16-831 course overview.** Expect: 16 new concepts and 8 relations. Tiles: Courses 2, Concepts 35.
-- [ ] **A3. Step 3, Canvas assignments.** Expect: "Canvas assignments: 7 new". The **Assignments** block shows HW5 (due d+3), HW3 (d+5) and more, with "+N more".
-- [ ] **A4. Step 4, my calendar.** Expect: "Calendar events: N new". The **Calendar** block shows a 7-day strip (events per day, ⏰ due counts).
-- [ ] **A5. Step 5, 10-601 Quiz 2 (graded).** Expect: "6 graded answers became evidence (3 incorrect: Q2, Q4, Q5)", "Backpropagation: 0.12", "Logistic Regression: 0.30", and "Q7 held for review". Tile: Graded 6.
-- [ ] **A6. Ask again.** Do: Ask "ML topics I'm struggling with?". Expect: Backpropagation 0.12 citing p.2 Q4 and Q5, and Logistic Regression 0.30 citing p.1 Q2. The untested-concepts list ends "…and N more", and "1 answer needs review" is noted.
-- [ ] **A7. Step 6, 16-831 HW2 (graded).** Expect: Policy Gradients 0.12 and Imitation Learning 0.92. Ask "What robot learning topics am I struggling with?" → Policy Gradients.
-- [ ] **A8. Step 7, career goals statement.** Expect: "Learned a new goal: “After graduation I want to work at an early-stage startup that builds robots that understand natural language.”", plus 2 interests and a preference. The Insights block shows **Your goal**.
-- [ ] **A9. Step 8, email you sent your advisor.** Expect: "Reinforced goal — now stated in 2 sources". The goal insight shows a **2 sources** pill, and the goal isn't duplicated.
-- [ ] **A10. Steps 9–12, emails.** Expect in **Opportunities**:
-  - the robotics seminar (VLA) and the startup mixer are on top;
-  - the RL reading group's **why?** says it covers a knowledge gap (Policy Gradients);
-  - the quant club is at the bottom.
-  
-  An approval card for the seminar appears in **Needs approval**.
-- [ ] **A11. Step 13, Piazza posts.** Expect: **Discussions** shows 3 posts, with instructor posts marked. Mastery is unchanged by the student question.
-- [ ] **A12. Step 14, ungraded practice sheet.** Expect: "Indexed … as study material — knowledge estimates unchanged". Mastery numbers are identical to before.
-- [ ] **A13. Re-add.** Do: **Add again** on step 5. Expect: "Already added — nothing new was learned from this file."
-- [ ] **A14. Order matters, then recovers.** Do: Reset, add step 5 first. Expect a warning: "…couldn't be matched to a known concept… Add the course overview first". Then add step 1, then step 5 again. Expect: the estimates now appear.
-- [ ] **A15. Add all remaining.** Do: Reset, then **Add all remaining**. Expect: all 14 added in order, and tiles Courses 2, Concepts 35, Graded 12.
-
-## D. Dashboard: titles first, details on click (after A15)
+## D. Dashboard: titles first, details on click
 
 - [ ] **D1. Calm by default.** Expect: every block lists one-line titles only, with at most one small badge ("soon", "★ match", "2 sources", a date) and ≤4 items plus "+N more".
 - [ ] **D2. Expand.** Do: click "Focus: Backpropagation". Expect: it opens to show the reason, a confidence note and quiz evidence chips. Click again to close it.
@@ -56,7 +38,7 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **D5. Opportunity details.** Do: click the robotics seminar. Expect: When, Speaker, Where, a match bar, reasons and the event link.
 - [ ] **D6. Document details.** Do: click the 10-601 quiz. Expect: the type, pages, "6 answers, 1 to review" and Open PDF.
 
-## W. Interactive calendar (after A4–A10)
+## W. Interactive calendar
 
 - [ ] **W0. Open it.** Do: click **Open calendar**, or any day in the strip. Expect: the full week grid; **Close** returns to the strip.
 - [ ] **W1. Navigate.** Do: click **›** then **Today**. Expect: the range moves by a week and back. Days after the imported week are empty.
@@ -69,19 +51,11 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **W8. Overlaps.** Expect: overlapping items sit side by side, not on top of each other.
 - [ ] **W9. Phone width.** Do: narrow to ~375 px. Expect: a one-day view with ‹ › stepping a day at a time, and no sideways scroll.
 
-## U. Upload your own files
-
-- [ ] **U1. Your writing.** Do: **Upload**, choose `demo_assets/07_career_goals_statement.pdf`, and tick **I wrote this**. Expect: kind "personal document" and goals learned (or "Already added" if step 7 was added).
-- [ ] **U2. Email you received.** Do: upload `demo_assets/09_email_vla_seminar.eml`. Expect: it's added to Opportunities and **no** goals are learned from it.
-- [ ] **U3. Unsupported file.** Do: upload a `.txt` or `.png`. Expect the error "Unsupported file type…".
-- [ ] **U4. Broken pack.** Do: copy `demo_assets/03_canvas_assignments.md`, change a `course` cell to `nope`, and upload it. Expect an error naming "unknown course". Nothing changes.
-- [ ] **U5. Import history.** Expect: every import listed newest first, with a Demo tag on demo files.
-
-## C. Ask tab (questions) — after all 14 assets (A15)
+## C. Ask tab (questions)
 
 - [ ] **C1. Focus this week?** Expect:
-  - priorities: 1. Backpropagation (HW5), 2. Policy Gradients (HW3), …;
-  - a "Linked to your goal: **Foundation Models in Robotics** — Project proposal…" line;
+  - priorities: 1. Backpropagation (HW5, 3 graded answers), 2. Policy Gradients (HW3), …;
+  - a "Linked to your goal: **Transformers & Language Models** — HW 5: GPT-2 Training… Current estimate 0.69" line;
   - the free-hours line and the seminar;
   - study-block approval cards at times inside free slots, before the deadlines.
 - [ ] **C2. Classes to take next?** Expect:
@@ -98,7 +72,7 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 
 - [ ] **M1. Tabs.** Expect: **Ask** and **About me**, each keeping its own history across page changes.
 - [ ] **M2. Prefill chips.** Do: About me → click "My career goal is to ". Expect: the text lands in the input (not sent), with the cursor at the end.
-- [ ] **M3. Goal from chat merges.** Do: click the example "I want a job at a startup that makes robots understand language". Expect: ✓ "…now backed by 3 sources", "Connects to: Foundation Models in Robotics, …", and matching opportunities. The goal insight shows **3 sources**.
+- [ ] **M3. Goal from chat merges.** Do: in About me, click the example "I want a job at a startup that makes robots understand language". Expect: ✓ "…now backed by 3 sources", "Connects to: Foundation Models in Robotics, …", and matching opportunities. The goal insight shows **3 sources**.
 - [ ] **M4. Interest.** Do: "I'm interested in tactile sensing". Expect: ✓ "Saved interest…".
 - [ ] **M5. Preference without the pattern.** Do: "Group study in the evenings works for me". Expect: saved as a preference.
 - [ ] **M6. Anything else is a note.** Do: "Robotics competitions are my favorite thing". Expect: ✓ "Saved a note about you…".
@@ -127,7 +101,7 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 - [ ] **L1. Panel.** Do: **Sources → Privacy & AI**. Expect three options. Local shows qwen2.5 when Ollama is running; Cloud is unavailable without an OpenRouter key.
 - [ ] **L2. Local.** Do: select Local and Ask "Focus this week?". Expect: a 5–25 s wait, then either "worded by local:qwen2.5" or a note that the rewrite was discarded (the guardrail).
 - [ ] **L3. Ollama off.** Do: quit Ollama and Ask something. Expect: an answer within ~2 s, with "No local model server reachable".
-- [ ] **L4. Kept on reset.** Do: Reset demo. Expect: the privacy choice is unchanged.
+- [ ] **L4. Kept on reset.** Do: Reset. Expect: the privacy choice is unchanged.
 
 ## R. Resilience & layout
 
@@ -137,4 +111,4 @@ Go to **Add data**. After each **Add**, read the inline result (summary and ✓ 
 
 ## Finish
 
-- [ ] **Z1.** Reset demo, then choose your AI mode for the presentation (Off is instant; Local tells the privacy story).
+- [ ] **Z1.** Reset, then choose your AI mode for the presentation (Off is instant; Local tells the privacy story).

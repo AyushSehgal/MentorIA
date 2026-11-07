@@ -57,3 +57,11 @@ Status: accepted. All text, env vars (MENTORIA_*), the demo marker and DB filena
 ## ADR-012 "About me" chat mode
 Status: accepted. Chat panel has Ask and About me tabs (ChatRequest.mode). In tell mode every message is saved: explicit
 patterns first, else a keyword classifier picks goal/interest/preference/mood, else a general note. Tell replies skip the LLM.
+
+## ADR-013 Prepopulated start, third course with shared concepts, no visible demo labels
+Status: accepted (user request; partially reverses ADR-010's empty start; overrides spec invariant #9 for the UI only).
+Decision: on first start and on reset, all sample files are imported (MENTORIA_PREPOPULATE, default true). The Add data
+tab is hidden. 10-605 is added; its overview's `Shared concept:` lines add the course to existing concepts (`also_in`), so
+shared topics keep one estimate with evidence from both courses. The UI never shows "demo"; `is_fixture` stays in the
+API and assets carry a hidden marker (PDF metadata / email header / .ics property / .md comment).
+Consequence: presenters must state that the data is fictional sample data.

@@ -384,7 +384,6 @@ export function WeekCalendar({
               <div className="muted small">
                 {fmtTime(selected.rec.occurred_at, tz)}–{fmtTime(selected.rec.metadata?.end as string, tz)}
                 {selected.rec.metadata?.location ? ` · ${String(selected.rec.metadata.location)}` : ""}
-                {selected.rec.is_fixture ? " · Demo" : ""}
               </div>
             </>
           )}

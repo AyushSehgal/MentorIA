@@ -32,6 +32,7 @@ class Settings:
     upload_dir: Path
     synthetic_file: Path
     student_name: str
+    prepopulate: bool
     student_email: str
     llm_mode: str
     llm_timeout: float
@@ -67,6 +68,7 @@ def load_settings() -> Settings:
         upload_dir=_path("MENTORIA_UPLOAD_DIR", str(db_path.parent / "uploads")),
         synthetic_file=_path("MENTORIA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
         student_name=os.getenv("MENTORIA_STUDENT_NAME", "Ayush"),
+        prepopulate=_bool("MENTORIA_PREPOPULATE", True),
         student_email=os.getenv("MENTORIA_STUDENT_EMAIL", "ayush.student@example.edu"),
         llm_mode=os.getenv("LLM_MODE", "local").strip().lower(),
         llm_timeout=float(os.getenv("LLM_TIMEOUT_SECONDS", "90")),

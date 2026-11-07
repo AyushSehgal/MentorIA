@@ -77,7 +77,6 @@ export function ApprovalCard({
             {typeLabel[current.type] ?? current.type} ·{" "}
             {current.suggested_start ? fmtDateTime(current.suggested_start, tz) : "no time"}
             {current.duration_minutes ? ` · ${current.duration_minutes} min` : ""}
-            {current.is_fixture && !compact ? " · Demo" : ""}
           </div>
         </div>
         {pending ? (

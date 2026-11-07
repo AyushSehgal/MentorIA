@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api import chat, memory, sources
 from .services.demo_assets import ensure_generated
+from .services.seed import ensure_seeded
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +19,11 @@ async def lifespan(_app: FastAPI):
     try:
         ensure_generated()  # fresh demo assets for today's dates
     except Exception as e:  # never block startup on demo content
-        logging.getLogger("mentoria").warning("Demo assets not generated: %s", e)
+        logging.getLogger("mentoria").warning("Sample files not generated: %s", e)
+    try:
+        ensure_seeded()
+    except Exception as e:
+        logging.getLogger("mentoria").warning("Prepopulation failed: %s", e)
     yield
 
 
