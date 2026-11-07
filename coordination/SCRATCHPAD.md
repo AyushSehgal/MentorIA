@@ -41,3 +41,7 @@ Tests: pytest 33/33 (9 new LLM tests with a fake OpenAI-compatible server). Fron
 Live: Ollama qwen2.5 + llama3.2 through the running app; guardrail rejected some rewrites (dropped Q-citations) as intended.
 OpenRouter: MOCK_ONLY (no key). Mode left at "off".
 Interfaces changed: contract v1.1 (additive) — see CONTRACTS.md.
+
+[2026-11-07 17:05 EST] coordinator | llm-default-local | DONE
+Default LLM mode changed off → local (config, .env.example, README, ADR-009 amendment). Running instance switched to local.
+Tests: 36/36 (3 new: default is local, fresh install reports local, local default with no server still answers).

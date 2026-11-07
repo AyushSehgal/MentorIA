@@ -46,12 +46,12 @@ When a real connector is configured, that provider switches to live data and the
 
 **No LLM is required.** Every answer is assembled from stored evidence (quiz pages, deadlines, calendar, goals) by the
 LangGraph nodes, with citations. An LLM is optional and may only *reword* that grounded draft. The student picks the mode
-on **Sources → Privacy & AI** (initial default: `LLM_MODE` in `.env`, normally `off`):
+on **Sources → Privacy & AI** (default: **Local**; override the initial mode with `LLM_MODE` in `.env`):
 
 | Mode | What runs | Leaves the device? |
 |---|---|---|
-| **Off** (default) | Nothing — deterministic grounded answers | No |
-| **Local** | Any OpenAI-compatible server on `localhost` (Ollama, LM Studio, llama.cpp) | No |
+| **Off** | Nothing — deterministic grounded answers | No |
+| **Local** (default) | Any OpenAI-compatible server on `localhost` (Ollama, LM Studio, llama.cpp) | No |
 | **Cloud** | OpenRouter (or Anthropic direct) | Yes: the question + NOVA's draft answer |
 
 What an LLM receives in local/cloud mode: only the question and the drafted answer (concept names, estimates, deadlines,
@@ -70,7 +70,8 @@ ollama serve
 ```
 Then choose **Local model** on the Sources page. Measured on an M-series Mac with 16 GB of memory: `qwen2.5` (7B) takes
 5–25 s per answer; `llama3.2` (3B) takes about 3–8 s but more of its rewrites get discarded by the guardrail.
-For a live demo, **Off** is the fastest and most reliable option.
+If Ollama isn't running or the model isn't installed, Local mode falls back to the grounded draft within about 1.5 s and the chat says why.
+For the snappiest live demo, switch to **Off**; it answers instantly.
 
 **OpenRouter setup:** set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (any id from openrouter.ai/models) in `.env`, restart the API, then choose **Cloud model**.
 

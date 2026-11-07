@@ -111,3 +111,29 @@ def test_privacy_choice_survives_demo_reset(client):
     client.post("/api/settings/privacy", json={"mode": "local"})
     client.post("/api/demo/reset")
     assert client.get("/api/settings/privacy").json()["mode"] == "local"
+
+
+def test_default_mode_is_local(monkeypatch):
+    from app.config import load_settings
+
+    monkeypatch.delenv("LLM_MODE", raising=False)
+    assert load_settings().llm_mode == "local"
+
+
+def test_fresh_install_uses_local_until_user_changes_it(client, monkeypatch):
+    from app import db
+
+    monkeypatch.setattr(settings, "llm_mode", "local")
+    db.execute("DELETE FROM meta WHERE key='llm_mode'")  # nothing chosen yet
+    assert client.get("/api/settings/privacy").json()["mode"] == "local"
+    assert client.get("/api/health").json()["llm"]["mode"] == "local"
+
+
+def test_local_default_without_server_still_answers(client, monkeypatch):
+    def down(url, timeout):
+        raise ConnectionError("refused")
+
+    monkeypatch.setattr(llm.requests, "get", down)
+    monkeypatch.setattr(settings, "llm_mode", "local")
+    r = client.post("/api/chat", json={"message": Q}).json()
+    assert r["answer"] and r["llm_used"] is False and "No local model server" in r["llm_note"]

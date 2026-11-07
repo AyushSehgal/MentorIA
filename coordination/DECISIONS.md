@@ -33,9 +33,11 @@ Rationale: one human-editable file for the demo; real connectors can replace pro
 
 ## ADR-009 User-selected LLM privacy modes (off / local / cloud)
 Status: accepted. Supersedes the Anthropic-only phrasing layer of ADR-003; deterministic grounding is still authoritative.
-Decision: modes are off (default), local (OpenAI-compatible server whose URL must be localhost; Ollama by default) and cloud
+Decision: modes are local (DEFAULT: an OpenAI-compatible server whose URL must be localhost; Ollama by default), off, and cloud
 (OpenRouter by default, with `provider.data_collection="deny"`; Anthropic direct optional). The mode is chosen in the UI and
 persisted in the DB (it survives demo resets). Only the question and grounded draft are sent. Rewrites that add numbers or
 drop Q-citations or bold items are discarded. OpenAI-compatible calls use raw HTTP (`requests`), with no extra SDK.
 Rationale: students decide where their data goes; local works offline; a small model can't silently change facts.
+Amendment (2026-11-07, user request): default changed from off to local. If no local server is up, answers fall back to the
+grounded draft after a ~1.5 s probe.
 Consequences: the local path adds 5–25 s latency per answer; the guard can reject a rewrite, so the draft is shown instead.
