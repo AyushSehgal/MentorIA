@@ -27,7 +27,14 @@ Base URL: `http://localhost:8000` (Vite dev server proxies `/api` → 8000). Def
 | GET | `/api/recommendations?student_id=&status=` | – | `Recommendation[]` |
 | POST | `/api/recommendations/{id}/approve` | `ApproveRequest` | `ApproveResponse` (409 if not pending or confirm mismatch) |
 | POST | `/api/recommendations/{id}/reject` | `{student_id}` | `{recommendation: Recommendation}` |
+| GET | `/api/settings/privacy` | – | `PrivacySettings` (v1.1) |
+| POST | `/api/settings/privacy` | `{mode: "off"|"local"|"cloud"}` | `PrivacySettings` (v1.1) |
 | POST | `/api/demo/reset` | – | `{ok: true}` re-seeds fixtures (no quiz ingested) |
 
 Errors: `{"detail": "..."}` with 4xx/5xx.
 Timestamps: ISO 8601 with offset. Display in `student.timezone`.
+
+## v1.1 (2026-11-07) — additive
+- `ChatResponse.llm_provider: string|null`, `ChatResponse.llm_note: string|null`
+- `HealthResponse.llm.mode: "off"|"local"|"cloud"`
+- New `PrivacySettings` type + `/api/settings/privacy` routes (ADR-009)

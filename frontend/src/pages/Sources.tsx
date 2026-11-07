@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
-import type { ConnectorStatus, Provider } from "../api/types";
+import type { ConnectorStatus, LLMMode, PrivacySettings, Provider } from "../api/types";
 import { Card, StatusBadge } from "../components/Common";
 import { fmtDateTime, providerLabel } from "../lib/format";
 
@@ -57,6 +57,7 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
 
   return (
     <div className="page">
+      <PrivacyCard />
       <Card
         title="Connected sources"
         actions={
@@ -111,5 +112,71 @@ export function Sources({ tz, onChanged }: { tz: string; onChanged?: () => void 
         </div>
       </Card>
     </div>
+  );
+}
+
+const MODES: { mode: LLMMode; title: string; blurb: string }[] = [
+  { mode: "off", title: "Off — most private", blurb: "No language model. Answers are assembled directly from your stored evidence." },
+  { mode: "local", title: "Local model", blurb: "A model running on this computer (e.g. Ollama) rewords answers. Nothing leaves your device." },
+  { mode: "cloud", title: "Cloud model", blurb: "A hosted model (OpenRouter) rewords answers. Your question and NOVA's draft answer are sent to that provider." },
+];
+
+function PrivacyCard() {
+  const [p, setP] = useState<PrivacySettings | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api.privacy().then(setP).catch((e) => setErr((e as Error).message));
+  }, []);
+
+  async function choose(mode: LLMMode) {
+    if (mode === "cloud" && !window.confirm("Cloud mode sends your questions and NOVA's drafted answers (which can include concept names, estimates, deadlines and email/assignment titles) to OpenRouter and the model provider it routes to. Continue?")) return;
+    setBusy(true);
+    try {
+      setP(await api.setPrivacy(mode));
+      setErr(null);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const available = (m: LLMMode) => m === "off" || (m === "local" ? p?.local_available : p?.cloud_available);
+  const detail = (m: LLMMode) => (m === "local" ? p?.local_detail : m === "cloud" ? p?.cloud_detail : "Always available");
+
+  return (
+    <Card title="Privacy & AI">
+      <p className="muted small">
+        Every answer is first built from your stored evidence with citations. A language model, if you enable one, may only
+        reword that draft; rewrites that add numbers or drop citations are discarded automatically.
+      </p>
+      {err && <p className="error-text">{err}</p>}
+      <div className="privacy-modes" role="radiogroup" aria-label="Language model mode">
+        {MODES.map((m) => (
+          <label key={m.mode} className={`privacy-mode${p?.mode === m.mode ? " selected" : ""}${available(m.mode) ? "" : " unavailable"}`}>
+            <input
+              type="radio"
+              name="llm-mode"
+              checked={p?.mode === m.mode}
+              disabled={busy || !p || !available(m.mode)}
+              onChange={() => void choose(m.mode)}
+            />
+            <span>
+              <strong>{m.title}</strong>
+              <span className="small">{m.blurb}</span>
+              <span className="small muted">{available(m.mode) ? "✓ " : "Not available: "}{detail(m.mode)}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      {p && (
+        <p className="small">
+          {p.data_leaves_device ? "⚠️ Data leaves this device in the current mode. " : "🔒 Nothing leaves this device in the current mode. "}
+          <span className="muted">What an LLM receives: {p.sent_to_llm}</span>
+        </p>
+      )}
+    </Card>
   );
 }

@@ -26,6 +26,8 @@ class ChatState(TypedDict, total=False):
     recs: list[Any]
     memory_updates: list[str]
     llm_used: bool
+    llm_provider: str | None
+    llm_note: str | None
     trace: list[str]
 
 
@@ -60,8 +62,9 @@ def after_memory(state: ChatState) -> str:
 
 
 def compose(state: ChatState) -> ChatState:
-    answer, used = polish(state["message"], state["draft"])
-    return {"answer": answer, "llm_used": used, "trace": state["trace"] + ["compose" + ("+llm" if used else "")]}
+    r = polish(state["message"], state["draft"])
+    return {"answer": r.text, "llm_used": r.used, "llm_provider": r.provider, "llm_note": r.note,
+            "trace": state["trace"] + ["compose" + (f"+{r.provider}" if r.used else "")]}
 
 
 @lru_cache(maxsize=1)
@@ -86,4 +89,5 @@ def run_chat(req: ChatRequest) -> ChatResponse:
     return ChatResponse(answer=out["answer"], intent=out["intent"], sources=out.get("sources", []),
                         beliefs_used=out.get("beliefs_used", []), uncertainties=out.get("uncertainties", []),
                         proposed_recommendations=out.get("recs", []), memory_updates=out.get("memory_updates", []),
-                        llm_used=out.get("llm_used", False), trace=out.get("trace", []))
+                        llm_used=out.get("llm_used", False), llm_provider=out.get("llm_provider"),
+                        llm_note=out.get("llm_note"), trace=out.get("trace", []))

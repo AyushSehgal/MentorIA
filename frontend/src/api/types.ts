@@ -269,6 +269,8 @@ export interface ChatResponse {
   proposed_recommendations: Recommendation[];
   memory_updates: string[]; // human-readable descriptions of beliefs/propositions changed by this message
   llm_used: boolean;
+  llm_provider: string | null; // e.g. "local:qwen2.5"; null when the deterministic draft was shown
+  llm_note: string | null; // why the LLM was skipped or its rewrite discarded
   trace: string[]; // LangGraph node path
 }
 
@@ -297,6 +299,18 @@ export interface HealthResponse {
   status: "ok";
   db: "ok" | "error";
   demo_mode: boolean;
-  llm: { enabled: boolean; model: string | null };
+  llm: { enabled: boolean; model: string | null; mode: LLMMode };
   providers: ConnectorStatus[];
+}
+
+export type LLMMode = "off" | "local" | "cloud";
+
+export interface PrivacySettings {
+  mode: LLMMode;
+  local_available: boolean;
+  local_detail: string;
+  cloud_available: boolean;
+  cloud_detail: string;
+  data_leaves_device: boolean;
+  sent_to_llm: string;
 }

@@ -316,6 +316,8 @@ class ChatResponse(BaseModel):
     proposed_recommendations: list[Recommendation] = Field(default_factory=list)
     memory_updates: list[str] = Field(default_factory=list)
     llm_used: bool = False
+    llm_provider: Optional[str] = None  # e.g. "local:qwen2.5"; None when the deterministic draft was shown
+    llm_note: Optional[str] = None  # why the LLM was skipped/discarded, if it was
     trace: list[str] = Field(default_factory=list)
 
 
@@ -386,6 +388,21 @@ class PropositionStatusRequest(BaseModel):
 class LLMInfo(BaseModel):
     enabled: bool
     model: Optional[str] = None
+    mode: Literal["off", "local", "cloud"] = "off"
+
+
+class PrivacySettings(BaseModel):
+    mode: Literal["off", "local", "cloud"]
+    local_available: bool
+    local_detail: str
+    cloud_available: bool
+    cloud_detail: str
+    data_leaves_device: bool
+    sent_to_llm: str
+
+
+class PrivacyUpdate(BaseModel):
+    mode: Literal["off", "local", "cloud"]
 
 
 class HealthResponse(BaseModel):

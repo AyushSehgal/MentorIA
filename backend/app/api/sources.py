@@ -8,7 +8,8 @@ from fastapi.responses import FileResponse
 from .. import db
 from ..config import FIXTURES_DIR, settings
 from ..memory import store
-from ..schemas import ConnectorStatus, DashboardResponse, DocumentSummary, HealthResponse, SyncResponse
+from ..schemas import PrivacySettings, PrivacyUpdate, ConnectorStatus, DashboardResponse, DocumentSummary, HealthResponse, SyncResponse
+from ..orchestration import llm
 from ..services import aggregation, dashboard as dash, seed
 from ..services.document_ingest import ingest_pdf
 
@@ -19,8 +20,10 @@ MAX_UPLOAD = 25 * 1024 * 1024
 
 @router.get("/health", response_model=HealthResponse)
 def health(student_id: str = "demo_student"):
+    mode = llm.get_mode()
+    model = {"local": f"local:{settings.llm_local_model}", "cloud": settings.llm_cloud_provider}.get(mode)
     return HealthResponse(status="ok", db="ok" if db.ping() else "error", demo_mode=settings.demo_mode,
-                          llm={"enabled": settings.llm_enabled, "model": settings.llm_model if settings.llm_enabled else None},
+                          llm={"enabled": mode != "off", "model": model, "mode": mode},
                           providers=aggregation.statuses(student_id))
 
 
@@ -82,3 +85,26 @@ def document_file(doc_id: str):
         raise HTTPException(404, "Document not found")
     return FileResponse(path, media_type="application/pdf", filename=d.filename,
                         headers={"Content-Disposition": f'inline; filename="{d.filename}"'})
+
+
+SENT_TO_LLM = ("Only your question and NOVA's drafted answer (concept names, estimates, deadlines, and email/assignment "
+               "titles it cites). Raw emails, PDFs and the database are never sent.")
+
+
+def _privacy() -> PrivacySettings:
+    mode = llm.get_mode()
+    lok, ldet = llm.local_available()
+    cok, cdet = llm.cloud_available()
+    return PrivacySettings(mode=mode, local_available=lok, local_detail=ldet, cloud_available=cok, cloud_detail=cdet,
+                           data_leaves_device=(mode == "cloud"), sent_to_llm=SENT_TO_LLM)
+
+
+@router.get("/settings/privacy", response_model=PrivacySettings)
+def get_privacy():
+    return _privacy()
+
+
+@router.post("/settings/privacy", response_model=PrivacySettings)
+def set_privacy(req: PrivacyUpdate):
+    llm.set_mode(req.mode)
+    return _privacy()

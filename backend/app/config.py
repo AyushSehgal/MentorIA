@@ -31,8 +31,15 @@ class Settings:
     db_path: Path
     upload_dir: Path
     synthetic_file: Path
-    llm_enabled: bool
-    llm_model: str
+    llm_mode: str
+    llm_timeout: float
+    llm_local_base_url: str
+    llm_local_model: str
+    llm_cloud_provider: str
+    openrouter_api_key: str
+    openrouter_model: str
+    openrouter_allow_data_collection: bool
+    anthropic_model: str
     canvas_base_url: str
     canvas_token: str
     google_client_id: str
@@ -57,8 +64,15 @@ def load_settings() -> Settings:
         db_path=db_path,
         upload_dir=_path("NOVA_UPLOAD_DIR", str(db_path.parent / "uploads")),
         synthetic_file=_path("NOVA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
-        llm_enabled=_bool("LLM_ENABLED", False),
-        llm_model=os.getenv("LLM_MODEL", "claude-opus-5-5"),
+        llm_mode=os.getenv("LLM_MODE", "off").strip().lower(),
+        llm_timeout=float(os.getenv("LLM_TIMEOUT_SECONDS", "90")),
+        llm_local_base_url=os.getenv("LLM_LOCAL_BASE_URL", "http://localhost:11434/v1").rstrip("/"),
+        llm_local_model=os.getenv("LLM_LOCAL_MODEL", "qwen2.5"),
+        llm_cloud_provider=os.getenv("LLM_CLOUD_PROVIDER", "openrouter").strip().lower(),
+        openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
+        openrouter_model=os.getenv("OPENROUTER_MODEL", ""),
+        openrouter_allow_data_collection=_bool("OPENROUTER_ALLOW_DATA_COLLECTION", False),
+        anthropic_model=os.getenv("ANTHROPIC_MODEL", "claude-opus-5-5"),
         canvas_base_url=os.getenv("CANVAS_BASE_URL", "").rstrip("/"),
         canvas_token=os.getenv("CANVAS_API_TOKEN", ""),
         google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""),

@@ -144,7 +144,9 @@ function AssistantTurn({ res, tz, onChanged }: { res: ChatResponse; tz: string; 
         <ApprovalCard key={r.id} rec={r} tz={tz} onChanged={onChanged} compact />
       ))}
       <div className="chat-foot">
-        intent: {res.intent} · trace: {res.trace.join(" → ") || "—"} · LLM: {res.llm_used ? "on" : "off"}
+        intent: {res.intent} · trace: {res.trace.join(" → ") || "—"} ·{" "}
+        {res.llm_used ? `worded by ${res.llm_provider}` : "grounded draft (no LLM)"}
+        {res.llm_note && <div className="muted">{res.llm_note}</div>}
       </div>
     </div>
   );

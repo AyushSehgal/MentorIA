@@ -9,7 +9,7 @@ Status: accepted. Coordinator owns all backend + contracts; one frontend agent o
 Rationale: backend modules are tightly coupled (memory ↔ planning ↔ chat); the frontend is the cleanly separable scope.
 
 ## ADR-003 Deterministic grounding first, LLM optional
-Status: accepted. LangGraph nodes compute grounded answers from stored evidence with templates. If `LLM_ENABLED=true`, Claude (`claude-opus-5-5`) may rephrase the draft but is instructed not to add facts; any failure → deterministic draft. `llm_used` is reported in every ChatResponse.
+Status: superseded by ADR-009 (principle unchanged). LangGraph nodes compute grounded answers from stored evidence with templates. If `LLM_ENABLED=true`, Claude (`claude-opus-5-5`) may rephrase the draft but is instructed not to add facts; any failure → deterministic draft. `llm_used` is reported in every ChatResponse.
 
 ## ADR-004 `/api/memory/model` extension
 Status: accepted. Added a typed StudentModel summary route so the UI does not reconstruct concept state from raw beliefs.
@@ -30,3 +30,12 @@ self-reports, and Canvas/Calendar/Gmail/Piazza records. Parsed by `backend/app/s
 Connectors fall back to it per provider when not configured. Invalid edits keep the last valid version and surface the error
 in connector status. Self-report rows are ingested on Sync all (idempotent by id).
 Rationale: one human-editable file for the demo; real connectors can replace providers one at a time.
+
+## ADR-009 User-selected LLM privacy modes (off / local / cloud)
+Status: accepted. Supersedes the Anthropic-only phrasing layer of ADR-003; deterministic grounding is still authoritative.
+Decision: modes are off (default), local (OpenAI-compatible server whose URL must be localhost; Ollama by default) and cloud
+(OpenRouter by default, with `provider.data_collection="deny"`; Anthropic direct optional). The mode is chosen in the UI and
+persisted in the DB (it survives demo resets). Only the question and grounded draft are sent. Rewrites that add numbers or
+drop Q-citations or bold items are discarded. OpenAI-compatible calls use raw HTTP (`requests`), with no extra SDK.
+Rationale: students decide where their data goes; local works offline; a small model can't silently change facts.
+Consequences: the local path adds 5–25 s latency per answer; the guard can reject a rewrite, so the draft is shown instead.

@@ -76,7 +76,10 @@ def loads(s: str) -> Any:
 def reset_all() -> None:
     with _lock:
         for t in TABLES:
-            conn().execute(f"DELETE FROM {t}")
+            if t == "meta":
+                conn().execute("DELETE FROM meta WHERE key != 'llm_mode'")  # the user's privacy choice survives a demo reset
+            else:
+                conn().execute(f"DELETE FROM {t}")
 
 
 def bump_state_version() -> int:

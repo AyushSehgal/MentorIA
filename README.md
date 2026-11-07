@@ -42,6 +42,38 @@ Gmail messages and Piazza posts — as markdown tables and `###` blocks.
 
 When a real connector is configured, that provider switches to live data and the others keep using the file.
 
+## Language models & privacy
+
+**No LLM is required.** Every answer is assembled from stored evidence (quiz pages, deadlines, calendar, goals) by the
+LangGraph nodes, with citations. An LLM is optional and may only *reword* that grounded draft. The student picks the mode
+on **Sources → Privacy & AI** (initial default: `LLM_MODE` in `.env`, normally `off`):
+
+| Mode | What runs | Leaves the device? |
+|---|---|---|
+| **Off** (default) | Nothing — deterministic grounded answers | No |
+| **Local** | Any OpenAI-compatible server on `localhost` (Ollama, LM Studio, llama.cpp) | No |
+| **Cloud** | OpenRouter (or Anthropic direct) | Yes: the question + NOVA's draft answer |
+
+What an LLM receives in local/cloud mode: only the question and the drafted answer (concept names, estimates, deadlines,
+and the email/assignment titles it cites). Raw emails, PDFs and the database are never sent. OpenRouter requests ask it to
+route only to providers that don't collect data (`provider.data_collection = "deny"`) unless `OPENROUTER_ALLOW_DATA_COLLECTION=true`.
+
+**Guardrail:** a rewrite is discarded, and the grounded draft is shown instead, if it adds any number that isn't in the draft
+or drops any cited question (Q2, Q3…) or bolded topic/event. Chat shows which model worded each answer, or why it was skipped.
+Known limit: the guardrail doesn't catch a dropped *sentence* (e.g. a disclaimer); the Caveats list under each answer is
+never reworded.
+
+**Local setup (Ollama):**
+```bash
+ollama pull qwen2.5
+ollama serve
+```
+Then choose **Local model** on the Sources page. Measured on an M-series Mac with 16 GB of memory: `qwen2.5` (7B) takes
+5–25 s per answer; `llama3.2` (3B) takes about 3–8 s but more of its rewrites get discarded by the guardrail.
+For a live demo, **Off** is the fastest and most reliable option.
+
+**OpenRouter setup:** set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` (any id from openrouter.ai/models) in `.env`, restart the API, then choose **Cloud model**.
+
 ## Demo script (3–4 min)
 1. **Dashboard**: Canvas due-soon, Calendar + free windows, Gmail opportunities, Piazza, Documents — each card shows its connector state; fixtures say **Demo data**.
 2. Ask chat **“What systems topics am I struggling with?”** → honest “no graded evidence yet”.
@@ -62,7 +94,9 @@ When a real connector is configured, that provider switches to live data and the
 | Gmail | **MOCK_ONLY** | Read-only, query-filtered, bodies clipped. Untested live. |
 | Piazza | **MOCK_ONLY** | No official API; optional unofficial `piazza-api` path behind `PIAZZA_ENABLED`. Untested. |
 | PDF upload | **Working** | Tested with generated demo PDFs (graded + ungraded). Text-based PDFs only (no OCR). |
-| LLM phrasing | **Off by default, untested** | `LLM_ENABLED=true` + `ANTHROPIC_API_KEY` lets Claude rephrase the deterministic grounded draft; any failure falls back to the deterministic draft. `llm_used` is reported per answer. |
+| LLM — local (Ollama) | **Working** | Tested live with `qwen2.5` and `llama3.2` through the running app. |
+| LLM — OpenRouter | **MOCK_ONLY** | Request shape tested against a fake server; no real call made (no key available). |
+| LLM — Anthropic direct | **Untested** | Optional alternative cloud provider. |
 
 To connect real services: copy `.env.example` to `.env`, fill in credentials, run `backend/.venv/bin/python scripts/google_auth.py` for Google, restart, and press **Sync all**. A card changes to `connected` / `verified_live: true` only after a successful live call. Failures show `failed` with the error plus labeled fixtures; other cards are unaffected.
 

@@ -12,7 +12,9 @@ import type {
   GraphResponse,
   HealthResponse,
   HistoryResponse,
+  LLMMode,
   Observation,
+  PrivacySettings,
   Provider,
   Recommendation,
   SemanticProposition,
@@ -125,4 +127,6 @@ export const api = {
   reject: (id: string, student_id = DEFAULT_STUDENT) =>
     postJson<{ recommendation: Recommendation }>(`/api/recommendations/${encodeURIComponent(id)}/reject`, { student_id }),
   resetDemo: () => request<{ ok: boolean }>("/api/demo/reset", { method: "POST" }),
+  privacy: () => request<PrivacySettings>("/api/settings/privacy"),
+  setPrivacy: (mode: LLMMode) => postJson<PrivacySettings>("/api/settings/privacy", { mode }),
 };

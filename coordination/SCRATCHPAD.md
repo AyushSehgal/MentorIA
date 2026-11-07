@@ -34,3 +34,10 @@ memory/context.py, services/seed.py, api/sources.py, config.py; removed fixtures
 Tests: pytest 24/24 (6 new: parse, bad reference error, edit→sync, removal→sync, invalid edit keeps last good, new self-report row).
 Manual: running API — edited a calendar row in the md, Sync all → dashboard showed the edit; reverted.
 Interfaces changed: none (API contract unchanged). New env var NOVA_SYNTHETIC_FILE.
+
+[2026-11-07 16:50 EST] coordinator | llm-privacy | DONE
+Files: backend/app/orchestration/llm.py, graph.py, config.py, schemas.py, api/sources.py, db.py; frontend types.ts, client.ts, ChatPanel.tsx, pages/Sources.tsx, styles.css
+Tests: pytest 33/33 (9 new LLM tests with a fake OpenAI-compatible server). Frontend build passes.
+Live: Ollama qwen2.5 + llama3.2 through the running app; guardrail rejected some rewrites (dropped Q-citations) as intended.
+OpenRouter: MOCK_ONLY (no key). Mode left at "off".
+Interfaces changed: contract v1.1 (additive) — see CONTRACTS.md.

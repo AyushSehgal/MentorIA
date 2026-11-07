@@ -10,7 +10,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "db_path", tmp_path / "test.db")
     monkeypatch.setattr(settings, "upload_dir", tmp_path / "uploads")
     monkeypatch.setattr(settings, "demo_mode", True)
-    monkeypatch.setattr(settings, "llm_enabled", False)
+    monkeypatch.setattr(settings, "llm_mode", "off")
     db.close()
     synthetic.reset_cache()
     from app.main import app

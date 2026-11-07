@@ -253,3 +253,11 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .upload { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.5rem 0; }
 .upload select { padding: 0.4rem; border-radius: 8px; border: 1px solid var(--border); font: inherit; }
 .demo-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
+
+/* Privacy & AI */
+.privacy-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 10px 0; }
+.privacy-mode { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--border, #e3e5ec); border-radius: 10px; cursor: pointer; }
+.privacy-mode > span { display: flex; flex-direction: column; gap: 4px; }
+.privacy-mode.selected { border-color: var(--accent, #4f46e5); box-shadow: 0 0 0 1px var(--accent, #4f46e5) inset; }
+.privacy-mode.unavailable { opacity: 0.6; cursor: not-allowed; }
+.privacy-mode input { margin-top: 3px; }
