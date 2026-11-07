@@ -353,6 +353,11 @@ class ApproveResponse(BaseModel):
     result_detail: str
 
 
+class CompleteRequest(BaseModel):
+    student_id: str = "demo_student"
+    completed: bool = True
+
+
 class RejectRequest(BaseModel):
     student_id: str = "demo_student"
 

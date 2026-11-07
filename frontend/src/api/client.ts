@@ -129,6 +129,8 @@ export const api = {
   reject: (id: string, student_id = DEFAULT_STUDENT) =>
     postJson<{ recommendation: Recommendation }>(`/api/recommendations/${encodeURIComponent(id)}/reject`, { student_id }),
   resetDemo: () => request<{ ok: boolean }>("/api/demo/reset", { method: "POST" }),
+  completeAssignment: (id: string, completed: boolean, student_id = DEFAULT_STUDENT) =>
+    postJson<SourceRecord>(`/api/assignments/${encodeURIComponent(id)}/complete`, { student_id, completed }),
   dismissSuggestion: (id: string, student_id = DEFAULT_STUDENT) =>
     postJson<{ ok: boolean }>(`/api/suggestions/${encodeURIComponent(id)}/dismiss`, { student_id }),
   privacy: () => request<PrivacySettings>("/api/settings/privacy"),

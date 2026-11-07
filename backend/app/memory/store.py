@@ -9,8 +9,32 @@ from ..schemas import (Belief, BeliefUpdate, ConnectorStatus, DocumentSummary, O
 
 
 # ---- source records ---------------------------------------------------------
+def _completion_key(student_id: str, provider: str, external_id: str) -> str:
+    return f"done:{student_id}:{provider}:{external_id}"
+
+
+def _apply_completion(r: SourceRecord) -> None:
+    """A student's own 'complete' toggle wins over whatever a sync or re-import says."""
+    rows = db.query("SELECT value FROM meta WHERE key=?", (_completion_key(r.student_id, r.provider, r.external_id),))
+    if rows:
+        r.metadata = dict(r.metadata) | {"completed": rows[0]["value"] == "1", "completed_by_student": rows[0]["value"] == "1"}
+
+
+def set_completion(record_id: str, student_id: str, completed: bool) -> Optional[SourceRecord]:
+    r = get_record(record_id)
+    if r is None or r.student_id != student_id:
+        return None
+    db.execute("INSERT OR REPLACE INTO meta(key, value) VALUES(?, ?)",
+               (_completion_key(student_id, r.provider, r.external_id), "1" if completed else "0"))
+    _apply_completion(r)
+    db.execute("UPDATE source_records SET data=? WHERE id=?", (db.dumps(r.model_dump()), r.id))
+    db.bump_state_version()
+    return r
+
+
 def upsert_record(r: SourceRecord) -> bool:
     """Dedup by (student, provider, external_id). Returns True if newly added."""
+    _apply_completion(r)
     existing = db.query("SELECT id FROM source_records WHERE student_id=? AND provider=? AND external_id=?",
                         (r.student_id, r.provider, r.external_id))
     if existing:

@@ -249,6 +249,7 @@ export function Item({
 
 /** A row that shows only a title (and at most one tiny badge). Clicking it reveals the details. */
 export function ExpandItem({
+  lead,
   icon,
   title,
   badge,
@@ -257,6 +258,7 @@ export function ExpandItem({
   defaultOpen,
   children,
 }: {
+  lead?: ReactNode; // rendered outside the expand button (e.g. a checkbox), so it can have its own click
   icon?: ReactNode;
   title: ReactNode;
   badge?: ReactNode;
@@ -268,12 +270,15 @@ export function ExpandItem({
   const [open, setOpen] = useState(!!defaultOpen);
   return (
     <li className={`xitem ${open ? "open" : ""} ${done ? "done" : ""}`} style={accent ? { borderLeftColor: accent } : undefined}>
-      <button className="xitem-row" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        {icon && <span className="xitem-icon" aria-hidden>{icon}</span>}
-        <span className="xitem-title">{title}</span>
-        {badge && <span className="xitem-badge">{badge}</span>}
-        <span className="xitem-chev" aria-hidden>{open ? "▾" : "▸"}</span>
-      </button>
+      <div className="xitem-line">
+        {lead}
+        <button className="xitem-row" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {icon && <span className="xitem-icon" aria-hidden>{icon}</span>}
+          <span className="xitem-title">{title}</span>
+          {badge && <span className="xitem-badge">{badge}</span>}
+          <span className="xitem-chev" aria-hidden>{open ? "▾" : "▸"}</span>
+        </button>
+      </div>
       {open && <div className="xitem-body">{children}</div>}
     </li>
   );

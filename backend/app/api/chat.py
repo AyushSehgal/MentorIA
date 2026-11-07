@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from ..memory import store
+from ..memory import store, updates
 from ..orchestration.graph import run_chat
-from ..schemas import ApproveRequest, ApproveResponse, ChatRequest, ChatResponse, Recommendation, RejectRequest
+from ..schemas import CompleteRequest, SourceRecord, ApproveRequest, ApproveResponse, ChatRequest, ChatResponse, Recommendation, RejectRequest
 from ..services import actions, seed, suggestions
 
 router = APIRouter(prefix="/api")
@@ -30,6 +30,15 @@ def approve(rec_id: str, req: ApproveRequest):
 @router.post("/recommendations/{rec_id}/reject")
 def reject(rec_id: str, req: RejectRequest):
     return {"recommendation": actions.reject(rec_id, req.student_id).model_dump()}
+
+
+@router.post("/assignments/{record_id}/complete", response_model=SourceRecord)
+def complete_assignment(record_id: str, req: CompleteRequest):
+    r = store.set_completion(record_id, req.student_id, req.completed)
+    if r is None:
+        raise HTTPException(404, "Assignment not found for this student")
+    updates.recompute_workload(req.student_id)
+    return r
 
 
 @router.post("/suggestions/{sug_id}/dismiss")

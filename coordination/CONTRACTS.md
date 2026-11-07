@@ -75,3 +75,8 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
 - Course-staff emails whose subject starts with a course code (e.g. "[10-601] …") import as gmail `kind: "course_message"`
   and are excluded from opportunities.
 - `DashboardResponse.discussions: SourceRecord[]` — Piazza + Ed + course emails, ordered by course then relevance.
+
+## v1.7 (2026-11-07) — assignment completion
+- `POST /api/assignments/{record_id}/complete` `{student_id, completed: boolean}` → `SourceRecord`.
+  Sets `metadata.completed` (+ `metadata.completed_by_student`); the student's choice is persisted and wins over later
+  syncs/re-imports. Workload beliefs are recomputed; Quick Recap, calendar due markers and planning skip completed work.

@@ -41,7 +41,7 @@ export function Dashboard({
                 <RecapBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <CalendarBlock data={data} tz={tz} onRefresh={onRefresh} />
                 <div className="grid-2">
-                  <AssignmentsBlock data={data} tz={tz} />
+                  <AssignmentsBlock data={data} tz={tz} onRefresh={onRefresh} />
                   <DiscussionsBlock data={data} tz={tz} />
                 </div>
               </>
@@ -223,30 +223,57 @@ function CourseTag({ code, courseId }: { code: string; courseId: string | null }
 
 type AssignSort = "deadline" | "course";
 
-function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string }) {
+function AssignmentsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz: string; onRefresh: () => void }) {
   const card = data.cards.canvas;
   const [sort, setSort] = useState<AssignSort>("deadline");
+  // Optimistic overrides so the strikethrough appears instantly; the server copy arrives with the refresh.
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const isDone = (r: SourceRecord) => pending[r.id] ?? !!r.metadata?.completed;
+  async function toggle(r: SourceRecord) {
+    const next = !isDone(r);
+    setPending((p) => ({ ...p, [r.id]: next }));
+    try {
+      await api.completeAssignment(r.id, next);
+      onRefresh();
+    } catch {
+      setPending((p) => ({ ...p, [r.id]: !next })); // revert on failure
+    }
+  }
   const byDue = (a: SourceRecord, b: SourceRecord) => {
-    const ca = a.metadata?.completed ? 1 : 0;
-    const cb = b.metadata?.completed ? 1 : 0;
+    // Completed work sinks to the bottom — except items you toggled during this visit, which stay put (struck
+    // through) so you can see what you just did, and can undo it.
+    const ca = a.id in pending ? 0 : a.metadata?.completed ? 1 : 0;
+    const cb = b.id in pending ? 0 : b.metadata?.completed ? 1 : 0;
     if (ca !== cb) return ca - cb;
     return (a.occurred_at ?? "9999").localeCompare(b.occurred_at ?? "9999");
   };
   const items = [...card.items].sort(byDue);
   const row = (r: SourceRecord) => {
-    const done = !!r.metadata?.completed;
+    const done = isDone(r);
+    const byYou = done && (pending[r.id] !== undefined || !!r.metadata?.completed_by_student);
     const dueMs = r.occurred_at ? new Date(r.occurred_at).getTime() - Date.now() : null;
     const urgent = !done && dueMs !== null && dueMs >= 0 && dueMs < 3 * 864e5;
     return (
       <ExpandItem
         key={r.id}
+        lead={
+          <button
+            className={`check-btn ${done ? "on" : ""}`}
+            aria-pressed={done}
+            aria-label={done ? `Mark "${r.title}" as not complete` : `Mark "${r.title}" as complete`}
+            title={done ? "Completed — click to undo" : "Mark complete"}
+            onClick={() => void toggle(r)}
+          >
+            {done ? "✓" : ""}
+          </button>
+        }
         title={r.title}
         done={done}
         badge={
           <span className="tags">
             {sort === "deadline" && <CourseTag code={courseShort(r)} courseId={r.course_id} />}
             <span className={`tag tag-due ${urgent ? "urgent" : ""} ${done ? "done" : ""}`}>
-              {done ? "submitted" : deadlineTag(r.occurred_at, tz)}
+              {done ? (byYou ? "done" : "submitted") : deadlineTag(r.occurred_at, tz)}
             </span>
           </span>
         }
@@ -254,7 +281,8 @@ function AssignmentsBlock({ data, tz }: { data: DashboardResponse; tz: string })
         <Facts
           rows={[
             ["Course", String(r.metadata?.course_name ?? courseShort(r))],
-            ["Due", done ? "Submitted" : deadlineLabel(r.occurred_at, tz)],
+            ["Due", deadlineLabel(r.occurred_at, tz)],
+            ["Status", done ? (byYou ? "Marked complete by you" : "Submitted on Canvas") : "Not complete"],
             ["Points", r.metadata?.points_possible ? String(r.metadata.points_possible) : null],
           ]}
         />

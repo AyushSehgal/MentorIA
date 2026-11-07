@@ -122,3 +122,8 @@ Note: which forum each real course uses (Piazza vs Ed) is not verified — the E
 Discussions block renamed "Relevant Discussion", collapsed by default (course counts summary). Dark theme via
 html[data-theme] (index.html applies saved/OS theme before paint; header toggle saves to localStorage); dark palette +
 overrides for every hard-coded light colour (styles.css). Verified in browser in both themes.
+
+[2026-11-07 22:05 EST] coordinator | assignment complete toggle | DONE
+POST /api/assignments/{id}/complete (contract v1.7); choice persisted in meta and re-applied on every upsert so syncs/imports
+can't undo it; workload recomputed. Dashboard: round check button per row, strikethrough, "done" tag; toggled rows stay
+in place until reload. pytest 56/56; browser-verified complete + undo.

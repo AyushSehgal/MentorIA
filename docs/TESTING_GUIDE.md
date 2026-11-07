@@ -40,6 +40,7 @@ Demo assets live in `demo_assets/`, are regenerated daily, and use dates relativ
 
 - [ ] **D1. Assignments tags.** Expect each row to show a coloured course tag (10-601 / 10-605 / 16-831) and a deadline tag (e.g. "Tue, Nov 10"; the time appears only when it isn't 11:59 PM, e.g. Exam 2 "· 7:00 PM"). Submitted work shows "submitted".
 - [ ] **D2. Sort.** Do: click **Course**. Expect: groups per course with the full course name, each sorted by deadline. Click **Deadline** to get one list again.
+- [ ] **D2b. Complete toggle.** Do: click the round button at the start of HW5. Expect: it turns into a green ✓, the title is struck through, and the tag reads "done". The row stays in place. **Quick Recap → Due next** moves on to the next assignment. Click the button again to undo. Reload: completed items sit at the bottom; the choice is kept across reloads and re-syncs.
 - [ ] **D3. Assignment details.** Do: click HW5. Expect: course, due date and time, points, description.
 - [ ] **D4. Relevant Discussion.** Expect it collapsed by default: one line of course tags with post counts and a **Show N ▾** button. Click it. Expect posts grouped by course. Each post is tagged **Piazza**, **Ed** or **Email**, and instructor/staff posts are marked and listed first. The [10-601] Exam 2 email appears here, tagged Email · Staff.
 - [ ] **D5. Gone.** Expect: no Opportunities block and no Documents block. Gmail events still appear in Quick Recap → Suggested for you.

@@ -185,3 +185,20 @@ def test_discussions_mix_forums_and_course_email(empty_client):
     assert all(o["record"]["kind"] == "event_announcement" for o in d["cards"]["gmail"]["opportunities"])
     courses = [r["course_id"] for r in disc]
     assert courses == sorted(courses)  # grouped by course
+
+
+# ---- v1.7 assignment completion toggle -----------------------------------------------------------
+def test_complete_toggle_persists_and_survives_reimport(empty_client):
+    for step in (1, 2, 3, 4):
+        add(empty_client, step)
+    hw5 = next(i for i in empty_client.get("/api/dashboard").json()["cards"]["canvas"]["items"] if i["title"].startswith("Homework 5"))
+    assert not hw5["metadata"]["completed"]
+    r = empty_client.post(f"/api/assignments/{hw5['id']}/complete", json={"student_id": SID, "completed": True}).json()
+    assert r["metadata"]["completed"] and r["metadata"]["completed_by_student"]
+    add(empty_client, 4)  # re-importing the Canvas export must not undo the student's toggle
+    again = next(i for i in empty_client.get("/api/dashboard").json()["cards"]["canvas"]["items"] if i["id"] == hw5["id"])
+    assert again["metadata"]["completed"]
+    empty_client.post(f"/api/assignments/{hw5['id']}/complete", json={"student_id": SID, "completed": False})
+    back = next(i for i in empty_client.get("/api/dashboard").json()["cards"]["canvas"]["items"] if i["id"] == hw5["id"])
+    assert not back["metadata"]["completed"]
+    assert empty_client.post("/api/assignments/nope/complete", json={"student_id": SID}).status_code == 404
