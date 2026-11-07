@@ -1,13 +1,12 @@
 """Read side of the memory layer: concept states, student model, graph, narrative, context retrieval."""
 from __future__ import annotations
 
-import json
 import re
 from datetime import timedelta
 from typing import Optional
 
-from .. import db
-from ..config import FIXTURES_DIR, settings
+from .. import db, synthetic
+from ..config import settings
 from ..schemas import (Belief, ConceptState, ContextResponse, CourseSummary, EvidenceRef, GraphEdge, GraphNode,
                        GraphResponse, Observation, SemanticProposition, StudentInfo, StudentModel)
 from ..timeutil import now, parse
@@ -22,7 +21,7 @@ STOP = set("the a an and or of to in on for with about what which how should i m
 
 
 def profile() -> dict:
-    return json.loads((FIXTURES_DIR / "student_profile.json").read_text())
+    return synthetic.world()["profile"]
 
 
 def student_info(student_id: str) -> StudentInfo:

@@ -22,3 +22,11 @@ Status: accepted. Fixture timestamps are offsets from "today" in the student tim
 
 ## ADR-007 Interpreting signals
 Status: accepted. Blind-spot candidate = self_confidence − mastery ≥ 0.3 AND ≥2 accepted assessment answers. Evidence older than 60 days is flagged stale. Mood self-reports expire after 24h. Student questions (Piazza/chat) never lower mastery.
+
+## ADR-008 Single markdown file for synthetic data
+Status: accepted (supersedes the JSON fixtures of ADR-006; relative times kept).
+Decision: `fixtures/synthetic_world.md` is the only source of synthetic data — courses, concepts, relations, student profile,
+self-reports, and Canvas/Calendar/Gmail/Piazza records. Parsed by `backend/app/synthetic.py`, re-read on file change.
+Connectors fall back to it per provider when not configured. Invalid edits keep the last valid version and surface the error
+in connector status. Self-report rows are ingested on Sync all (idempotent by id).
+Rationale: one human-editable file for the demo; real connectors can replace providers one at a time.

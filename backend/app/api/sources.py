@@ -9,7 +9,7 @@ from .. import db
 from ..config import FIXTURES_DIR, settings
 from ..memory import store
 from ..schemas import ConnectorStatus, DashboardResponse, DocumentSummary, HealthResponse, SyncResponse
-from ..services import aggregation, dashboard as dash
+from ..services import aggregation, dashboard as dash, seed
 from ..services.document_ingest import ingest_pdf
 
 router = APIRouter(prefix="/api")
@@ -36,6 +36,11 @@ def connectors(student_id: str = "demo_student"):
 
 @router.post("/connectors/sync", response_model=list[SyncResponse])
 def sync_all(student_id: str = "demo_student"):
+    if settings.demo_mode:
+        try:
+            seed.ingest_self_reports(student_id)  # new self-report rows in the synthetic file
+        except Exception:
+            pass  # a bad edit is reported on the source cards; don't block the sync
     return aggregation.sync_all(student_id)
 
 

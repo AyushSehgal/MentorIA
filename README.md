@@ -27,6 +27,21 @@ Reset the demo (also available as a button on the Sources page): `backend/.venv/
 
 Tests: `cd backend && .venv/bin/python -m pytest -q` · Frontend typecheck/build: `npm --prefix frontend run build`
 
+## Synthetic data (current mode)
+
+Until real connectors are configured, **all source data comes from one file: [`fixtures/synthetic_world.md`](fixtures/synthetic_world.md)**.
+It holds the courses and concept map, the student profile and self-reports, Canvas assignments, calendar events,
+Gmail messages and Piazza posts — as markdown tables and `###` blocks.
+
+- Edit the file, save, press **Sync all** (no restart). Added, changed and removed items all follow the file.
+- Times are relative (`d+3 16:00` = 3 days from today at 4 pm) so the demo stays current; ISO timestamps also work.
+- A typo or unknown concept id never breaks the app: the previous valid version keeps showing and the source cards
+  explain what's wrong ("Latest edit NOT loaded: …").
+- Everything from this file is labeled **Demo data** in the UI. Point `NOVA_SYNTHETIC_FILE` at another file to swap scenarios.
+- Graded quizzes stay PDFs (Documents page), because the PDF → page reference → evidence path is part of the product.
+
+When a real connector is configured, that provider switches to live data and the others keep using the file.
+
 ## Demo script (3–4 min)
 1. **Dashboard**: Canvas due-soon, Calendar + free windows, Gmail opportunities, Piazza, Documents — each card shows its connector state; fixtures say **Demo data**.
 2. Ask chat **“What systems topics am I struggling with?”** → honest “no graded evidence yet”.
@@ -41,7 +56,7 @@ Tests: `cd backend && .venv/bin/python -m pytest -q` · Frontend typecheck/build
 
 | Source | Status | Notes |
 |---|---|---|
-| Canvas | **MOCK_ONLY** | REST adapter implemented (`connectors/canvas.py`), not tested live: no credentials were available. Demo shows labeled fixtures. |
+| Canvas | **MOCK_ONLY** | REST adapter implemented (`connectors/canvas.py`), not tested live: no credentials were available. Demo reads `fixtures/synthetic_world.md`. |
 | Google Calendar read | **MOCK_ONLY** | Adapter + token refresh implemented, untested live. |
 | Google Calendar write | **MOCK_ONLY** | Approved writes are *simulated* and labeled unless `GOOGLE_CALENDAR_WRITE_ENABLED=true` and the token has `calendar.events` scope. Idempotent via private extended property. Untested live. |
 | Gmail | **MOCK_ONLY** | Read-only, query-filtered, bodies clipped. Untested live. |
@@ -61,7 +76,7 @@ To connect real services: copy `.env.example` to `.env`, fill in credentials, ru
 
 ## Known gaps
 - No live connector verified (no credentials in this environment). BKT parameters are illustrative, uncalibrated.
-- Concept map, courses and prerequisites are labeled fixtures; no course catalog (course recommendations say so).
+- Concept map, courses and prerequisites come from the synthetic file; no course catalog (course recommendations say so).
 - Intent routing is keyword-based; free-form questions outside the main intents get a context summary.
 - No OCR for scanned PDFs; questions spanning a page break are not parsed.
 - Single-user local demo: no auth on the API.

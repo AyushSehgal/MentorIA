@@ -5,19 +5,24 @@ from .. import db
 from ..memory import updates
 from ..memory.context import profile
 from ..schemas import Observation
-from ..timeutil import iso, resolve_rel
+from ..connectors.base import resolve_time
 from .aggregation import sync_all
 
 
-def seed(student_id: str = "demo_student") -> None:
-    p = profile()
+def ingest_self_reports(student_id: str = "demo_student") -> int:
+    """Self-reports from the synthetic file. Idempotent by id, so re-running only adds new rows."""
     obs = []
-    for raw in p["seed_observations"]:
+    for raw in profile()["seed_observations"]:
         obs.append(Observation(event_id=raw["event_id"], student_id=student_id, source=raw["source"],
                                event_type=raw["event_type"], course_id=raw.get("course_id"), concept_id=raw.get("concept_id"),
-                               occurred_at=iso(resolve_rel(raw["occurred_at_rel"])), payload=raw["payload"],
+                               occurred_at=resolve_time(raw["when"]), payload=raw["payload"],
                                extraction_confidence=1.0, status="accepted", is_fixture=True))
-    updates.ingest_observations(obs)
+    accepted, _, _, _ = updates.ingest_observations(obs)
+    return accepted
+
+
+def seed(student_id: str = "demo_student") -> None:
+    ingest_self_reports(student_id)
     sync_all(student_id)
 
 

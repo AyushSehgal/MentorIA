@@ -27,3 +27,10 @@ Needs integration: T09–T12 live connectors are MOCK_ONLY — need real credent
 
 [2026-11-07 15:30 EST] coordinator | T02/T07-UI/T14 | REVIEWED
 Verified frontend against live backend payloads; accepted.
+
+[2026-11-07 16:10 EST] coordinator | synthetic-md | DONE
+Files: fixtures/synthetic_world.md (new, single source), backend/app/synthetic.py (parser), connectors/base.py, memory/catalog.py,
+memory/context.py, services/seed.py, api/sources.py, config.py; removed fixtures/{source_records,student_profile,knowledge_graph}.json
+Tests: pytest 24/24 (6 new: parse, bad reference error, edit→sync, removal→sync, invalid edit keeps last good, new self-report row).
+Manual: running API — edited a calendar row in the md, Sync all → dashboard showed the edit; reverted.
+Interfaces changed: none (API contract unchanged). New env var NOVA_SYNTHETIC_FILE.

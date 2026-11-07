@@ -30,6 +30,7 @@ class Settings:
     timezone: str
     db_path: Path
     upload_dir: Path
+    synthetic_file: Path
     llm_enabled: bool
     llm_model: str
     canvas_base_url: str
@@ -55,6 +56,7 @@ def load_settings() -> Settings:
         timezone=os.getenv("NOVA_TIMEZONE", "America/New_York"),
         db_path=db_path,
         upload_dir=_path("NOVA_UPLOAD_DIR", str(db_path.parent / "uploads")),
+        synthetic_file=_path("NOVA_SYNTHETIC_FILE", "fixtures/synthetic_world.md"),
         llm_enabled=_bool("LLM_ENABLED", False),
         llm_model=os.getenv("LLM_MODEL", "claude-opus-5-5"),
         canvas_base_url=os.getenv("CANVAS_BASE_URL", "").rstrip("/"),

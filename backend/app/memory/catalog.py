@@ -1,17 +1,15 @@
-"""Course/concept catalog from fixtures/knowledge_graph.json (labeled fixture, not an official catalog)."""
+"""Course/concept catalog from the synthetic world file (labeled fixture, not an official catalog)."""
 from __future__ import annotations
 
-import json
 import re
-from functools import lru_cache
 from typing import Optional
 
-from ..config import FIXTURES_DIR
+from .. import synthetic
 
 
-@lru_cache(maxsize=1)
 def load() -> dict:
-    return json.loads((FIXTURES_DIR / "knowledge_graph.json").read_text())
+    """Courses, concepts and relations from fixtures/synthetic_world.md (re-read when the file changes)."""
+    return synthetic.world()
 
 
 def courses() -> list[dict]:
