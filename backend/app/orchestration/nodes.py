@@ -19,8 +19,8 @@ BKT_CAVEAT = "Mastery numbers are Bayesian Knowledge Tracing estimates with illu
 
 
 def _demo_caveat(refs: list[EvidenceRef]) -> list[str]:
-    """Sample-data status stays in the API (is_fixture); the UI no longer labels it (ADR-013)."""
-    return []
+    """Answers that cite sample data say so (ADR-015, amending ADR-013); each source chip is also tagged "Sample"."""
+    return ["Some cited sources are sample data (fictional), not from your accounts."] if any(r.is_fixture for r in refs) else []
 
 
 def _dedupe(refs: list[EvidenceRef]) -> list[EvidenceRef]:
@@ -301,9 +301,10 @@ def sources(state: State) -> State:
         lines += [f"- **{a.title}** ({catalog.course_label(a.course_id)}) — due {human(parse(a.occurred_at))}" for a in due]
     else:
         lines.append("Nothing incomplete is due in the next 7 days in your synced Canvas data.")
-    ann = [p for p in store.list_records(sid, provider="piazza") if p.metadata.get("is_instructor")]
+    ann = [p for p in store.list_records(sid, provider="piazza") + store.list_records(sid, provider="edstem")
+           if p.metadata.get("is_instructor")]
     if ann:
-        lines.append("Recent instructor posts (Piazza):")
+        lines.append("Recent instructor posts (Piazza and Ed):")
         lines += [f"- {p.title}" for p in sorted(ann, key=lambda p: p.occurred_at or "", reverse=True)[:3]]
     events = [e for e in store.list_records(sid, kind="calendar_event") if (d := parse(e.occurred_at)) and now() <= d <= horizon]
     lines.append(f"Your calendar has {len(events)} event(s) in the next 7 days.")
@@ -462,3 +463,173 @@ def about_me(state: State) -> State:
     return {"draft": "\n".join(lines), "sources": refs, "beliefs_used": [f"belief_{sid}_{s.concept_id}_mastery" for s in graded],
             "uncertainties": [BKT_CAVEAT, "Goals and preferences are what you told me; I don't infer them from your activity."],
             "trace": state["trace"] + ["about_me"]}
+
+
+# ---- Course forums: what happened on Piazza, Ed and course email -------------------------------------------------
+FORUM = {"piazza": "Piazza", "edstem": "Ed", "gmail": "course email"}
+FORUM_DAYS = 7
+PER_COURSE = 4
+
+
+def _forum_course(r) -> str:
+    return str(r.metadata.get("course_name") or (catalog.course_label(r.course_id) if r.course_id else "Other"))
+
+
+def discussions(state: State) -> State:
+    """Grounded summary of recent course-forum activity: post titles, who posted (staff or not), whether a question is
+    still unanswered, and links. Never paraphrases post bodies (that needs its own guardrail)."""
+    sid, msg = state["student_id"], state["message"].lower()
+    wanted = {p for p, rx in (("edstem", r"\b(ed|edstem)\b"), ("piazza", r"\bpiazza\b")) if re.search(rx, msg)}
+    items = (store.list_records(sid, provider="piazza") + store.list_records(sid, provider="edstem")
+             + [r for r in store.list_records(sid, provider="gmail") if r.kind == "course_message"])
+    if wanted:
+        items = [r for r in items if r.provider in wanted]
+    courses = catalog.courses_in_text(state["message"])
+    named = _named_courses(state["message"], items)
+    if named:
+        items = [r for r in items if _forum_course(r) in named]
+    elif courses:
+        items = [r for r in items if r.course_id in courses]
+    since = now() - timedelta(days=FORUM_DAYS)
+    recent = [r for r in items if (d := parse(r.occurred_at)) and d >= since]
+    weak = {s.concept_id for s in concept_states(sid) if s.mastery is not None and s.mastery < 0.5}
+    goals = goal_concepts(sid)
+    where = " and ".join(FORUM[p] for p in sorted(wanted)) if wanted else "Piazza, Ed and course email"
+
+    def staff(r) -> bool:
+        return bool(r.metadata.get("is_instructor")) or r.kind == "course_message"
+
+    lines: list[str] = []
+    refs: list[EvidenceRef] = []
+    if not recent:
+        lines.append(f"Nothing new on {where} in the last {FORUM_DAYS} days.")
+        latest = sorted(items, key=lambda r: r.occurred_at or "", reverse=True)[:3]
+        if latest:
+            lines.append("The most recent posts I have:")
+            for r in latest:
+                lines.append(f"- {r.title} ({FORUM[r.provider]}, {_forum_course(r)})")
+                refs.append(record_evidence(r))
+    else:
+        n_staff = sum(staff(r) for r in recent)
+        lines.append(f"In the last {FORUM_DAYS} days on {where}: {len(recent)} post(s), {n_staff} from course staff.")
+        groups: dict[str, list] = {}
+        for r in recent:
+            groups.setdefault(_forum_course(r), []).append(r)
+        for course, posts in sorted(groups.items(), key=lambda kv: (-sum(staff(r) for r in kv[1]), kv[0])):
+            posts.sort(key=lambda r: (not staff(r), not (set(r.concept_ids) & (weak | goals)), "".join(
+                chr(255 - ord(ch)) for ch in (r.occurred_at or ""))))
+            lines.append(f"**{course}**")
+            for r in posts[:PER_COURSE]:
+                tags = (["staff"] if staff(r) else []) + \
+                       (["unanswered question"] if r.metadata.get("type") == "question" and r.metadata.get("is_answered") is False else []) + \
+                       (["touches a topic you're working on"] if set(r.concept_ids) & (weak | goals) else []) + \
+                       (["sample data"] if r.is_fixture else [])
+                when = parse(r.occurred_at).astimezone(now().tzinfo).strftime("%a %b %d").replace(" 0", " ")
+                lines.append(f"- {r.title} ({FORUM[r.provider]}, {when}" + (f"; {', '.join(tags)}" if tags else "") + ")")
+                refs.append(record_evidence(r))
+            if len(posts) > PER_COURSE:
+                lines.append(f"- …and {len(posts) - PER_COURSE} more in {course}.")
+    unc = ["Summarized from post titles and metadata only; open a thread for what it actually says."]
+    return {"draft": "\n".join(lines), "sources": _dedupe(refs), "beliefs_used": [],
+            "uncertainties": unc + _demo_caveat(refs), "trace": state["trace"] + ["discussions"]}
+
+
+# ---- This week's deadlines: Canvas + forum/email announcements + exam-like calendar entries ----------------------
+AGENDA_DAYS = 7
+_WORK = re.compile(r"\b(due|released?|deadline|homework|hw\s?\d+|assignment|project|milestone|exam|midterm|quiz|lab)\b", re.I)
+_EXAMLIKE = re.compile(r"\b(exam|midterm|final|quiz|deadline|due|presentation|submission|demo day)\b", re.I)
+
+
+def _day(dt) -> str:
+    return dt.astimezone(now().tzinfo).strftime("%a %b %d").replace(" 0", " ")
+
+
+def _clock(dt) -> str:
+    return dt.astimezone(now().tzinfo).strftime("%I:%M %p").lstrip("0")
+
+
+def _course_of(r) -> str:
+    return str(r.metadata.get("course_name") or (catalog.course_label(r.course_id) if r.course_id else "")).strip()
+
+
+def _named_courses(message: str, records: list) -> set[str]:
+    """Course names (as stored on records) that the question names: the full name, the name without its code, or the
+    course number (e.g. "AI Innovation", "11-868"). Empty -> the question names no course."""
+    m = " " + re.sub(r"\s+", " ", message.lower()) + " "
+    hits = set()
+    for name in {_course_of(r) for r in records if _course_of(r)}:
+        code = re.search(r"\b\d{2}-\d{3}\b", name)
+        bare = re.sub(r"\(?\b\d{2}-\d{3}\b\)?", "", name).strip(" -()").lower()
+        cands = [name.lower(), bare] + ([code.group(0), code.group(0).replace("-", "")] if code else [])
+        if any(len(c) >= 4 and c in m for c in cands):
+            hits.add(name)
+    return hits
+
+
+def deadlines(state: State) -> State:
+    """What's due in the next 7 days, from every connected source: Canvas assignments (incomplete), course-staff posts
+    and emails announcing work, and exam/deadline-like calendar entries. Sample items are marked."""
+    sid = state["student_id"]
+    start, end = now(), now() + timedelta(days=AGENDA_DAYS)
+    sample = lambda r: " (sample)" if r.is_fixture else ""
+    days: dict[str, list[tuple]] = {}
+    refs: list[EvidenceRef] = []
+
+    due = [a for a in store.list_records(sid, kind="assignment")
+           if not a.metadata.get("completed") and (d := parse(a.occurred_at)) and start <= d <= end]
+    for a in due:
+        d = parse(a.occurred_at)
+        course = _course_of(a)
+        days.setdefault(_day(d), []).append((d, f"- **{a.title}**" + (f" ({course})" if course else "") +
+                                             f": due {_clock(d)}, Canvas{sample(a)}"))
+        refs.append(record_evidence(a))
+    cal = [e for e in store.list_records(sid, kind="calendar_event")
+           if _EXAMLIKE.search(e.title or "") and (d := parse(e.occurred_at)) and start <= d <= end]
+    for e in cal:
+        d = parse(e.occurred_at)
+        days.setdefault(_day(d), []).append((d, f"- {e.title}: {_clock(d)}, calendar{sample(e)}"))
+        refs.append(record_evidence(e))
+    since = now() - timedelta(days=AGENDA_DAYS)
+    ann = [r for r in store.list_records(sid, provider="edstem") + store.list_records(sid, provider="piazza")
+           + [m for m in store.list_records(sid, provider="gmail") if m.kind == "course_message"]
+           if (r.metadata.get("is_instructor") or r.kind == "course_message") and _WORK.search(r.title or "")
+           and (d := parse(r.occurred_at)) and d >= since]
+    ann.sort(key=lambda r: r.occurred_at or "", reverse=True)
+    named = _named_courses(state["message"], store.list_records(sid, kind="assignment") + ann)
+    if named:  # "Anything for AI Innovation this week" -> only that course
+        keys = {c.lower() for c in named} | {re.sub(r"\(?\b\d{2}-\d{3}\b\)?", "", c).strip(" -()").lower() for c in named}
+        days = {}
+        refs = []
+        due = [a for a in due if _course_of(a) in named]
+        cal = [e for e in cal if any(k and k in (e.title or "").lower() for k in keys)]
+        ann = [r for r in ann if _course_of(r) in named]
+        for a in due:
+            d = parse(a.occurred_at)
+            days.setdefault(_day(d), []).append((d, f"- **{a.title}** ({_course_of(a)}): due {_clock(d)}, Canvas{sample(a)}"))
+            refs.append(record_evidence(a))
+        for e in cal:
+            d = parse(e.occurred_at)
+            days.setdefault(_day(d), []).append((d, f"- {e.title}: {_clock(d)}, calendar{sample(e)}"))
+            refs.append(record_evidence(e))
+
+    lines: list[str] = []
+    n = len(due) + len(cal)
+    scope = f" for {' and '.join(sorted(named))}" if named else ""
+    if not n and not ann:
+        lines.append(f"Nothing due{scope} in the next {AGENDA_DAYS} days in your synced Canvas, calendar or course announcements.")
+    else:
+        lines.append(f"Due{scope} in the next {AGENDA_DAYS} days: {len(due)} assignment(s)"
+                     + (f" and {len(cal)} exam/deadline calendar entr{'y' if len(cal) == 1 else 'ies'}" if cal else "") + ".")
+        for day, items in sorted(days.items(), key=lambda kv: min(t[0] for t in kv[1])):
+            lines.append(f"**{day}**")
+            lines += [text for _, text in sorted(items, key=lambda t: t[0])]
+        if ann:
+            lines.append("Recently announced by course staff:")
+            for r in ann[:6]:
+                where = {"edstem": "Ed", "piazza": "Piazza", "gmail": "course email"}[r.provider]
+                course = _course_of(r)
+                lines.append(f"- {r.title} ({where}" + (f", {course}" if course else "") + f", {_day(parse(r.occurred_at))}){sample(r)}")
+                refs.append(record_evidence(r))
+    unc = ["Canvas lists assignments that have a due date; announcements are matched on their titles, so check the post for the exact deadline."]
+    return {"draft": "\n".join(lines), "sources": _dedupe(refs), "beliefs_used": [f"belief_{sid}_{c['id']}_workload" for c in catalog.courses()],
+            "uncertainties": unc + _demo_caveat(refs), "trace": state["trace"] + ["deadlines"]}

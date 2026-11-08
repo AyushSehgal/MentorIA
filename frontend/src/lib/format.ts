@@ -79,6 +79,8 @@ export function providerLabel(p: string): string {
       return "Gmail";
     case "piazza":
       return "Piazza";
+    case "edstem":
+      return "Ed Discussion";
     case "documents":
       return "Documents";
     default:

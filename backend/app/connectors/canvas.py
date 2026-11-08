@@ -16,6 +16,12 @@ def _strip_html(s: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", s or "")).strip()
 
 
+def _excluded(course: dict) -> bool:
+    """CANVAS_EXCLUDE_COURSES: comma-separated course names, codes or ids (case-insensitive, exact) that are never synced."""
+    keys = {str(course.get(k, "")).strip().lower() for k in ("name", "course_code", "id")}
+    return bool(keys & set(settings.canvas_exclude_courses))
+
+
 class CanvasConnector(Connector):
     provider = "canvas"
     label = "Canvas — Due Soon"
@@ -36,9 +42,9 @@ class CanvasConnector(Connector):
         fetched = now_iso()
         courses = self._get("/users/self/courses", {"enrollment_state": "active", "per_page": 30})
         out: list[SourceRecord] = []
+        # Drop excluded courses before the 12-course cap, so an exclusion never pushes out a course you want.
+        courses = [c for c in courses if isinstance(c, dict) and "id" in c and not _excluded(c)]
         for c in courses[:12]:
-            if not isinstance(c, dict) or "id" not in c:
-                continue
             name = c.get("name") or c.get("course_code") or str(c["id"])
             course_id = catalog.course_for_text(name) or f"canvas_{c['id']}"
             try:

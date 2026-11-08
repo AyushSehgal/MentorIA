@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { FreeWindow, Recommendation, SourceRecord } from "../api/types";
 import { fmtTime } from "../lib/format";
 import { ApprovalCard } from "./ApprovalCard";
+import { SampleTag } from "./Common";
 
 /* An interactive week (or, on narrow screens, day) calendar:
    events as time blocks, free slots shaded, deadlines in day headers,
@@ -329,10 +330,10 @@ export function WeekCalendar({
                     return (
                       <button
                         key={e.id}
-                        className="wcal-ev"
+                        className={`wcal-ev ${e.is_fixture ? "is-sample" : ""}`}
                         style={{ top, height, width, left, borderLeftColor: color, background: `${color}1a` }}
                         onClick={() => setSelected({ kind: "event", rec: e })}
-                        title={`${fmtTime(e.occurred_at, tz)}–${fmtTime(e.metadata?.end as string, tz)} ${e.title}`}
+                        title={`${fmtTime(e.occurred_at, tz)}–${fmtTime(e.metadata?.end as string, tz)} ${e.title}${e.is_fixture ? " · sample data" : ""}`}
                       >
                         <span className="wcal-ev-time">{fmtTime(e.occurred_at, tz)}</span>
                         <span className="wcal-ev-title">{e.title}</span>
@@ -380,7 +381,7 @@ export function WeekCalendar({
           </button>
           {selected.kind === "event" && (
             <>
-              <strong>{selected.rec.title}</strong>
+              <strong>{selected.rec.title}</strong> <SampleTag show={selected.rec.is_fixture} />
               <div className="muted small">
                 {fmtTime(selected.rec.occurred_at, tz)}–{fmtTime(selected.rec.metadata?.end as string, tz)}
                 {selected.rec.metadata?.location ? ` · ${String(selected.rec.metadata.location)}` : ""}

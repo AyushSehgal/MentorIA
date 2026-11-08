@@ -219,6 +219,12 @@ export function Knowledge({ tz }: { tz: string }) {
           </div>
         </div>
 
+        {model && model.courses.some((c) => c.is_fixture) && (
+          <p className="sm-sample-note">
+            Sample data: {model.courses.filter((c) => c.is_fixture).map((c) => courseShort(c.label)).join(", ")} are fictional
+            courses, with fictional quizzes and goals, used to demo the model. Your own confidence ratings and notes are real.
+          </p>
+        )}
         {errors.model && <p className="error-text">{errors.model}</p>}
         {!model && !errors.model && <Empty>Loading…</Empty>}
         {model && model.concepts.length === 0 && (

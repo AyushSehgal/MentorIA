@@ -3,7 +3,7 @@ import { api, DEFAULT_STUDENT } from "../api/client";
 import type { DashboardResponse, KnowledgeCounts, SourceRecord, Suggestion } from "../api/types";
 import { ChatPanel } from "../components/ChatPanel";
 import { courseColor, WeekCalendar } from "../components/WeekCalendar";
-import { Block, Empty, ExpandItem, Facts, MoreList } from "../components/Common";
+import { Block, Empty, ExpandItem, Facts, MoreList, SampleTag } from "../components/Common";
 import { fmtDay, fmtShort, fmtTime } from "../lib/format";
 
 
@@ -271,6 +271,7 @@ function AssignmentsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz
         done={done}
         badge={
           <span className="tags">
+            <SampleTag show={r.is_fixture} />
             {sort === "deadline" && <CourseTag code={courseShort(r)} courseId={r.course_id} />}
             <span className={`tag tag-due ${urgent ? "urgent" : ""} ${done ? "done" : ""}`}>
               {done ? (byYou ? "done" : "submitted") : deadlineTag(r.occurred_at, tz)}
@@ -327,7 +328,7 @@ function AssignmentsBlock({ data, tz, onRefresh }: { data: DashboardResponse; tz
         [...groups.entries()].map(([code, list]) => (
           <div key={code} className="group">
             <div className="group-head">
-              <CourseTag code={code} courseId={list[0].course_id} />
+              <CourseTag code={code} courseId={list[0].course_id} /> <SampleTag show={list.every((r) => r.is_fixture)} />
               {String(list[0].metadata?.course_name ?? "") !== code && (
                 <span className="muted small">{String(list[0].metadata?.course_name ?? "")}</span>
               )}
@@ -367,7 +368,7 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
         <button className="disc-summary" onClick={() => setOpen(true)} title="Show discussions">
           {[...groups.entries()].map(([code, list]) => (
             <span key={code} className="disc-count">
-              <CourseTag code={code} courseId={list[0].course_id} /> {list.length}
+              <CourseTag code={code} courseId={list[0].course_id} /> <SampleTag show={list.every((r) => r.is_fixture)} /> {list.length}
             </span>
           ))}
           <span className="muted small">from Piazza, Ed and course email</span>
@@ -376,7 +377,7 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
         [...groups.entries()].map(([code, list]) => (
           <div key={code} className="group">
             <div className="group-head">
-              <CourseTag code={code} courseId={list[0].course_id} />
+              <CourseTag code={code} courseId={list[0].course_id} /> <SampleTag show={list.every((r) => r.is_fixture)} />
               {courseName(list[0].course_id) !== code && <span className="muted small">{courseName(list[0].course_id)}</span>}
             </div>
             <MoreList
@@ -391,6 +392,7 @@ function DiscussionsBlock({ data, tz }: { data: DashboardResponse; tz: string })
                     title={r.title}
                     badge={
                       <span className="tags">
+                        <SampleTag show={r.is_fixture} />
                         <span className={`tag tag-src src-${r.provider}`}>{FORUM[r.provider] ?? r.provider}</span>
                         {staff && <span className="tag tag-staff">{r.kind === "course_message" ? "Staff" : "Instructor"}</span>}
                       </span>

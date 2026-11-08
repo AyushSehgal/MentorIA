@@ -587,3 +587,11 @@ a.chip:hover { border-color: var(--accent); text-decoration: none; }
 .check-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .xitem.done .xitem-title { text-decoration: line-through; color: var(--muted); }
 :root[data-theme="dark"] .check-btn.on { color: #0e131d; }
+
+/* ---- sample-data labels (ADR-015) ---- */
+.tag-sample { background: #fffbeb; border: 1px dashed #d97706; color: #92400e; }
+.chip-sample { margin-left: 0.35rem; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #92400e; }
+.wcal-ev.is-sample { border-style: dashed; border-left-style: solid; }
+.sm-sample-note { margin: 0 0 0.5rem; font-size: 0.8rem; color: #92400e; background: #fffbeb; border: 1px dashed #d97706; border-radius: 8px; padding: 0.35rem 0.6rem; }
+:root[data-theme="dark"] .tag-sample, :root[data-theme="dark"] .sm-sample-note { background: rgba(217, 119, 6, 0.12); color: #fcd34d; border-color: #b45309; }
+:root[data-theme="dark"] .chip-sample { color: #fcd34d; }

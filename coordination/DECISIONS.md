@@ -76,3 +76,21 @@ only around the selection) with an "All topics" toggle.
 Rationale: one place shows what the model believes and lets the student correct or extend it; questions must never
 pollute the profile (e.g. "Am I confident in X?" would otherwise save a confidence of 0.8).
 Consequence: tell-mode question detection is a heuristic; a statement phrased as a question is answered, not saved.
+
+## ADR-015 Label sample data again, now that real accounts are connected
+Status: accepted (user request, 2026-11-07). Amends ADR-013 ("the UI never shows demo labels").
+Context: Canvas, Google Calendar, Gmail and Ed are now live, so real and fictional items sit side by side.
+Decision: every item with `is_fixture: true` is marked "Sample" (tooltip: fictional sample data, not from your accounts):
+assignment and discussion rows, all-sample course groups, calendar events (dashed outline + tag in the detail view),
+evidence chips (chat, inspector, goals), sample courses in Details, and a one-line note on Student Model naming the sample
+courses. Chat answers that cite sample data add the caveat "Some cited sources are sample data (fictional)"; forum summaries
+mark sample posts inline. Real data stays unmarked.
+
+## ADR-016 Cloud model chooses the answer type; keywords remain the fallback
+Status: accepted (user request, 2026-11-07).
+Decision: in cloud mode, `llm.classify_intent` sends only the question to the configured cloud model, which replies with one
+label from a fixed list (the capability names). Anything else, a timeout (8 s) or any error falls back to the keyword router;
+off and local modes never call it. Facts still come only from stored data; the model only chooses which grounded answer runs.
+Keyword rules were also fixed: assignment/deadline words beat a bare "this week"; "focus/prioritize/what should I" still
+means the study plan.
+Rationale: keyword order sent "Assignments this week" to the study plan. Consequence: about +1-2 s per question in cloud mode.

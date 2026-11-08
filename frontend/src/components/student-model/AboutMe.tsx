@@ -54,11 +54,14 @@ function BeliefSummary({ model, goalIds, onSelect }: { model: StudentModel; goal
     [
       "Goals",
       goals.map((p) => {
-        const n = model.proposition_evidence?.[p.id]?.length ?? p.evidence_ids.length;
+        const ev = model.proposition_evidence?.[p.id] ?? [];
+        const n = ev.length || p.evidence_ids.length;
+        const sample = ev.length > 0 && ev.every((e) => e.is_fixture);
         const inner = (
           <>
             {short(goalShort(p.statement), 42)}
             {n > 1 && <span className="sm-count">{n} sources</span>}
+            {sample && <span className="chip-sample">Sample</span>}
           </>
         );
         return goalIds.has(p.id) ? (

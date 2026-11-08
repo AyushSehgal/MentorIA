@@ -86,3 +86,14 @@ Timestamps: ISO 8601 with offset. Display in `student.timezone`.
   except "What I …"-style statements) from a statement. Questions are answered from stored beliefs and **never saved**:
   `intent: "general"`, `memory_updates: []`, trace contains `about_me`. Statements are saved exactly as in v1.3.
 - UI: the Dashboard chat is Ask only; About me lives on the Student Model page (`ChatPanel` `modes` prop).
+
+## v1.9 (2026-11-07) — chat answers about course forums (no schema change)
+- Questions mentioning Ed, Piazza, forums, discussions, threads, posts or announcements (or "what did I miss") are answered
+  from stored forum posts (Piazza, Ed, gmail `course_message`): last 7 days, grouped by course, staff first, unanswered
+  questions flagged, each linked. Reported as `intent: "sources"` (the intent list is fixed); trace contains `discussions`.
+
+## v1.10 (2026-11-07) — deadlines agenda + model routing (no schema change)
+- Questions about assignments, homework, due dates, deadlines, exams, or "what do I have / coming up" get a 7-day agenda:
+  incomplete Canvas assignments, exam/deadline-like calendar entries, and recent course-staff announcements (Ed, Piazza,
+  course email) about work; grouped by day; sample items marked. Reported as `intent: "sources"`; trace contains `deadlines`.
+- In cloud mode the cloud model picks the answer type (trace `router:llm`); otherwise, or on any failure, the keyword router.

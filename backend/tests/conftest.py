@@ -25,6 +25,18 @@ def load_doc(client, which: str) -> dict:
     return r.json()["document"]
 
 
+@pytest.fixture(autouse=True)
+def no_real_credentials(tmp_path, monkeypatch):
+    """Tests never touch real accounts, whatever the developer's .env holds (it is loaded at import time).
+    Without this, a configured Google token made test_approval_idempotent create a real calendar event."""
+    for name, value in (("canvas_base_url", ""), ("canvas_token", ""), ("google_client_id", ""),
+                        ("google_client_secret", ""), ("google_calendar_write_enabled", False),
+                        ("edstem_token", ""), ("piazza_enabled", False), ("openrouter_api_key", "")):
+        monkeypatch.setattr(settings, name, value)
+    monkeypatch.setattr(settings, "google_token_file", tmp_path / "no_google_token.json")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+
 @pytest.fixture()
 def empty_client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "db_path", tmp_path / "test.db")

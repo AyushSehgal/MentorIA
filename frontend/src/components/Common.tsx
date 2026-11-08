@@ -69,6 +69,16 @@ export function Card({
   );
 }
 
+/** Marks fictional sample data (is_fixture) so it is never mistaken for the student's real accounts (ADR-015). */
+export function SampleTag({ show = true }: { show?: boolean }) {
+  if (!show) return null;
+  return (
+    <span className="tag tag-sample" title="Fictional sample data, not from your accounts">
+      Sample
+    </span>
+  );
+}
+
 export function EvidenceChips({ evidence }: { evidence: EvidenceRef[] }) {
   if (!evidence || evidence.length === 0) return null;
   return (
@@ -77,6 +87,7 @@ export function EvidenceChips({ evidence }: { evidence: EvidenceRef[] }) {
         const inner = (
           <>
             <span className="chip-provider">{providerLabel(e.provider)}</span> {e.label}
+            {e.is_fixture && <span className="chip-sample">Sample</span>}
           </>
         );
         return e.url ? (

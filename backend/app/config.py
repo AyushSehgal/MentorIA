@@ -45,6 +45,10 @@ class Settings:
     anthropic_model: str
     canvas_base_url: str
     canvas_token: str
+    canvas_exclude_courses: list[str]  # lower-cased Canvas course names, codes or ids never synced
+    edstem_base_url: str
+    edstem_token: str
+    edstem_exclude_courses: list[str]  # lower-cased Ed course names, codes or ids never synced
     google_client_id: str
     google_client_secret: str
     google_token_file: Path
@@ -81,6 +85,10 @@ def load_settings() -> Settings:
         anthropic_model=os.getenv("ANTHROPIC_MODEL", "claude-opus-5-5"),
         canvas_base_url=os.getenv("CANVAS_BASE_URL", "").rstrip("/"),
         canvas_token=os.getenv("CANVAS_API_TOKEN", ""),
+        canvas_exclude_courses=[x.strip().lower() for x in os.getenv("CANVAS_EXCLUDE_COURSES", "").split(",") if x.strip()],
+        edstem_base_url=os.getenv("EDSTEM_BASE_URL", "https://us.edstem.org").rstrip("/"),
+        edstem_token=os.getenv("EDSTEM_API_TOKEN", "").strip(),
+        edstem_exclude_courses=[x.strip().lower() for x in os.getenv("EDSTEM_EXCLUDE_COURSES", "").split(",") if x.strip()],
         google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""),
         google_client_secret=os.getenv("GOOGLE_CLIENT_SECRET", ""),
         google_token_file=_path("GOOGLE_TOKEN_FILE", "backend/data/google_token.json"),

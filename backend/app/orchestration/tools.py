@@ -11,8 +11,14 @@ from ..timeutil import now_iso
 
 INTENT_RULES: list[tuple[str, re.Pattern]] = [
     ("course_next", re.compile(r"\b(class(es)?|courses?)\b.*\b(take|enroll|register|next|sign up)\b|\b(take|enroll in|register for)\b.*\b(class(es)?|courses?)\b", re.I)),
+    ("discussions", re.compile(r"\b(ed|edstem|piazza|forums?|discussions?|threads?|posts?|announcements?)\b|what did i miss|"
+                               r"what'?s new in (my )?(course|class)", re.I)),
     ("struggling", re.compile(r"struggl|weak|blind ?spot|bad at|gaps?\b|don'?t understand|behind on|need help with|worst", re.I)),
-    ("weekly_focus", re.compile(r"\bfocus\b|this week|prioriti|study plan|plan (my|the) week|what should i (do|study|work on)|schedule", re.I)),
+    # A plan request ("focus", "prioritize", "what should I…") wins; a bare "this week" loses to assignment/deadline words.
+    ("weekly_focus", re.compile(r"\bfocus\b|prioriti|study plan|plan (my|the) week|what should i (do|study|work on)", re.I)),
+    ("deadlines", re.compile(r"\b(assignments?|homeworks?|hw\s?\d*|due|deadlines?|exams?|midterms?|finals?|milestones?)\b|"
+                             r"what do i have|coming up|\bagenda\b", re.I)),
+    ("weekly_focus", re.compile(r"this week|schedule", re.I)),
     ("opportunities", re.compile(r"\btalks?\b|seminar|events?\b|opportunit|colloquium|workshop|research (talk|position)|\bemails?\b", re.I)),
     ("sources", re.compile(r"\bdue\b|deadline|assignment|calendar|piazza|canvas|announcement|upcoming", re.I)),
 ]

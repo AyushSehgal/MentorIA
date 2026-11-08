@@ -1,6 +1,6 @@
 import type { StudentModel } from "../../api/types";
 import { fmtDateTime } from "../../lib/format";
-import { EvidenceChips } from "../Common";
+import { EvidenceChips, SampleTag } from "../Common";
 import { courseShort, type ConceptView } from "./replay";
 
 const f2 = (v: number | null) => (v === null ? "—" : v.toFixed(2));
@@ -50,6 +50,7 @@ export function Details({
                   <td className="muted">
                     {[k.courseId, ...k.alsoIn].map(courseLabel).join(" · ")}
                     {k.alsoIn.length > 0 && <span className="pill pill-shared">shared</span>}
+                    <SampleTag show={!!model.courses.find((c) => c.course_id === k.courseId)?.is_fixture} />
                   </td>
                   <td>{f2(k.mastery)}</td>
                   <td>{f2(k.confidence)}</td>

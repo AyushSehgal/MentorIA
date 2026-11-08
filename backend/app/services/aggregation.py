@@ -9,7 +9,7 @@ from ..schemas import ConnectorStatus, FreeWindow, SourceRecord, SyncResponse
 from ..timeutil import iso, now, parse
 from ..memory import store, updates
 
-PROVIDERS = ["canvas", "google_calendar", "gmail", "piazza"]
+PROVIDERS = ["canvas", "google_calendar", "gmail", "piazza", "edstem"]
 
 
 def sync_provider(provider: str, student_id: str) -> SyncResponse:

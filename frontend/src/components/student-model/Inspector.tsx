@@ -48,6 +48,7 @@ export function ConceptInspector({
                     {s.event.correct ? "✓" : "✗"}
                   </span>
                   {s.event.source}
+                  {s.event.isFixture && <span className="chip-sample">Sample</span>}
                 </>
               );
               return s.event.url ? (

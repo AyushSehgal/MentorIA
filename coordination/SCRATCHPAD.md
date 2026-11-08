@@ -153,3 +153,95 @@ Browser (isolated API :8001 on a scratch DB, prepopulated): calm map 13 topics v
 about me?" answered with 0 new observations; "I'm confident about backpropagation" -> blue ring + red dot + "Check this" row live;
 chat and inspector agree (0.12); Dashboard chat shows "Ask MentorIA" only; dark mode; 900px stacks. No console errors.
 Interfaces: no schema change (intent "general" reused). Running :8000 API needs a restart for the backend part.
+
+[2026-11-07 18:52 EST] student-model-agent | T09 Canvas live | DONE
+Live: https://canvas.cmu.edu with a personal access token in .env (never committed). POST /api/connectors/canvas/sync ->
+connected / verified_live: true, "Live read OK (71 records)", no errors. Re-verified after the change below: 46 records, 0 excluded.
+Change: CANVAS_EXCLUDE_COURSES (config.py, connectors/canvas.py, .env.example): comma-separated Canvas course names, codes or ids
+(exact, case-insensitive) that are never synced; applied before the 12-course cap. Tests: backend/tests/test_canvas.py (fake Canvas),
+pytest 63/63. The 25 "Machine Learning in Production" records were also deleted from the local DB (user request).
+Known issues, NOT fixed (decision pending):
+- course_for_text matches loose aliases, so a real "Machine Learning in Production" course mapped to course_id 10-601. Match by
+  course number instead.
+- 46 of the live assignments have no due date (orientation/career "courses"): clutter in Assignments ("+N more").
+- concept_ids are matched on description text across all courses, e.g. a real Homework 6 linked to advanced_rl.
+- Live and sample Canvas items show side by side with no visible distinction (ADR-013 removed demo labels).
+
+[2026-11-07 19:20 EST] student-model-agent | T10 Google Calendar + T11 Gmail live | DONE
+Setup: Google Cloud project (External, Testing), Desktop OAuth client; scripts/google_auth.py --calendar-write (scopes
+calendar.readonly, gmail.readonly, calendar.events); token in backend/data/google_token.json (gitignored, chmod 600);
+GOOGLE_CALENDAR_WRITE_ENABLED=true. No code changes.
+Live: google_calendar sync -> connected / verified_live, 23 events (Nov 9-13); gmail sync -> connected / verified_live, 15 messages.
+Planner re-planned around real events (backprop block moved to Mon 1:50 PM, after a real 1:00-1:50 meeting).
+Approved write: rec_study_backpropagation_20261109 -> executed (not simulated); Google Calendar API shows exactly 1 event with
+mentoria_recommendation_id; a second approve returned "Already processed" and the count stayed 1.
+Gmail -> opportunities: 15 live emails ranked; top: brAIn Seminar (0.80), timing honestly "no time found".
+Known issues, NOT fixed:
+- Pending study proposals made before a calendar sync stay pending with stale times (one clashes with a real class).
+- Gmail query is broad: personal threads mentioning "lecture"/"talk" are imported (privacy on stage).
+- Time parsing misses formats like "3:30p"; past seminars still listed as "worth reviewing".
+- Live and sample calendar events are mixed; sample events count as busy time.
+
+[2026-11-07 19:40 EST] student-model-agent | T21 Ed Discussion live | START
+Files: connectors/edstem.py (new), connectors/__init__.py, services/aggregation.py (+ "edstem" in PROVIDERS), config.py
+(EDSTEM_BASE_URL, EDSTEM_API_TOKEN, EDSTEM_EXCLUDE_COURSES), .env.example, frontend lib/format.ts (providerLabel "Ed Discussion",
+additive), backend/tests/test_edstem.py (new). Contract: none ("edstem" provider and discussion records exist since v1.6).
+Probe (read-only): GET /api/user and /api/courses/{id}/threads on us.edstem.org with a personal token -> 200.
+
+[2026-11-07 19:55 EST] student-model-agent | T21 Ed Discussion live | DONE
+Live (read-only, personal token): EdStemConnector().fetch_live -> 30 threads from "11-868 Large Language Model Systems",
+14 staff/announcement, private threads skipped. Records: provider "edstem", kind "discussion", metadata.course_name "11-868 …",
+is_instructor (admin/staff/mentor/tutor or announcement), course_id only on an exact MentorIA course-number match (none today).
+Tests: backend/tests/test_edstem.py (fake Ed). Needs an API restart before "Sync all" includes Ed.
+
+[2026-11-07 19:55 EST] student-model-agent | INCIDENT: tests used the real .env | FIXED
+config.py loads the developer's .env at import, so once Google was signed in, pytest ran live: test_connector_partial_failure
+read real Gmail, and test_approval_idempotent created ONE real Google Calendar event ("Study: Cache Coherence (MESI) before
+Cache Lab Part B", Sun Nov 8 3:20 PM). Fix: autouse fixture `no_real_credentials` in tests/conftest.py blanks every external
+credential (Canvas, Google, Ed, Piazza, OpenRouter, Anthropic) for every test. Verified: full suite 67/67 with a socket guard
+that blocks all non-localhost connections (guard confirmed active). Stray event reported to the user; not deleted without OK.
+[2026-11-07 20:00 EST] student-model-agent | INCIDENT follow-up | Stray test event deleted from Google Calendar with the user's OK
+(event vgenvq283mukboj3m4cq3le9o0, rec_study_cache_coherence_20261108). The user's kept "Study: Backpropagation" event is untouched.
+
+[2026-11-07 20:20 EST] student-model-agent | chat: discussions answer + Anthropic Sonnet | READY (key pending)
+Files: orchestration/tools.py (route "discussions" before struggling/weekly_focus), orchestration/nodes.py (new `discussions`
+node; `sources` instructor posts now Piazza + Ed), orchestration/graph.py (capability; reported intent "sources"),
+orchestration/llm.py (anthropic mode requires ANTHROPIC_API_KEY), backend/tests/test_discussions.py (new), CONTRACTS v1.9.
+Why: "Summarize what happened on Ed this week" hit weekly_focus ("this week"); "announcements" read Piazza only.
+LLM: local mode never ran (Ollama has llama3.1, config expects qwen2.5). Per user: cloud via Anthropic, model claude-sonnet-5-5
+(.env LLM_CLOUD_PROVIDER=anthropic). Key to be pasted by the user. Tests: 70/70 with an outside-network guard.
+
+[2026-11-07 20:35 EST] student-model-agent | chat: discussions answer + Anthropic Sonnet | DONE (live)
+Running API restarted with ANTHROPIC_API_KEY; privacy mode set to cloud (user request) -> "Anthropic API · claude-sonnet-5-5".
+Live checks: "Summarize what happened on Ed this week" -> route:discussions, 17 posts in 7 days (7 staff), grouped by course,
+7 linked sources, compose+anthropic:claude-sonnet-5-5 (guardrail accepted), 3.7 s. "What ML topics am I struggling with?" ->
+Sonnet rewrite accepted, 2.4 s. Note: the Ed answer mixes live 11-868 posts with sample 10-605 Ed posts (no visible label).
+For the live demo, switch the mode back to Off (Sources -> Privacy & AI).
+
+[2026-11-07 20:50 EST] student-model-agent | sample-data labels (ADR-015) | DONE
+Files: frontend components/Common.tsx (+SampleTag, chip label), styles.css (+tag-sample, chip-sample, wcal-ev.is-sample,
+sm-sample-note; dark variants), pages/Dashboard.tsx (assignment/discussion rows + all-sample groups), components/WeekCalendar.tsx
+(dashed sample events, tag in detail), student-model/{Inspector,Details,AboutMe}.tsx, pages/Knowledge.tsx (note);
+backend orchestration/nodes.py (_demo_caveat restored as a sample caveat; "sample data" tag in forum summaries).
+Verified in the running app: 1 sample assignment row tagged (46 live untagged), 13 of 35 calendar events dashed, Student Model
+note + 3 inspector chips + 3 goal chips. pytest 70/70; build passes. Chat caveat needs an API restart.
+
+[2026-11-07 21:10 EST] student-model-agent | deadlines agenda + LLM routing | DONE
+Files: orchestration/tools.py (rules), nodes.py (new `deadlines`), graph.py (capability + llm routing, trace router:llm),
+llm.py (INTENTS, classify_intent, _parse_label), tests/test_discussions.py (+5). CONTRACTS v1.10, ADR-016.
+Tests: 75/75 with an outside-network guard. Live (copy of the real DB, real Sonnet): "Assignments this week" -> router:llm ->
+deadlines: Canvas (real + sample), calendar "HW 4 DUE"/"HW6 Due", staff announcements; "anything pressing…" -> deadlines;
+"what's going on in my LLM systems class forum?" -> discussions. ~4.5 s per answer (route + rewrite).
+Known: course filtering only recognizes MentorIA's catalog courses, so "my LLM systems forum" lists 11-868 first but
+does not hide the other courses. Running API needs a restart to pick this up.
+
+[2026-11-07 21:40 EST] student-model-agent | fix: LLM router silently fell back + course narrowing | DONE
+Bug: classify_intent used max_tokens=20; Claude Sonnet 5.5 thinks by default and spent it all (empty text, stop_reason
+max_tokens), so every question fell back to keywords ("Anything for AI Innovation this week" -> weekly study plan).
+Fix (per the Claude API skill): max_tokens 256, output_config effort "low", and on claude-sonnet-5-5 thinking
+{"type": "between_tools"} (its only "off" form; "disabled" is a 400); refusal -> fallback. The router prompt now gets the
+student's course names (names only) so a course isn't mistaken for an event. Router ~1 s.
+New: questions naming a course ("AI Innovation", "11-868", "Large Language Model Systems") narrow the deadlines agenda and the
+forum summary to that course, using course names on the synced records (not only MentorIA's catalog).
+Tests: 76/76 with an outside-network guard (+1). Live on a DB copy: "Anything for AI Innovation this week" -> router:llm ->
+deadlines -> only the 2 AI Innovation assignments (2.9 s). Running API needs a restart.

@@ -8,6 +8,8 @@ from langgraph.graph import END, START, StateGraph
 
 from ..schemas import ChatRequest, ChatResponse
 from . import nodes
+from ..memory import catalog, store
+from . import llm
 from .llm import polish
 from .tools import extract_contributions, is_self_question, route
 
@@ -39,6 +41,8 @@ CAPABILITIES = {
     "course_next": nodes.course_next,
     "opportunities": nodes.opportunities,
     "sources": nodes.sources,
+    "discussions": nodes.discussions,
+    "deadlines": nodes.deadlines,
     "general": nodes.general,
 }
 
@@ -47,17 +51,27 @@ def _node_for(intent: str) -> str:
     return "general" if intent == "memory_update" else intent
 
 
+def course_names(student_id: str) -> list[str]:
+    """Names of the student's courses (catalog + synced records), so the router can tell a course from an event."""
+    names = {c["label"] for c in catalog.courses()}
+    for p in ("canvas", "edstem", "piazza"):
+        names |= {str(r.metadata["course_name"]) for r in store.list_records(student_id, provider=p) if r.metadata.get("course_name")}
+    return sorted(n for n in names if n)
+
+
 def route_node(state: ChatState) -> ChatState:
     if state.get("mode") == "tell":
         if is_self_question(state["message"]):
             return {"intent": "general", "about_me": True, "has_contributions": False,
                     "trace": state.get("trace", []) + ["route:tell:question"]}
         return {"intent": "memory_update", "has_contributions": True, "trace": state.get("trace", []) + ["route:tell"]}
-    intent = route(state["message"])
+    picked = llm.classify_intent(state["message"], course_names(state["student_id"]))  # cloud only; None -> keywords
+    intent = picked or route(state["message"])
     has = bool(extract_contributions(state["student_id"], state["message"]))
     if intent == "general" and has:
         intent = "memory_update"
-    return {"intent": intent, "has_contributions": has, "trace": state.get("trace", []) + [f"route:{intent}"]}
+    how = ["router:llm"] if picked else []
+    return {"intent": intent, "has_contributions": has, "trace": state.get("trace", []) + how + [f"route:{intent}"]}
 
 
 def after_route(state: ChatState) -> str:
@@ -104,7 +118,8 @@ def build_graph():
 def run_chat(req: ChatRequest) -> ChatResponse:
     out = build_graph().invoke({"student_id": req.student_id, "message": req.message, "mode": req.mode,
                                 "history": [m.model_dump() for m in req.history], "trace": [], "memory_updates": []})
-    return ChatResponse(answer=out["answer"], intent=out["intent"], sources=out.get("sources", []),
+    intent = {"discussions": "sources", "deadlines": "sources"}.get(out["intent"], out["intent"])  # contract intents are fixed (CONTRACTS v1.9)
+    return ChatResponse(answer=out["answer"], intent=intent, sources=out.get("sources", []),
                         beliefs_used=out.get("beliefs_used", []), uncertainties=out.get("uncertainties", []),
                         proposed_recommendations=out.get("recs", []), memory_updates=out.get("memory_updates", []),
                         llm_used=out.get("llm_used", False), llm_provider=out.get("llm_provider"),
